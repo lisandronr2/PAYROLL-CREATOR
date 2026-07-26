@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <style>
   @page { size: A4; margin: 1cm 1.2cm; }
-  * { box-sizing: border-box; }
   body { font-family: Helvetica, Arial, sans-serif; font-size: 7.6pt; color: #1a1a1a; line-height: 1.15; }
   h1 { font-size: 11pt; margin: 0 0 2px 0; }
   .subtitulo { font-size: 7.6pt; color: #555; margin-bottom: 5px; }
@@ -14,8 +13,12 @@
   .bloque p { margin: 0; }
   .bloque strong { font-size: 8.5pt; }
   table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
+  th.col-concepto, td.col-concepto { width: 55%; }
+  th.col-base, td.col-base { width: 15%; }
+  th.col-pct, td.col-pct { width: 10%; }
+  th.col-importe, td.col-importe { width: 20%; }
   th { text-align: left; background: #eee; padding: 1.5px 4px; font-size: 7pt; border-bottom: 1px solid #999; }
-  td { padding: 1px 4px; border-bottom: 0.5px solid #ddd; font-size: 7.3pt; vertical-align: top; }
+  td { padding: 1px 4px; border-bottom: 0.5px solid #ddd; font-size: 7.3pt; vertical-align: top; word-wrap: break-word; overflow-wrap: break-word; }
   td.num { text-align: right; white-space: nowrap; }
   .total-row td { font-weight: bold; border-top: 1px solid #333; }
   .seccion-titulo { font-weight: bold; margin: 4px 0 1px 0; font-size: 8pt; }
@@ -45,43 +48,43 @@
   </div>
 
   <div class="seccion-titulo">I. Devengos</div>
-  <table>
-    <tr><th>Concepto</th><th class="num">Base</th><th class="num">%</th><th class="num">Importe (€)</th></tr>
+  <table class="detalle">
+    <tr><th class="col-concepto">Concepto</th><th class="num col-base">Base</th><th class="num col-pct">%</th><th class="num col-importe">Importe (€)</th></tr>
     {% for l in lineas_devengo %}
     <tr>
-      <td>{{ l.concepto }} <strong>({{ "1" if l.cotiza else "2" }})</strong>{% if l.referencia_legal %} <span class="ref">({{ l.referencia_legal }})</span>{% endif %}</td>
-      <td class="num">{{ "%.2f"|format(l.base) if l.base is not none else "" }}</td>
-      <td class="num">{{ "%.2f"|format(l.tipo_pct) if l.tipo_pct is not none else "" }}</td>
-      <td class="num">{{ "%.2f"|format(l.importe) }}</td>
+      <td class="col-concepto">{{ l.concepto }} <strong>({{ "1" if l.cotiza else "2" }})</strong>{% if l.referencia_legal %} <span class="ref">({{ l.referencia_legal }})</span>{% endif %}</td>
+      <td class="num col-base">{{ "%.2f"|format(l.base) if l.base is not none else "" }}</td>
+      <td class="num col-pct">{{ "%.2f"|format(l.tipo_pct) if l.tipo_pct is not none else "" }}</td>
+      <td class="num col-importe">{{ "%.2f"|format(l.importe) }}</td>
     </tr>
     {% endfor %}
-    <tr class="total-row"><td colspan="3">Total devengado</td><td class="num">{{ "%.2f"|format(nomina.total_devengado) }}</td></tr>
+    <tr class="total-row"><td colspan="3">Total devengado</td><td class="num col-importe">{{ "%.2f"|format(nomina.total_devengado) }}</td></tr>
   </table>
   <div class="ref" style="margin: -3px 0 5px 0;">(1) Computa en la base de cotización a la Seguridad Social. (2) Exento de cotización.</div>
 
   <div class="seccion-titulo">II. Deducciones</div>
-  <table>
-    <tr><th>Concepto</th><th class="num">Base</th><th class="num">%</th><th class="num">Importe (€)</th></tr>
+  <table class="detalle">
+    <tr><th class="col-concepto">Concepto</th><th class="num col-base">Base</th><th class="num col-pct">%</th><th class="num col-importe">Importe (€)</th></tr>
     {% for l in lineas_deduccion %}
     <tr>
-      <td>{{ l.concepto }}{% if l.referencia_legal %} <span class="ref">({{ l.referencia_legal }})</span>{% endif %}</td>
-      <td class="num">{{ "%.2f"|format(l.base) if l.base is not none else "" }}</td>
-      <td class="num">{{ "%.2f"|format(l.tipo_pct) if l.tipo_pct is not none else "" }}</td>
-      <td class="num">{{ "%.2f"|format(l.importe) }}</td>
+      <td class="col-concepto">{{ l.concepto }}{% if l.referencia_legal %} <span class="ref">({{ l.referencia_legal }})</span>{% endif %}</td>
+      <td class="num col-base">{{ "%.2f"|format(l.base) if l.base is not none else "" }}</td>
+      <td class="num col-pct">{{ "%.2f"|format(l.tipo_pct) if l.tipo_pct is not none else "" }}</td>
+      <td class="num col-importe">{{ "%.2f"|format(l.importe) }}</td>
     </tr>
     {% endfor %}
-    <tr class="total-row"><td colspan="3">Total deducciones</td><td class="num">{{ "%.2f"|format(nomina.total_deducciones) }}</td></tr>
+    <tr class="total-row"><td colspan="3">Total deducciones</td><td class="num col-importe">{{ "%.2f"|format(nomina.total_deducciones) }}</td></tr>
   </table>
 
   <div class="seccion-titulo">III. Cotizaciones a cargo de la empresa</div>
-  <table>
-    <tr><th>Concepto</th><th class="num">Base</th><th class="num">%</th><th class="num">Importe (€)</th></tr>
+  <table class="detalle">
+    <tr><th class="col-concepto">Concepto</th><th class="num col-base">Base</th><th class="num col-pct">%</th><th class="num col-importe">Importe (€)</th></tr>
     {% for l in lineas_empresa %}
     <tr>
-      <td>{{ l.concepto }}{% if l.referencia_legal %} <span class="ref">({{ l.referencia_legal }})</span>{% endif %}</td>
-      <td class="num">{{ "%.2f"|format(l.base) if l.base is not none else "" }}</td>
-      <td class="num">{{ "%.2f"|format(l.tipo_pct) if l.tipo_pct is not none else "" }}</td>
-      <td class="num">{{ "%.2f"|format(l.importe) }}</td>
+      <td class="col-concepto">{{ l.concepto }}{% if l.referencia_legal %} <span class="ref">({{ l.referencia_legal }})</span>{% endif %}</td>
+      <td class="num col-base">{{ "%.2f"|format(l.base) if l.base is not none else "" }}</td>
+      <td class="num col-pct">{{ "%.2f"|format(l.tipo_pct) if l.tipo_pct is not none else "" }}</td>
+      <td class="num col-importe">{{ "%.2f"|format(l.importe) }}</td>
     </tr>
     {% endfor %}
   </table>
