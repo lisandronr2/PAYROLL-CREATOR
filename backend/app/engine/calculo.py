@@ -202,6 +202,7 @@ def calcular_it(
                 concepto=f"IT días 1-3 sin prestación ({dias_sin_prestacion} días, salvo mejora de convenio)",
                 importe=Decimal("0.00"),
                 referencia_legal="Art. 173 LGSS; ver mejora voluntaria en convenio aplicable",
+                cotiza=False,
             )
         )
     if dias_60pct:
@@ -215,6 +216,7 @@ def calcular_it(
                 tipo_pct=Decimal("60"),
                 importe=importe,
                 referencia_legal="Art. 173 LGSS",
+                cotiza=False,
             )
         )
     if dias_75pct:
@@ -228,6 +230,7 @@ def calcular_it(
                 tipo_pct=Decimal("75"),
                 importe=importe,
                 referencia_legal="Art. 173 LGSS",
+                cotiza=False,
             )
         )
     return lineas, total
@@ -285,6 +288,7 @@ def calcular_dietas(
                 base=convenio.media_dieta,
                 importe=importe,
                 referencia_legal="Convenio colectivo aplicable; exenta hasta límites del art. 9 Reglamento IRPF",
+                cotiza=False,
             )
         )
 
@@ -301,6 +305,7 @@ def calcular_dietas(
                 base=convenio.dieta_completa_corta,
                 importe=importe,
                 referencia_legal="Convenio colectivo aplicable; exenta hasta límites del art. 9 Reglamento IRPF",
+                cotiza=False,
             )
         )
 
@@ -317,6 +322,7 @@ def calcular_dietas(
                 base=convenio.dieta_completa_larga,
                 importe=importe,
                 referencia_legal="Convenio colectivo aplicable; exenta hasta límites del art. 9 Reglamento IRPF",
+                cotiza=False,
             )
         )
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Numeric, Date, DateTime, Text
+from sqlalchemy import Boolean, Column, Integer, String, ForeignKey, Numeric, Date, DateTime, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -48,5 +48,7 @@ class NominaLinea(Base):
     importe = Column(Numeric(10, 2), nullable=False)
     referencia_legal = Column(Text, nullable=True)
     orden = Column(Integer, default=0)
+    # Solo relevante en bloque "devengo": si computa en la base de cotización SS.
+    cotiza = Column(Boolean, nullable=False, default=True)
 
     nomina = relationship("Nomina", back_populates="lineas")

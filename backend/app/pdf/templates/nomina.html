@@ -49,7 +49,7 @@
     <tr><th>Concepto</th><th class="num">Base</th><th class="num">%</th><th class="num">Importe (€)</th></tr>
     {% for l in lineas_devengo %}
     <tr>
-      <td>{{ l.concepto }}{% if l.referencia_legal %} <span class="ref">({{ l.referencia_legal }})</span>{% endif %}</td>
+      <td>{{ l.concepto }} <strong>({{ "1" if l.cotiza else "2" }})</strong>{% if l.referencia_legal %} <span class="ref">({{ l.referencia_legal }})</span>{% endif %}</td>
       <td class="num">{{ "%.2f"|format(l.base) if l.base is not none else "" }}</td>
       <td class="num">{{ "%.2f"|format(l.tipo_pct) if l.tipo_pct is not none else "" }}</td>
       <td class="num">{{ "%.2f"|format(l.importe) }}</td>
@@ -57,6 +57,7 @@
     {% endfor %}
     <tr class="total-row"><td colspan="3">Total devengado</td><td class="num">{{ "%.2f"|format(nomina.total_devengado) }}</td></tr>
   </table>
+  <div class="ref" style="margin: -3px 0 5px 0;">(1) Computa en la base de cotización a la Seguridad Social. (2) Exento de cotización.</div>
 
   <div class="seccion-titulo">II. Deducciones</div>
   <table>

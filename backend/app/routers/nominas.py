@@ -96,6 +96,7 @@ def generar_nomina(payload: GenerarNominaRequest, db: Session = Depends(get_db))
                 importe=linea.importe,
                 referencia_legal=linea.referencia_legal,
                 orden=orden,
+                cotiza=linea.cotiza,
             )
         )
 

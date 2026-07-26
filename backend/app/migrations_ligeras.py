@@ -15,6 +15,7 @@ from sqlalchemy.engine import Engine
 # (tabla, columna, definición SQL de la columna)
 COLUMNAS_NUEVAS = [
     ("nominas", "total_dietas_exentas", "NUMERIC(10, 2) NOT NULL DEFAULT 0"),
+    ("nomina_lineas", "cotiza", "BOOLEAN NOT NULL DEFAULT TRUE"),
 ]
 
 

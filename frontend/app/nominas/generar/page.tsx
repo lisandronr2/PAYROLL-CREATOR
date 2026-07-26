@@ -233,6 +233,9 @@ export default function GenerarNominaPage() {
                     <tr key={i} className="border-t align-top">
                       <td className="p-1.5">
                         {l.concepto}
+                        {bloque === "devengo" && (
+                          <span className="font-semibold"> ({l.cotiza ? "1" : "2"})</span>
+                        )}
                         {l.referencia_legal && (
                           <div className="text-xs text-slate-400">{l.referencia_legal}</div>
                         )}
@@ -245,6 +248,11 @@ export default function GenerarNominaPage() {
                   ))}
                 </tbody>
               </table>
+              {bloque === "devengo" && (
+                <p className="text-xs text-slate-400 mt-1">
+                  (1) Computa en la base de cotización a la Seguridad Social. (2) Exento de cotización.
+                </p>
+              )}
             </div>
           ))}
 

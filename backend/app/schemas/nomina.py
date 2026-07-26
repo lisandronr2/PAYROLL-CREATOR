@@ -34,6 +34,7 @@ class NominaLineaOut(BaseModel):
     importe: Decimal
     referencia_legal: Optional[str] = None
     orden: int
+    cotiza: bool = True
 
 
 class NominaOut(BaseModel):

@@ -122,6 +122,9 @@ def test_it_reduce_devengo_pero_genera_prestacion():
     assert any("IT días 4-20" in c for c in conceptos)
     # 20 días trabajados de 30 -> salario prorrateado menor que el mes completo
     assert resultado.total_devengado < Decimal("1590.26") + Decimal("50")  # margen por prestación IT sumada
+    # La prestación de IT no cotiza (art. 173 LGSS, simplificación del MVP)
+    lineas_it = [l for l in resultado.lineas if "IT" in l.concepto]
+    assert lineas_it and all(l.cotiza is False for l in lineas_it)
 
 
 def test_vacaciones_no_reducen_devengo():
@@ -174,5 +177,10 @@ def test_dietas_suman_al_liquido_pero_no_cotizan_ni_tributan():
     # Las dietas no deben alterar la base de cotización ni la de IRPF
     assert con_dietas.base_cotizacion_comun == sin_dietas.base_cotizacion_comun
     assert con_dietas.base_sujeta_irpf == sin_dietas.base_sujeta_irpf
+
+    lineas_dieta = [l for l in con_dietas.lineas if "dieta" in l.concepto.lower()]
+    assert lineas_dieta and all(l.cotiza is False for l in lineas_dieta)
+    linea_salario = next(l for l in con_dietas.lineas if l.concepto == "Salario base convenio")
+    assert linea_salario.cotiza is True
     # Pero sí incrementan el líquido a percibir
     assert con_dietas.liquido_a_percibir == sin_dietas.liquido_a_percibir + importe_dietas_esperado

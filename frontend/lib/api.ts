@@ -112,6 +112,7 @@ export interface NominaLinea {
   importe: string;
   referencia_legal?: string | null;
   orden: number;
+  cotiza: boolean;
 }
 
 export interface Nomina {

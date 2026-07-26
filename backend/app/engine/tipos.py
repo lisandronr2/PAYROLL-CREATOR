@@ -73,6 +73,10 @@ class LineaCalculo:
     base: Decimal | None = None
     tipo_pct: Decimal | None = None
     referencia_legal: str | None = None
+    # Solo relevante para líneas de bloque "devengo": si computa en la base
+    # de cotización a la Seguridad Social (True) o está exento (False, p.ej.
+    # dietas o prestación de IT).
+    cotiza: bool = True
 
 
 @dataclass
