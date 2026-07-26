@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 1.5cm; }
+  body { font-family: Helvetica, Arial, sans-serif; font-size: 9.5pt; color: #1a1a1a; }
+  h1 { font-size: 13pt; margin: 0 0 4px 0; }
+  .subtitulo { font-size: 9pt; color: #555; margin-bottom: 12px; }
+  .cabecera { border-bottom: 2px solid #222; padding-bottom: 8px; margin-bottom: 10px; overflow: hidden; }
+  .bloque { width: 48%; float: left; }
+  .bloque.derecha { float: right; }
+  .bloque p { margin: 1px 0; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+  th { text-align: left; background: #eee; padding: 4px 6px; font-size: 8.5pt; border-bottom: 1px solid #999; }
+  td { padding: 3px 6px; border-bottom: 1px solid #ddd; font-size: 8.5pt; }
+  td.num { text-align: right; white-space: nowrap; }
+  .total-row td { font-weight: bold; border-top: 1.5px solid #333; }
+  .seccion-titulo { font-weight: bold; margin: 10px 0 4px 0; font-size: 10pt; }
+  .resumen { margin-top: 12px; border: 1.5px solid #222; padding: 8px; }
+  .resumen table td { border: none; padding: 2px 6px; }
+  .liquido { font-size: 12pt; font-weight: bold; }
+  .ref { color: #777; font-size: 7.5pt; }
+  .aviso { margin-top: 16px; font-size: 7.5pt; color: #888; border-top: 1px solid #ccc; padding-top: 6px; }
+</style>
+</head>
+<body>
+  <h1>Recibo de salarios (nómina)</h1>
+  <div class="subtitulo">Periodo: {{ mes_nombre }} de {{ nomina.periodo_anio }} — {{ convenio_nombre }}</div>
+
+  <div class="cabecera">
+    <div class="bloque">
+      <strong>{{ empresa.razon_social }}</strong>
+      <p>CIF: {{ empresa.cif }}</p>
+      <p>{{ empresa.direccion or "" }}</p>
+      <p>CCC: {{ empresa.codigo_cuenta_cotizacion or "-" }}</p>
+    </div>
+    <div class="bloque derecha">
+      <strong>{{ trabajador.nombre }} {{ trabajador.apellidos }}</strong>
+      <p>NIF: {{ trabajador.nif }}</p>
+      <p>Nº afiliación SS: {{ trabajador.numero_afiliacion_ss or "-" }}</p>
+      <p>Categoría: {{ categoria_nombre }} (grupo cotización {{ grupo_cotizacion }})</p>
+    </div>
+  </div>
+
+  <div class="seccion-titulo">I. Devengos</div>
+  <table>
+    <tr><th>Concepto</th><th class="num">Base</th><th class="num">%</th><th class="num">Importe (€)</th></tr>
+    {% for l in lineas_devengo %}
+    <tr>
+      <td>{{ l.concepto }}<br><span class="ref">{{ l.referencia_legal or "" }}</span></td>
+      <td class="num">{{ "%.2f"|format(l.base) if l.base is not none else "" }}</td>
+      <td class="num">{{ "%.2f"|format(l.tipo_pct) if l.tipo_pct is not none else "" }}</td>
+      <td class="num">{{ "%.2f"|format(l.importe) }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="total-row"><td colspan="3">Total devengado</td><td class="num">{{ "%.2f"|format(nomina.total_devengado) }}</td></tr>
+  </table>
+
+  <div class="seccion-titulo">II. Deducciones</div>
+  <table>
+    <tr><th>Concepto</th><th class="num">Base</th><th class="num">%</th><th class="num">Importe (€)</th></tr>
+    {% for l in lineas_deduccion %}
+    <tr>
+      <td>{{ l.concepto }}<br><span class="ref">{{ l.referencia_legal or "" }}</span></td>
+      <td class="num">{{ "%.2f"|format(l.base) if l.base is not none else "" }}</td>
+      <td class="num">{{ "%.2f"|format(l.tipo_pct) if l.tipo_pct is not none else "" }}</td>
+      <td class="num">{{ "%.2f"|format(l.importe) }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="total-row"><td colspan="3">Total deducciones</td><td class="num">{{ "%.2f"|format(nomina.total_deducciones) }}</td></tr>
+  </table>
+
+  <div class="seccion-titulo">III. Cotizaciones a cargo de la empresa</div>
+  <table>
+    <tr><th>Concepto</th><th class="num">Base</th><th class="num">%</th><th class="num">Importe (€)</th></tr>
+    {% for l in lineas_empresa %}
+    <tr>
+      <td>{{ l.concepto }}<br><span class="ref">{{ l.referencia_legal or "" }}</span></td>
+      <td class="num">{{ "%.2f"|format(l.base) if l.base is not none else "" }}</td>
+      <td class="num">{{ "%.2f"|format(l.tipo_pct) if l.tipo_pct is not none else "" }}</td>
+      <td class="num">{{ "%.2f"|format(l.importe) }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <div class="resumen">
+    <table>
+      <tr><td>Base de cotización por contingencias comunes</td><td class="num">{{ "%.2f"|format(nomina.base_cotizacion_comun) }} €</td></tr>
+      <tr><td>Base sujeta a retención IRPF</td><td class="num">{{ "%.2f"|format(nomina.base_sujeta_irpf) }} €</td></tr>
+      <tr><td>Coste total para la empresa</td><td class="num">{{ "%.2f"|format(nomina.coste_empresa_total) }} €</td></tr>
+      <tr class="liquido"><td>LÍQUIDO A PERCIBIR</td><td class="num">{{ "%.2f"|format(nomina.liquido_a_percibir) }} €</td></tr>
+    </table>
+  </div>
+
+  <div class="aviso">
+    Documento generado por PAYROLL CREATOR (motor de cálculo MVP). Los parámetros legales, tablas
+    salariales y tramos de IRPF aplicados son orientativos para 2026 y deben ser verificados por una
+    asesoría laboral/fiscal antes de su uso como nómina oficial. Ver docs/LEGAL_DISCLAIMER.md.
+  </div>
+</body>
+</html>
