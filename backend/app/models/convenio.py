@@ -45,3 +45,25 @@ class ConvenioTablaSalarial(Base):
     vigente_hasta = Column(Date, nullable=True)
 
     categoria = relationship("CategoriaProfesional")
+
+
+class ConvenioDieta(Base):
+    """
+    Dietas del convenio (compensación de gastos por desplazamiento/manutención,
+    NO retribución salarial). Están exentas de cotización y de IRPF hasta los
+    límites reglamentarios (art. 9 Reglamento IRPF, RD 439/2007; art. 23 LGSS
+    y Orden de cotización) — este MVP las trata como exentas en su totalidad,
+    a falta de comprobar que no se superan esos límites reglamentarios.
+    """
+    __tablename__ = "convenio_dietas"
+
+    id = Column(Integer, primary_key=True, index=True)
+    convenio_id = Column(Integer, ForeignKey("convenios.id"), nullable=False)
+    anio = Column(Integer, nullable=False)
+    media_dieta = Column(Numeric(8, 2), default=0)
+    dieta_completa_corta = Column(Numeric(8, 2), default=0)  # viaje < 7 días
+    dieta_completa_larga = Column(Numeric(8, 2), default=0)  # viaje >= 7 días
+    vigente_desde = Column(Date, nullable=False)
+    vigente_hasta = Column(Date, nullable=True)
+
+    convenio = relationship("Convenio")

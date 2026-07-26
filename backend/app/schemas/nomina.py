@@ -20,6 +20,9 @@ class GenerarNominaRequest(BaseModel):
     dias_festivos_trabajados: int = 0
     anticipos: Decimal = Decimal("0")
     embargo_mensual: Decimal = Decimal("0")
+    numero_medias_dietas: int = 0
+    numero_dietas_completas_cortas: int = 0  # viaje < 7 días
+    numero_dietas_completas_largas: int = 0  # viaje >= 7 días
 
 
 class NominaLineaOut(BaseModel):
@@ -48,4 +51,5 @@ class NominaOut(BaseModel):
     base_cotizacion_comun: Decimal
     base_sujeta_irpf: Decimal
     coste_empresa_total: Decimal
+    total_dietas_exentas: Decimal
     lineas: list[NominaLineaOut] = []

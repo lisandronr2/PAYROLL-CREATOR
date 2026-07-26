@@ -5,7 +5,7 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from app.models.contrato import Contrato
-from app.models.convenio import ConvenioTablaSalarial
+from app.models.convenio import ConvenioDieta, ConvenioTablaSalarial
 from app.models.parametro_legal import ParametroLegal
 from app.models.tabla_irpf import TablaIRPF
 from app.engine.tipos import DatosConvenioContrato, ParametrosCotizacion
@@ -91,6 +91,17 @@ def obtener_datos_convenio_contrato(db: Session, contrato: Contrato, en_fecha: d
     categoria = contrato.categoria
     fecha_antiguedad = contrato.fecha_antiguedad or contrato.fecha_inicio
 
+    dieta = (
+        db.query(ConvenioDieta)
+        .filter(
+            ConvenioDieta.convenio_id == convenio.id,
+            ConvenioDieta.vigente_desde <= en_fecha,
+        )
+        .filter((ConvenioDieta.vigente_hasta.is_(None)) | (ConvenioDieta.vigente_hasta >= en_fecha))
+        .order_by(ConvenioDieta.vigente_desde.desc())
+        .first()
+    )
+
     return DatosConvenioContrato(
         nombre_convenio=convenio.nombre,
         numero_pagas=convenio.numero_pagas,
@@ -107,4 +118,7 @@ def obtener_datos_convenio_contrato(db: Session, contrato: Contrato, en_fecha: d
         numero_quinquenios_o_trienios=_numero_quinquenios_o_trienios(fecha_antiguedad, en_fecha),
         grupo_cotizacion=categoria.grupo_cotizacion,
         salario_pactado_mensual=Decimal(contrato.salario_pactado_mensual) if contrato.salario_pactado_mensual else None,
+        media_dieta=Decimal(dieta.media_dieta) if dieta else Decimal("0"),
+        dieta_completa_corta=Decimal(dieta.dieta_completa_corta) if dieta else Decimal("0"),
+        dieta_completa_larga=Decimal(dieta.dieta_completa_larga) if dieta else Decimal("0"),
     )

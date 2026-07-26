@@ -19,7 +19,7 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
-from app.models.convenio import Convenio, CategoriaProfesional, ConvenioTablaSalarial
+from app.models.convenio import Convenio, CategoriaProfesional, ConvenioDieta, ConvenioTablaSalarial
 
 VIGENTE_DESDE_2026 = date(2026, 1, 1)
 
@@ -143,4 +143,38 @@ def seed_convenios(db: Session) -> None:
             )
         )
 
+    db.commit()
+
+
+def seed_convenio_dietas(db: Session) -> None:
+    """
+    Se ejecuta de forma independiente de seed_convenios() para que también
+    añada las dietas si el convenio ya existía de un despliegue anterior
+    (antes de que existiera esta tabla).
+    """
+    if db.query(ConvenioDieta).first() is not None:
+        return
+
+    dietas_por_convenio = {
+        # Metal Madrid: valores REALES, Acta Comisión Negociadora 21/01/2026 (BOCM núm. 59)
+        "Industria, Servicios e Instalaciones del Metal de Madrid": ("12.14", "59.17", "47.36"),
+        # Resto: EJEMPLO orientativo, verificar tablas oficiales del convenio aplicable
+        "Construcción (VIII Convenio General del Sector) — EJEMPLO": ("10.00", "40.00", "60.00"),
+        "Comercio (Madrid) — EJEMPLO": ("9.00", "35.00", "55.00"),
+    }
+
+    for nombre, (media, corta, larga) in dietas_por_convenio.items():
+        convenio = db.query(Convenio).filter(Convenio.nombre == nombre).first()
+        if convenio is None:
+            continue
+        db.add(
+            ConvenioDieta(
+                convenio_id=convenio.id,
+                anio=2026,
+                media_dieta=Decimal(media),
+                dieta_completa_corta=Decimal(corta),
+                dieta_completa_larga=Decimal(larga),
+                vigente_desde=VIGENTE_DESDE_2026,
+            )
+        )
     db.commit()

@@ -41,6 +41,9 @@ class DatosConvenioContrato:
     numero_quinquenios_o_trienios: int
     grupo_cotizacion: int
     salario_pactado_mensual: Decimal | None = None  # sustituye al de convenio si es mejora
+    media_dieta: Decimal = Decimal("0")
+    dieta_completa_corta: Decimal = Decimal("0")  # viaje < 7 días
+    dieta_completa_larga: Decimal = Decimal("0")  # viaje >= 7 días
 
 
 @dataclass
@@ -57,6 +60,9 @@ class EventosMes:
     dias_festivos_trabajados: int = 0
     anticipos: Decimal = Decimal("0")
     embargo_mensual: Decimal = Decimal("0")
+    numero_medias_dietas: int = 0
+    numero_dietas_completas_cortas: int = 0  # viaje < 7 días
+    numero_dietas_completas_largas: int = 0  # viaje >= 7 días
 
 
 @dataclass
@@ -78,3 +84,4 @@ class ResultadoNomina:
     base_cotizacion_comun: Decimal = Decimal("0")
     base_sujeta_irpf: Decimal = Decimal("0")
     coste_empresa_total: Decimal = Decimal("0")
+    total_dietas_exentas: Decimal = Decimal("0")

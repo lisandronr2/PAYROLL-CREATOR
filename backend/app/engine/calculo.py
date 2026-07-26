@@ -261,6 +261,68 @@ def calcular_prorrata_pagas_extra(
     return None, Decimal("0"), importe_prorrata
 
 
+def calcular_dietas(
+    convenio: DatosConvenioContrato, eventos: EventosMes
+) -> tuple[list[LineaCalculo], Decimal]:
+    """
+    Dietas de manutención/desplazamiento según el convenio del contrato.
+    Son una compensación de gastos, no salario: quedan fuera de la base de
+    cotización y de la base de IRPF hasta los límites reglamentarios (art. 9
+    Reglamento IRPF, RD 439/2007; Orden de cotización a la SS). Este MVP las
+    trata como exentas en su totalidad — comprueba que el importe total no
+    supere esos límites antes de usarlo en una nómina real.
+    """
+    lineas: list[LineaCalculo] = []
+    total = Decimal("0")
+
+    if eventos.numero_medias_dietas and convenio.media_dieta:
+        importe = _q(convenio.media_dieta * eventos.numero_medias_dietas)
+        total += importe
+        lineas.append(
+            LineaCalculo(
+                bloque="devengo",
+                concepto=f"Media dieta ({eventos.numero_medias_dietas} días) — {convenio.nombre_convenio}",
+                base=convenio.media_dieta,
+                importe=importe,
+                referencia_legal="Convenio colectivo aplicable; exenta hasta límites del art. 9 Reglamento IRPF",
+            )
+        )
+
+    if eventos.numero_dietas_completas_cortas and convenio.dieta_completa_corta:
+        importe = _q(convenio.dieta_completa_corta * eventos.numero_dietas_completas_cortas)
+        total += importe
+        lineas.append(
+            LineaCalculo(
+                bloque="devengo",
+                concepto=(
+                    f"Dieta completa, viaje < 7 días ({eventos.numero_dietas_completas_cortas} días) "
+                    f"— {convenio.nombre_convenio}"
+                ),
+                base=convenio.dieta_completa_corta,
+                importe=importe,
+                referencia_legal="Convenio colectivo aplicable; exenta hasta límites del art. 9 Reglamento IRPF",
+            )
+        )
+
+    if eventos.numero_dietas_completas_largas and convenio.dieta_completa_larga:
+        importe = _q(convenio.dieta_completa_larga * eventos.numero_dietas_completas_largas)
+        total += importe
+        lineas.append(
+            LineaCalculo(
+                bloque="devengo",
+                concepto=(
+                    f"Dieta completa, viaje ≥ 7 días ({eventos.numero_dietas_completas_largas} días) "
+                    f"— {convenio.nombre_convenio}"
+                ),
+                base=convenio.dieta_completa_larga,
+                importe=importe,
+                referencia_legal="Convenio colectivo aplicable; exenta hasta límites del art. 9 Reglamento IRPF",
+            )
+        )
+
+    return lineas, total
+
+
 def calcular_cotizacion(
     parametros: ParametrosCotizacion, base_bruta_cotizable: Decimal
 ) -> tuple[list[LineaCalculo], Decimal, Decimal, Decimal]:
@@ -424,14 +486,19 @@ def calcular_nomina(
     linea_prorrata, importe_prorrata_pagado, importe_prorrata_cotizable = calcular_prorrata_pagas_extra(
         convenio, suma_devengos_base
     )
+    lineas_dietas, importe_dietas = calcular_dietas(convenio, eventos)
 
     resultado.lineas.extend(lineas_devengo_base)
     resultado.lineas.extend(lineas_horas)
     resultado.lineas.extend(lineas_it)
     if linea_prorrata:
         resultado.lineas.append(linea_prorrata)
+    resultado.lineas.extend(lineas_dietas)
+    resultado.total_dietas_exentas = _q(importe_dietas)
 
-    total_devengado = suma_devengos_base + importe_horas + importe_it + importe_prorrata_pagado
+    total_devengado = (
+        suma_devengos_base + importe_horas + importe_it + importe_prorrata_pagado + importe_dietas
+    )
     resultado.total_devengado = _q(total_devengado)
 
     base_cotizable = suma_devengos_base + importe_horas + importe_prorrata_cotizable
@@ -441,7 +508,9 @@ def calcular_nomina(
     resultado.lineas.extend(lineas_cotizacion)
     resultado.base_cotizacion_comun = base_ajustada
 
-    base_irpf = max(Decimal("0"), resultado.total_devengado - cuota_trabajador)
+    # Las dietas no forman parte de la base de IRPF (compensan gastos, no son
+    # retribución) — se descuentan del devengado antes de calcular la retención.
+    base_irpf = max(Decimal("0"), resultado.total_devengado - importe_dietas - cuota_trabajador)
     resultado.base_sujeta_irpf = _q(base_irpf)
     lineas_irpf, importe_irpf = calcular_irpf(
         base_irpf, convenio.numero_pagas, hijos_menores_25, grado_discapacidad, tramos_irpf

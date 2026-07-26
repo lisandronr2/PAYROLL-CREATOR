@@ -13,6 +13,9 @@ const initialForm = {
   dias_vacaciones: "0",
   anticipos: "0",
   embargo_mensual: "0",
+  numero_medias_dietas: "0",
+  numero_dietas_completas_cortas: "0",
+  numero_dietas_completas_largas: "0",
 };
 
 const BLOQUE_LABEL: Record<string, string> = {
@@ -58,6 +61,9 @@ export default function GenerarNominaPage() {
         dias_vacaciones: Number(form.dias_vacaciones),
         anticipos: Number(form.anticipos),
         embargo_mensual: Number(form.embargo_mensual),
+        numero_medias_dietas: Number(form.numero_medias_dietas),
+        numero_dietas_completas_cortas: Number(form.numero_dietas_completas_cortas),
+        numero_dietas_completas_largas: Number(form.numero_dietas_completas_largas),
       });
       setResultado(nomina);
     } catch (err) {
@@ -165,6 +171,33 @@ export default function GenerarNominaPage() {
             onChange={(e) => setForm({ ...form, embargo_mensual: e.target.value })}
           />
         </label>
+        <label className="text-xs text-slate-500 flex flex-col gap-1">
+          Medias dietas (nº días)
+          <input
+            type="number"
+            className="border rounded px-3 py-2"
+            value={form.numero_medias_dietas}
+            onChange={(e) => setForm({ ...form, numero_medias_dietas: e.target.value })}
+          />
+        </label>
+        <label className="text-xs text-slate-500 flex flex-col gap-1">
+          Dietas completas, viaje &lt;7 días (nº días)
+          <input
+            type="number"
+            className="border rounded px-3 py-2"
+            value={form.numero_dietas_completas_cortas}
+            onChange={(e) => setForm({ ...form, numero_dietas_completas_cortas: e.target.value })}
+          />
+        </label>
+        <label className="text-xs text-slate-500 flex flex-col gap-1">
+          Dietas completas, viaje ≥7 días (nº días)
+          <input
+            type="number"
+            className="border rounded px-3 py-2"
+            value={form.numero_dietas_completas_largas}
+            onChange={(e) => setForm({ ...form, numero_dietas_completas_largas: e.target.value })}
+          />
+        </label>
         <button
           disabled={cargando}
           className="sm:col-span-3 bg-slate-900 text-white rounded py-2 disabled:opacity-50"
@@ -221,6 +254,11 @@ export default function GenerarNominaPage() {
             <div>Base cotización común: <strong>{Number(resultado.base_cotizacion_comun).toFixed(2)} €</strong></div>
             <div>Base sujeta a IRPF: <strong>{Number(resultado.base_sujeta_irpf).toFixed(2)} €</strong></div>
             <div>Coste total empresa: <strong>{Number(resultado.coste_empresa_total).toFixed(2)} €</strong></div>
+            {Number(resultado.total_dietas_exentas) > 0 && (
+              <div>
+                Dietas exentas (incluidas arriba): <strong>{Number(resultado.total_dietas_exentas).toFixed(2)} €</strong>
+              </div>
+            )}
             <div className="text-base">
               Líquido a percibir: <strong>{Number(resultado.liquido_a_percibir).toFixed(2)} €</strong>
             </div>

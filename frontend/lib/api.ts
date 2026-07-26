@@ -126,6 +126,7 @@ export interface Nomina {
   base_cotizacion_comun: string;
   base_sujeta_irpf: string;
   coste_empresa_total: string;
+  total_dietas_exentas: string;
   lineas: NominaLinea[];
 }
 

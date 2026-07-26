@@ -49,6 +49,9 @@ def generar_nomina(payload: GenerarNominaRequest, db: Session = Depends(get_db))
         dias_festivos_trabajados=payload.dias_festivos_trabajados,
         anticipos=payload.anticipos,
         embargo_mensual=payload.embargo_mensual,
+        numero_medias_dietas=payload.numero_medias_dietas,
+        numero_dietas_completas_cortas=payload.numero_dietas_completas_cortas,
+        numero_dietas_completas_largas=payload.numero_dietas_completas_largas,
     )
 
     trabajador = contrato.trabajador
@@ -77,6 +80,7 @@ def generar_nomina(payload: GenerarNominaRequest, db: Session = Depends(get_db))
         base_cotizacion_comun=resultado.base_cotizacion_comun,
         base_sujeta_irpf=resultado.base_sujeta_irpf,
         coste_empresa_total=resultado.coste_empresa_total,
+        total_dietas_exentas=resultado.total_dietas_exentas,
     )
     db.add(nomina)
     db.flush()

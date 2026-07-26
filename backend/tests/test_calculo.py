@@ -54,6 +54,9 @@ def convenio_metal_grupo5(**overrides):
         numero_quinquenios_o_trienios=0,
         grupo_cotizacion=5,
         salario_pactado_mensual=None,
+        media_dieta=Decimal("12.14"),
+        dieta_completa_corta=Decimal("59.17"),
+        dieta_completa_larga=Decimal("47.36"),
     )
     base.update(overrides)
     return DatosConvenioContrato(**base)
@@ -146,3 +149,30 @@ def test_irpf_creciente_con_salario():
     tipo_bajo = irpf_bajo / resultado_bajo.base_sujeta_irpf
     tipo_alto = irpf_alto / resultado_alto.base_sujeta_irpf
     assert tipo_alto > tipo_bajo  # progresividad
+
+
+def test_dietas_suman_al_liquido_pero_no_cotizan_ni_tributan():
+    convenio = convenio_metal_grupo5()
+    sin_dietas = calcular_nomina(
+        convenio, EventosMes(periodo_anio=2026, periodo_mes=6), parametros_2026(), TRAMOS_IRPF_2026
+    )
+    con_dietas = calcular_nomina(
+        convenio,
+        EventosMes(
+            periodo_anio=2026,
+            periodo_mes=6,
+            numero_medias_dietas=2,
+            numero_dietas_completas_cortas=3,
+        ),
+        parametros_2026(),
+        TRAMOS_IRPF_2026,
+    )
+
+    importe_dietas_esperado = (Decimal("12.14") * 2 + Decimal("59.17") * 3).quantize(Decimal("0.01"))
+    assert con_dietas.total_dietas_exentas == importe_dietas_esperado
+    assert con_dietas.total_devengado == sin_dietas.total_devengado + importe_dietas_esperado
+    # Las dietas no deben alterar la base de cotización ni la de IRPF
+    assert con_dietas.base_cotizacion_comun == sin_dietas.base_cotizacion_comun
+    assert con_dietas.base_sujeta_irpf == sin_dietas.base_sujeta_irpf
+    # Pero sí incrementan el líquido a percibir
+    assert con_dietas.liquido_a_percibir == sin_dietas.liquido_a_percibir + importe_dietas_esperado

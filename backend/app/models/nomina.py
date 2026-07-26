@@ -26,6 +26,7 @@ class Nomina(Base):
     base_cotizacion_comun = Column(Numeric(10, 2), nullable=False, default=0)
     base_sujeta_irpf = Column(Numeric(10, 2), nullable=False, default=0)
     coste_empresa_total = Column(Numeric(10, 2), nullable=False, default=0)
+    total_dietas_exentas = Column(Numeric(10, 2), nullable=False, default=0)
 
     generada_en = Column(DateTime(timezone=True), server_default=func.now())
     pdf_path = Column(String, nullable=True)

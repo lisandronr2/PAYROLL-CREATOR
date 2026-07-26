@@ -1,7 +1,7 @@
 from app.models.empresa import Empresa
 from app.models.trabajador import Trabajador
 from app.models.contrato import Contrato
-from app.models.convenio import Convenio, CategoriaProfesional, ConvenioTablaSalarial
+from app.models.convenio import Convenio, CategoriaProfesional, ConvenioTablaSalarial, ConvenioDieta
 from app.models.parametro_legal import ParametroLegal
 from app.models.tabla_irpf import TablaIRPF
 from app.models.nomina import Nomina, NominaLinea
@@ -17,6 +17,7 @@ __all__ = [
     "Convenio",
     "CategoriaProfesional",
     "ConvenioTablaSalarial",
+    "ConvenioDieta",
     "ParametroLegal",
     "TablaIRPF",
     "Nomina",

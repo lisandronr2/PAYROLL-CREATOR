@@ -88,6 +88,9 @@
     <table>
       <tr><td>Base de cotización por contingencias comunes</td><td class="num">{{ "%.2f"|format(nomina.base_cotizacion_comun) }} €</td></tr>
       <tr><td>Base sujeta a retención IRPF</td><td class="num">{{ "%.2f"|format(nomina.base_sujeta_irpf) }} €</td></tr>
+      {% if nomina.total_dietas_exentas %}
+      <tr><td>Dietas exentas de cotización e IRPF (incluidas en el devengado)</td><td class="num">{{ "%.2f"|format(nomina.total_dietas_exentas) }} €</td></tr>
+      {% endif %}
       <tr><td>Coste total para la empresa</td><td class="num">{{ "%.2f"|format(nomina.coste_empresa_total) }} €</td></tr>
       <tr class="liquido"><td>LÍQUIDO A PERCIBIR</td><td class="num">{{ "%.2f"|format(nomina.liquido_a_percibir) }} €</td></tr>
     </table>
