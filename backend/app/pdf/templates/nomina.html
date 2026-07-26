@@ -3,25 +3,28 @@
 <head>
 <meta charset="utf-8">
 <style>
-  @page { size: A4; margin: 1.5cm; }
-  body { font-family: Helvetica, Arial, sans-serif; font-size: 9.5pt; color: #1a1a1a; }
-  h1 { font-size: 13pt; margin: 0 0 4px 0; }
-  .subtitulo { font-size: 9pt; color: #555; margin-bottom: 12px; }
-  .cabecera { border-bottom: 2px solid #222; padding-bottom: 8px; margin-bottom: 10px; overflow: hidden; }
+  @page { size: A4; margin: 1cm 1.2cm; }
+  * { box-sizing: border-box; }
+  body { font-family: Helvetica, Arial, sans-serif; font-size: 7.6pt; color: #1a1a1a; line-height: 1.15; }
+  h1 { font-size: 11pt; margin: 0 0 2px 0; }
+  .subtitulo { font-size: 7.6pt; color: #555; margin-bottom: 5px; }
+  .cabecera { border-bottom: 1.5px solid #222; padding-bottom: 4px; margin-bottom: 5px; overflow: hidden; }
   .bloque { width: 48%; float: left; }
   .bloque.derecha { float: right; }
-  .bloque p { margin: 1px 0; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
-  th { text-align: left; background: #eee; padding: 4px 6px; font-size: 8.5pt; border-bottom: 1px solid #999; }
-  td { padding: 3px 6px; border-bottom: 1px solid #ddd; font-size: 8.5pt; }
+  .bloque p { margin: 0; }
+  .bloque strong { font-size: 8.5pt; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
+  th { text-align: left; background: #eee; padding: 1.5px 4px; font-size: 7pt; border-bottom: 1px solid #999; }
+  td { padding: 1px 4px; border-bottom: 0.5px solid #ddd; font-size: 7.3pt; vertical-align: top; }
   td.num { text-align: right; white-space: nowrap; }
-  .total-row td { font-weight: bold; border-top: 1.5px solid #333; }
-  .seccion-titulo { font-weight: bold; margin: 10px 0 4px 0; font-size: 10pt; }
-  .resumen { margin-top: 12px; border: 1.5px solid #222; padding: 8px; }
-  .resumen table td { border: none; padding: 2px 6px; }
-  .liquido { font-size: 12pt; font-weight: bold; }
-  .ref { color: #777; font-size: 7.5pt; }
-  .aviso { margin-top: 16px; font-size: 7.5pt; color: #888; border-top: 1px solid #ccc; padding-top: 6px; }
+  .total-row td { font-weight: bold; border-top: 1px solid #333; }
+  .seccion-titulo { font-weight: bold; margin: 4px 0 1px 0; font-size: 8pt; }
+  .resumen { margin-top: 5px; border: 1px solid #222; padding: 4px 6px; }
+  .resumen table { margin-bottom: 0; }
+  .resumen table td { border: none; padding: 1px 4px; }
+  .liquido { font-size: 10pt; font-weight: bold; }
+  .ref { color: #777; font-size: 6.2pt; }
+  .aviso { margin-top: 6px; font-size: 6pt; color: #888; border-top: 0.5px solid #ccc; padding-top: 3px; }
 </style>
 </head>
 <body>
@@ -31,14 +34,12 @@
   <div class="cabecera">
     <div class="bloque">
       <strong>{{ empresa.razon_social }}</strong>
-      <p>CIF: {{ empresa.cif }}</p>
+      <p>CIF: {{ empresa.cif }} · CCC: {{ empresa.codigo_cuenta_cotizacion or "-" }}</p>
       <p>{{ empresa.direccion or "" }}</p>
-      <p>CCC: {{ empresa.codigo_cuenta_cotizacion or "-" }}</p>
     </div>
     <div class="bloque derecha">
       <strong>{{ trabajador.nombre }} {{ trabajador.apellidos }}</strong>
-      <p>NIF: {{ trabajador.nif }}</p>
-      <p>Nº afiliación SS: {{ trabajador.numero_afiliacion_ss or "-" }}</p>
+      <p>NIF: {{ trabajador.nif }} · Nº afil. SS: {{ trabajador.numero_afiliacion_ss or "-" }}</p>
       <p>Categoría: {{ categoria_nombre }} (grupo cotización {{ grupo_cotizacion }})</p>
     </div>
   </div>
@@ -48,7 +49,7 @@
     <tr><th>Concepto</th><th class="num">Base</th><th class="num">%</th><th class="num">Importe (€)</th></tr>
     {% for l in lineas_devengo %}
     <tr>
-      <td>{{ l.concepto }}<br><span class="ref">{{ l.referencia_legal or "" }}</span></td>
+      <td>{{ l.concepto }}{% if l.referencia_legal %} <span class="ref">({{ l.referencia_legal }})</span>{% endif %}</td>
       <td class="num">{{ "%.2f"|format(l.base) if l.base is not none else "" }}</td>
       <td class="num">{{ "%.2f"|format(l.tipo_pct) if l.tipo_pct is not none else "" }}</td>
       <td class="num">{{ "%.2f"|format(l.importe) }}</td>
@@ -62,7 +63,7 @@
     <tr><th>Concepto</th><th class="num">Base</th><th class="num">%</th><th class="num">Importe (€)</th></tr>
     {% for l in lineas_deduccion %}
     <tr>
-      <td>{{ l.concepto }}<br><span class="ref">{{ l.referencia_legal or "" }}</span></td>
+      <td>{{ l.concepto }}{% if l.referencia_legal %} <span class="ref">({{ l.referencia_legal }})</span>{% endif %}</td>
       <td class="num">{{ "%.2f"|format(l.base) if l.base is not none else "" }}</td>
       <td class="num">{{ "%.2f"|format(l.tipo_pct) if l.tipo_pct is not none else "" }}</td>
       <td class="num">{{ "%.2f"|format(l.importe) }}</td>
@@ -76,7 +77,7 @@
     <tr><th>Concepto</th><th class="num">Base</th><th class="num">%</th><th class="num">Importe (€)</th></tr>
     {% for l in lineas_empresa %}
     <tr>
-      <td>{{ l.concepto }}<br><span class="ref">{{ l.referencia_legal or "" }}</span></td>
+      <td>{{ l.concepto }}{% if l.referencia_legal %} <span class="ref">({{ l.referencia_legal }})</span>{% endif %}</td>
       <td class="num">{{ "%.2f"|format(l.base) if l.base is not none else "" }}</td>
       <td class="num">{{ "%.2f"|format(l.tipo_pct) if l.tipo_pct is not none else "" }}</td>
       <td class="num">{{ "%.2f"|format(l.importe) }}</td>
@@ -100,6 +101,7 @@
     Documento generado por PAYROLL CREATOR (motor de cálculo MVP). Los parámetros legales, tablas
     salariales y tramos de IRPF aplicados son orientativos para 2026 y deben ser verificados por una
     asesoría laboral/fiscal antes de su uso como nómina oficial. Ver docs/LEGAL_DISCLAIMER.md.
+    · PAYROLL CREATOR v{{ app_version }}
   </div>
 </body>
 </html>

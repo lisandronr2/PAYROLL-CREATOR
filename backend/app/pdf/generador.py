@@ -4,6 +4,7 @@ from jinja2 import Environment, FileSystemLoader
 from xhtml2pdf import pisa
 
 from app.models.nomina import Nomina
+from app.version import FULL_VERSION
 
 MESES_ES = [
     "", "enero", "febrero", "marzo", "abril", "mayo", "junio",
@@ -42,6 +43,7 @@ def generar_pdf_nomina(nomina: Nomina) -> str:
         lineas_devengo=lineas_devengo,
         lineas_deduccion=lineas_deduccion,
         lineas_empresa=lineas_empresa,
+        app_version=FULL_VERSION,
     )
 
     nombre_archivo = f"nomina_{nomina.id}.pdf"

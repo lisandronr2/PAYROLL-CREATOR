@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import RequireAuth from "@/components/RequireAuth";
+import { FULL_VERSION } from "@/lib/version";
 
 const NAV_ITEMS = [
   { href: "/empresas", label: "Empresas" },
@@ -68,6 +69,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-6">{children}</main>
       <footer className="text-center text-xs text-slate-500 py-4">
         Motor de cálculo MVP — valores legales orientativos, verificar con asesoría antes de uso real.
+        <span className="block text-slate-400 mt-1">PAYROLL CREATOR v{FULL_VERSION}</span>
       </footer>
     </RequireAuth>
   );

@@ -10,8 +10,9 @@ from app.seed.tabla_irpf import seed_tabla_irpf
 from app.seed.convenios import seed_convenios, seed_convenio_dietas
 from app.seed.usuarios import seed_usuario_admin
 from app.migrations_ligeras import aplicar_migraciones_ligeras
+from app.version import VERSION, BUILD, FULL_VERSION
 
-app = FastAPI(title="Payroll Creator API", version="0.2.0")
+app = FastAPI(title="Payroll Creator API", version=FULL_VERSION)
 
 app.add_middleware(
     CORSMiddleware,
@@ -48,4 +49,4 @@ app.include_router(nominas.router)
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "version": VERSION, "build": BUILD}
