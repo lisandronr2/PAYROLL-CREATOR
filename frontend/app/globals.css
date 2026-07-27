@@ -16,6 +16,7 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+
 /* ============================================================
    Temas: Claro, Oscuro, Moderno, Monocromo Amarillo, Blanco y Negro
    Estrategia: en vez de reescribir cada clase de Tailwind en cada
@@ -147,7 +148,9 @@ html[data-theme] .text-slate-300 {
 
 html[data-theme] .border,
 html[data-theme] .border-t,
-html[data-theme] .border-b {
+html[data-theme] .border-b,
+html[data-theme] .border-l,
+html[data-theme] .border-r {
   border-color: var(--pc-border) !important;
 }
 

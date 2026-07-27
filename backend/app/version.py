@@ -3,5 +3,5 @@ Versión de la aplicación. Incrementar BUILD (y VERSION si el cambio es
 significativo) en cada actualización que se despliegue a producción.
 """
 VERSION = "1.0.0"
-BUILD = "2729"
+BUILD = "2730"
 FULL_VERSION = f"{VERSION}+{BUILD}"
