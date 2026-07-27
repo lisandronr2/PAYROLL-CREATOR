@@ -43,6 +43,9 @@ class NominaLinea(Base):
     nomina_id = Column(Integer, ForeignKey("nominas.id"), nullable=False)
     bloque = Column(String, nullable=False)  # devengo, cotizacion_trabajador, cotizacion_empresa, deduccion
     concepto = Column(String, nullable=False)
+    # Para devengos: nº de unidades (días, horas, dietas...) — "base" hace de
+    # precio unitario en ese caso, de forma que cantidad * base == importe.
+    cantidad = Column(Numeric(8, 3), nullable=True)
     base = Column(Numeric(10, 2), nullable=True)
     tipo_pct = Column(Numeric(6, 3), nullable=True)
     importe = Column(Numeric(10, 2), nullable=False)

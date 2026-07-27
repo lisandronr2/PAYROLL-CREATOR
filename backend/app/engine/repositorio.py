@@ -128,4 +128,5 @@ def obtener_datos_convenio_contrato(db: Session, contrato: Contrato, en_fecha: d
         dieta_completa_corta=Decimal(dieta.dieta_completa_corta) if dieta else Decimal("0"),
         dieta_completa_larga=Decimal(dieta.dieta_completa_larga) if dieta else Decimal("0"),
         tipo_at_ep_pct=Decimal(contrato.trabajador.empresa.tipo_at_ep_pct),
+        complemento_mensual=Decimal(contrato.complemento_mensual or 0),
     )

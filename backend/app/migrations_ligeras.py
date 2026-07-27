@@ -17,6 +17,11 @@ COLUMNAS_NUEVAS = [
     ("nominas", "total_dietas_exentas", "NUMERIC(10, 2) NOT NULL DEFAULT 0"),
     ("nomina_lineas", "cotiza", "BOOLEAN NOT NULL DEFAULT TRUE"),
     ("empresas", "tipo_at_ep_pct", "NUMERIC(5, 3) NOT NULL DEFAULT 1.50"),
+    ("empresas", "poblacion", "VARCHAR"),
+    ("contratos", "puesto_trabajo", "VARCHAR"),
+    ("contratos", "seccion", "VARCHAR"),
+    ("contratos", "complemento_mensual", "NUMERIC(10, 2) NOT NULL DEFAULT 0"),
+    ("nomina_lineas", "cantidad", "NUMERIC(8, 3)"),
 ]
 
 

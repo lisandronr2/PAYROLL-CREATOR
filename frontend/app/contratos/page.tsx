@@ -10,6 +10,9 @@ const initialForm = {
   tipo_contrato: "indefinido",
   jornada_porcentaje: "100",
   fecha_inicio: "",
+  puesto_trabajo: "",
+  seccion: "",
+  complemento_mensual: "0",
   pagas_extra_prorrateadas: false,
 };
 
@@ -141,6 +144,28 @@ export default function ContratosPage() {
           value={form.fecha_inicio}
           onChange={(e) => setForm({ ...form, fecha_inicio: e.target.value })}
         />
+        <input
+          placeholder="Puesto de trabajo (ej. Instalador)"
+          className="border rounded px-3 py-2"
+          value={form.puesto_trabajo}
+          onChange={(e) => setForm({ ...form, puesto_trabajo: e.target.value })}
+        />
+        <input
+          placeholder="Sección"
+          className="border rounded px-3 py-2"
+          value={form.seccion}
+          onChange={(e) => setForm({ ...form, seccion: e.target.value })}
+        />
+        <label className="text-xs text-slate-500 flex flex-col gap-1 sm:col-span-2">
+          Mejora voluntaria mensual (€, adicional al salario de convenio)
+          <input
+            type="number"
+            step="0.01"
+            className="border rounded px-3 py-2"
+            value={form.complemento_mensual}
+            onChange={(e) => setForm({ ...form, complemento_mensual: e.target.value })}
+          />
+        </label>
         <label className="flex items-center gap-2 text-sm sm:col-span-2">
           <input
             type="checkbox"
@@ -163,6 +188,7 @@ export default function ContratosPage() {
         <thead className="bg-slate-100">
           <tr>
             <th className="text-left p-2">Trabajador</th>
+            <th className="text-left p-2">Puesto</th>
             <th className="text-left p-2">Tipo</th>
             <th className="text-left p-2">Jornada</th>
             <th className="text-left p-2">Inicio</th>
@@ -172,6 +198,7 @@ export default function ContratosPage() {
           {contratos.map((c) => (
             <tr key={c.id} className="border-t">
               <td className="p-2">{nombreTrabajador(c.trabajador_id)}</td>
+              <td className="p-2">{c.puesto_trabajo}</td>
               <td className="p-2">{c.tipo_contrato}</td>
               <td className="p-2">{c.jornada_porcentaje}%</td>
               <td className="p-2">{c.fecha_inicio}</td>

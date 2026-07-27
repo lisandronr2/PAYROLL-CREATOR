@@ -17,6 +17,12 @@ OUTPUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file
 _env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
 
 
+def _fecha_es(fecha) -> str:
+    if fecha is None:
+        return "-"
+    return fecha.strftime("%d-%m-%Y")
+
+
 def generar_pdf_nomina(nomina: Nomina) -> str:
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
@@ -31,15 +37,24 @@ def generar_pdf_nomina(nomina: Nomina) -> str:
     ]
     lineas_empresa = [l for l in nomina.lineas if l.bloque == "cotizacion_empresa"]
 
+    mes_nombre = MESES_ES[nomina.periodo_mes]
+    periodo_texto = (
+        f"Del 01 al {nomina.dias_naturales_periodo:02d} de {mes_nombre} de {nomina.periodo_anio}"
+    )
+
     template = _env.get_template("nomina.html")
     html_str = template.render(
         nomina=nomina,
         empresa=empresa,
         trabajador=trabajador,
+        contrato=contrato,
         categoria_nombre=categoria.nombre,
         grupo_cotizacion=categoria.grupo_cotizacion,
         convenio_nombre=contrato.convenio.nombre,
-        mes_nombre=MESES_ES[nomina.periodo_mes],
+        mes_nombre=mes_nombre,
+        periodo_texto=periodo_texto,
+        fecha_alta=_fecha_es(trabajador.fecha_alta),
+        fecha_antiguedad=_fecha_es(contrato.fecha_antiguedad or contrato.fecha_inicio),
         lineas_devengo=lineas_devengo,
         lineas_deduccion=lineas_deduccion,
         lineas_empresa=lineas_empresa,

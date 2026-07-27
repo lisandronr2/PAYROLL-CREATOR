@@ -47,6 +47,9 @@ class DatosConvenioContrato:
     # Tipo de cotización por contingencias profesionales (AT/EP) de la
     # empresa del contrato, 100% a cargo de la empresa (depende del CNAE).
     tipo_at_ep_pct: Decimal = Decimal("1.50")
+    # Mejora voluntaria: complemento fijo mensual adicional al salario de
+    # convenio, sujeto a cotización e IRPF igual que el salario.
+    complemento_mensual: Decimal = Decimal("0")
 
 
 @dataclass
@@ -73,6 +76,10 @@ class LineaCalculo:
     bloque: str  # devengo | cotizacion_trabajador | cotizacion_empresa | deduccion
     concepto: str
     importe: Decimal
+    # Nº de unidades (días, horas, dietas...) para mostrar "cantidad x precio"
+    # en el recibo, igual que un recibo de nómina tradicional. Cuando se usa,
+    # `base` actúa como precio unitario (cantidad * base == importe).
+    cantidad: Decimal | None = None
     base: Decimal | None = None
     tipo_pct: Decimal | None = None
     referencia_legal: str | None = None

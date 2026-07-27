@@ -43,6 +43,12 @@ def _dias_trabajados_normales(eventos: EventosMes) -> int:
     return max(0, eventos.dias_naturales_periodo - eventos.dias_it)
 
 
+def _precio_unitario(importe: Decimal, cantidad: Decimal) -> Decimal | None:
+    if not cantidad:
+        return None
+    return (importe / cantidad).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
+
+
 def calcular_devengos(
     convenio: DatosConvenioContrato, eventos: EventosMes
 ) -> tuple[list[LineaCalculo], Decimal]:
@@ -56,10 +62,12 @@ def calcular_devengos(
         convenio.valor_quinquenio_o_trienio * convenio.numero_quinquenios_o_trienios * pct_jornada
     )
     plus_convenio = convenio.plus_convenio_mensual * pct_jornada
+    complemento_mensual = convenio.complemento_mensual * pct_jornada
 
     dias_trabajados = _dias_trabajados_normales(eventos)
+    cantidad_dias = Decimal(dias_trabajados)
     factor_dias = (
-        Decimal(dias_trabajados) / Decimal(eventos.dias_naturales_periodo)
+        cantidad_dias / Decimal(eventos.dias_naturales_periodo)
         if eventos.dias_naturales_periodo
         else Decimal(1)
     )
@@ -67,12 +75,14 @@ def calcular_devengos(
     salario_base_prorateado = _q(salario_base * factor_dias)
     antiguedad_prorateada = _q(complemento_antiguedad * factor_dias)
     plus_convenio_prorateado = _q(plus_convenio * factor_dias)
+    complemento_mensual_prorateado = _q(complemento_mensual * factor_dias)
 
     lineas.append(
         LineaCalculo(
             bloque="devengo",
             concepto="Salario base convenio",
-            base=None,
+            cantidad=cantidad_dias,
+            base=_precio_unitario(salario_base_prorateado, cantidad_dias),
             tipo_pct=None,
             importe=salario_base_prorateado,
             referencia_legal=f"Tabla salarial {convenio.nombre_convenio}, jornada {convenio.jornada_porcentaje}%",
@@ -83,6 +93,8 @@ def calcular_devengos(
             LineaCalculo(
                 bloque="devengo",
                 concepto="Complemento de antigüedad (trienio/quinquenio)",
+                cantidad=cantidad_dias,
+                base=_precio_unitario(antiguedad_prorateada, cantidad_dias),
                 importe=antiguedad_prorateada,
                 referencia_legal="Art. 25 Estatuto de los Trabajadores; convenio colectivo aplicable",
             )
@@ -92,13 +104,36 @@ def calcular_devengos(
             LineaCalculo(
                 bloque="devengo",
                 concepto="Plus convenio",
+                cantidad=cantidad_dias,
+                base=_precio_unitario(plus_convenio_prorateado, cantidad_dias),
                 importe=plus_convenio_prorateado,
                 referencia_legal=f"Tabla salarial {convenio.nombre_convenio}",
             )
         )
+    if complemento_mensual_prorateado:
+        lineas.append(
+            LineaCalculo(
+                bloque="devengo",
+                concepto="Mejora voluntaria",
+                cantidad=cantidad_dias,
+                base=_precio_unitario(complemento_mensual_prorateado, cantidad_dias),
+                importe=complemento_mensual_prorateado,
+                referencia_legal="Art. 27 Estatuto de los Trabajadores (mejora voluntaria pactada, sujeta a cotización e IRPF)",
+            )
+        )
 
-    suma_base = salario_base_prorateado + antiguedad_prorateada + plus_convenio_prorateado
-    return lineas, suma_base
+    suma_base = (
+        salario_base_prorateado
+        + antiguedad_prorateada
+        + plus_convenio_prorateado
+        + complemento_mensual_prorateado
+    )
+    # Base para la prorrata de pagas extraordinarias: solo los conceptos de
+    # convenio (salario, antigüedad, plus convenio). La mejora voluntaria
+    # queda fuera salvo que el contrato/convenio diga expresamente lo
+    # contrario, igual que en un recibo de nómina real.
+    base_pagas_extra = salario_base_prorateado + antiguedad_prorateada + plus_convenio_prorateado
+    return lineas, suma_base, base_pagas_extra
 
 
 def calcular_horas_extra_y_nocturnidad(
@@ -122,6 +157,7 @@ def calcular_horas_extra_y_nocturnidad(
             LineaCalculo(
                 bloque="devengo",
                 concepto=f"Horas extraordinarias ({eventos.horas_extra}h)",
+                cantidad=eventos.horas_extra,
                 base=precio_hora_ordinaria,
                 tipo_pct=parametros.recargo_hora_extra_pct,
                 importe=importe,
@@ -139,6 +175,7 @@ def calcular_horas_extra_y_nocturnidad(
             LineaCalculo(
                 bloque="devengo",
                 concepto=f"Horas extraordinarias nocturnas ({eventos.horas_extra_nocturnas}h)",
+                cantidad=eventos.horas_extra_nocturnas,
                 base=precio_hora_ordinaria,
                 importe=importe,
                 referencia_legal="Art. 35 y 36 Estatuto de los Trabajadores",
@@ -156,6 +193,7 @@ def calcular_horas_extra_y_nocturnidad(
             LineaCalculo(
                 bloque="devengo",
                 concepto=f"Plus de nocturnidad ({eventos.horas_nocturnas_ordinarias}h)",
+                cantidad=eventos.horas_nocturnas_ordinarias,
                 base=precio_hora_ordinaria,
                 tipo_pct=parametros.plus_nocturnidad_pct,
                 importe=importe,
@@ -172,6 +210,9 @@ def calcular_horas_extra_y_nocturnidad(
             LineaCalculo(
                 bloque="devengo",
                 concepto=f"Festivos trabajados ({eventos.dias_festivos_trabajados} días)",
+                cantidad=Decimal(eventos.dias_festivos_trabajados),
+                base=salario_dia,
+                tipo_pct=parametros.recargo_hora_extra_pct,
                 importe=importe,
                 referencia_legal="Convenio colectivo aplicable (descanso semanal/festivos, art. 37 ET)",
             )
@@ -255,6 +296,8 @@ def calcular_prorrata_pagas_extra(
         linea = LineaCalculo(
             bloque="devengo",
             concepto="Prorrata de pagas extraordinarias",
+            cantidad=Decimal("1"),
+            base=importe_prorrata,
             importe=importe_prorrata,
             referencia_legal="Art. 31 Estatuto de los Trabajadores (prorrateo pactado)",
         )
@@ -285,6 +328,7 @@ def calcular_dietas(
             LineaCalculo(
                 bloque="devengo",
                 concepto=f"Media dieta ({eventos.numero_medias_dietas} días) — {convenio.nombre_convenio}",
+                cantidad=Decimal(eventos.numero_medias_dietas),
                 base=convenio.media_dieta,
                 importe=importe,
                 referencia_legal="Convenio colectivo aplicable; exenta hasta límites del art. 9 Reglamento IRPF",
@@ -302,6 +346,7 @@ def calcular_dietas(
                     f"Dieta completa, viaje < 7 días ({eventos.numero_dietas_completas_cortas} días) "
                     f"— {convenio.nombre_convenio}"
                 ),
+                cantidad=Decimal(eventos.numero_dietas_completas_cortas),
                 base=convenio.dieta_completa_corta,
                 importe=importe,
                 referencia_legal="Convenio colectivo aplicable; exenta hasta límites del art. 9 Reglamento IRPF",
@@ -319,6 +364,7 @@ def calcular_dietas(
                     f"Dieta completa, viaje ≥ 7 días ({eventos.numero_dietas_completas_largas} días) "
                     f"— {convenio.nombre_convenio}"
                 ),
+                cantidad=Decimal(eventos.numero_dietas_completas_largas),
                 base=convenio.dieta_completa_larga,
                 importe=importe,
                 referencia_legal="Convenio colectivo aplicable; exenta hasta límites del art. 9 Reglamento IRPF",
@@ -491,11 +537,11 @@ def calcular_nomina(
 ) -> ResultadoNomina:
     resultado = ResultadoNomina()
 
-    lineas_devengo_base, suma_devengos_base = calcular_devengos(convenio, eventos)
+    lineas_devengo_base, suma_devengos_base, base_pagas_extra = calcular_devengos(convenio, eventos)
     lineas_horas, importe_horas = calcular_horas_extra_y_nocturnidad(convenio, eventos, parametros)
     lineas_it, importe_it = calcular_it(convenio, eventos, suma_devengos_base)
     linea_prorrata, importe_prorrata_pagado, importe_prorrata_cotizable = calcular_prorrata_pagas_extra(
-        convenio, suma_devengos_base
+        convenio, base_pagas_extra
     )
     lineas_dietas, importe_dietas = calcular_dietas(convenio, eventos)
 

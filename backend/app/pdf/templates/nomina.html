@@ -4,15 +4,21 @@
 <meta charset="utf-8">
 <style>
   @page { size: A4; margin: 1cm 1.2cm; }
-  body { font-family: Helvetica, Arial, sans-serif; font-size: 7.6pt; color: #1a1a1a; line-height: 1.15; }
-  h1 { font-size: 11pt; margin: 0 0 2px 0; }
-  .subtitulo { font-size: 7.6pt; color: #555; margin-bottom: 5px; }
-  .cabecera { border-bottom: 1.5px solid #222; padding-bottom: 4px; margin-bottom: 5px; overflow: hidden; }
-  .bloque { width: 48%; float: left; }
-  .bloque.derecha { float: right; }
-  .bloque p { margin: 0; }
-  .bloque strong { font-size: 8.5pt; }
+  body { font-family: Helvetica, Arial, sans-serif; font-size: 7.4pt; color: #1a1a1a; line-height: 1.15; }
+  h1 { font-size: 11pt; margin: 0 0 4px 0; }
+
+  table.ficha { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+  table.ficha th { background: #eee; border: 0.5px solid #999; text-align: left; font-size: 6.6pt; font-weight: normal; color: #555; padding: 1.5px 4px; }
+  table.ficha td { border: 0.5px solid #999; padding: 2px 4px; font-size: 8pt; font-weight: bold; }
+  table.ficha td.chico { font-size: 7pt; font-weight: normal; }
+
+  .periodo-row { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+  .periodo-row th { background: #eee; border: 0.5px solid #999; font-size: 6.6pt; font-weight: normal; color: #555; padding: 1.5px 4px; text-align: left; }
+  .periodo-row td { border: 0.5px solid #999; padding: 2px 4px; font-size: 7.6pt; font-weight: bold; }
+
   table { width: 100%; border-collapse: collapse; margin-bottom: 5px; }
+  th.col-cant, td.col-cant { width: 8%; }
+  th.col-precio, td.col-precio { width: 12%; }
   th.col-concepto, td.col-concepto { width: 55%; }
   th.col-base, td.col-base { width: 15%; }
   th.col-pct, td.col-pct { width: 10%; }
@@ -32,29 +38,86 @@
 </head>
 <body>
   <h1>Recibo de salarios (nómina)</h1>
-  <div class="subtitulo">Periodo: {{ mes_nombre }} de {{ nomina.periodo_anio }} — {{ convenio_nombre }}</div>
 
-  <div class="cabecera">
-    <div class="bloque">
-      <strong>{{ empresa.razon_social }}</strong>
-      <p>CIF: {{ empresa.cif }} · CCC: {{ empresa.codigo_cuenta_cotizacion or "-" }}</p>
-      <p>{{ empresa.direccion or "" }}</p>
-    </div>
-    <div class="bloque derecha">
-      <strong>{{ trabajador.nombre }} {{ trabajador.apellidos }}</strong>
-      <p>NIF: {{ trabajador.nif }} · Nº afil. SS: {{ trabajador.numero_afiliacion_ss or "-" }}</p>
-      <p>Categoría: {{ categoria_nombre }} (grupo cotización {{ grupo_cotizacion }})</p>
-    </div>
-  </div>
+  <table class="ficha">
+    <colgroup><col style="width:50%"><col style="width:20%"><col style="width:30%"></colgroup>
+    <tr>
+      <th>EMPRESA (razón social)</th>
+      <th>C.I.F.</th>
+      <th>Nº CTA. COTIZ. S.S.</th>
+    </tr>
+    <tr>
+      <td>{{ empresa.razon_social }}</td>
+      <td>{{ empresa.cif }}</td>
+      <td>{{ empresa.codigo_cuenta_cotizacion or "-" }}</td>
+    </tr>
+    <tr>
+      <th>DOMICILIO</th>
+      <th colspan="2">POBLACIÓN</th>
+    </tr>
+    <tr>
+      <td class="chico">{{ empresa.direccion or "-" }}</td>
+      <td class="chico" colspan="2">{{ empresa.poblacion or "-" }}</td>
+    </tr>
+  </table>
+
+  <table class="ficha">
+    <colgroup><col style="width:50%"><col style="width:20%"><col style="width:30%"></colgroup>
+    <tr>
+      <th>TRABAJADOR (nombre)</th>
+      <th>D.N.I.</th>
+      <th>Nº AFILIACIÓN S.S.</th>
+    </tr>
+    <tr>
+      <td>{{ trabajador.apellidos }}, {{ trabajador.nombre }}</td>
+      <td>{{ trabajador.nif }}</td>
+      <td>{{ trabajador.numero_afiliacion_ss or "-" }}</td>
+    </tr>
+    <tr>
+      <th>F. ALTA</th>
+      <th>ANTIGÜEDAD</th>
+      <th>CATEGORÍA</th>
+      <th>PTO. TRABAJO</th>
+      <th>SECCIÓN</th>
+      <th>JORNADA</th>
+    </tr>
+    <tr>
+      <td class="chico">{{ fecha_alta }}</td>
+      <td class="chico">{{ fecha_antiguedad }}</td>
+      <td class="chico">{{ categoria_nombre }} (gr. {{ grupo_cotizacion }})</td>
+      <td class="chico">{{ contrato.puesto_trabajo or "-" }}</td>
+      <td class="chico">{{ contrato.seccion or "-" }}</td>
+      <td class="chico">{{ contrato.jornada_porcentaje }}%</td>
+    </tr>
+  </table>
+
+  <table class="periodo-row">
+    <colgroup><col style="width:55%"><col style="width:25%"><col style="width:20%"></colgroup>
+    <tr>
+      <th>PERIODO DEVENGADO</th>
+      <th>CONVENIO</th>
+      <th>DÍAS</th>
+    </tr>
+    <tr>
+      <td>{{ periodo_texto }}</td>
+      <td>{{ convenio_nombre }}</td>
+      <td>{{ nomina.dias_naturales_periodo }}</td>
+    </tr>
+  </table>
 
   <div class="seccion-titulo">I. Devengos</div>
   <table class="detalle">
-    <tr><th class="col-concepto">Concepto</th><th class="num col-base">Base</th><th class="num col-pct">%</th><th class="num col-importe">Importe (€)</th></tr>
+    <tr>
+      <th class="num col-cant">Cant.</th>
+      <th class="num col-precio">Precio</th>
+      <th class="col-concepto">Concepto</th>
+      <th class="num col-importe">Importe (€)</th>
+    </tr>
     {% for l in lineas_devengo %}
     <tr>
+      <td class="num col-cant">{{ "%.2f"|format(l.cantidad) if l.cantidad is not none else "" }}</td>
+      <td class="num col-precio">{{ "%.4f"|format(l.base) if l.cantidad is not none and l.base is not none else "" }}</td>
       <td class="col-concepto">{{ l.concepto }} <strong>({{ "1" if l.cotiza else "2" }})</strong>{% if l.referencia_legal %} <span class="ref">({{ l.referencia_legal }})</span>{% endif %}</td>
-      <td class="num col-base">{{ "%.2f"|format(l.base) if l.base is not none else "" }}</td>
-      <td class="num col-pct">{{ "%.2f"|format(l.tipo_pct) if l.tipo_pct is not none else "" }}</td>
       <td class="num col-importe">{{ "%.2f"|format(l.importe) }}</td>
     </tr>
     {% endfor %}

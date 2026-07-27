@@ -7,6 +7,7 @@ const initialForm = {
   razon_social: "",
   cif: "",
   direccion: "",
+  poblacion: "",
   cnae: "",
   codigo_cuenta_cotizacion: "",
   tipo_at_ep_pct: "1.50",
@@ -62,9 +63,15 @@ export default function EmpresasPage() {
         />
         <input
           placeholder="Dirección"
-          className="border rounded px-3 py-2 sm:col-span-2"
+          className="border rounded px-3 py-2"
           value={form.direccion}
           onChange={(e) => setForm({ ...form, direccion: e.target.value })}
+        />
+        <input
+          placeholder="Población"
+          className="border rounded px-3 py-2"
+          value={form.poblacion}
+          onChange={(e) => setForm({ ...form, poblacion: e.target.value })}
         />
         <input
           placeholder="CNAE"
@@ -108,6 +115,7 @@ export default function EmpresasPage() {
           <tr>
             <th className="text-left p-2">Razón social</th>
             <th className="text-left p-2">CIF</th>
+            <th className="text-left p-2">Población</th>
             <th className="text-left p-2">CNAE</th>
             <th className="text-left p-2">CCC</th>
             <th className="text-left p-2">AT/EP %</th>
@@ -118,6 +126,7 @@ export default function EmpresasPage() {
             <tr key={e.id} className="border-t">
               <td className="p-2">{e.razon_social}</td>
               <td className="p-2">{e.cif}</td>
+              <td className="p-2">{e.poblacion}</td>
               <td className="p-2">{e.cnae}</td>
               <td className="p-2">{e.codigo_cuenta_cotizacion}</td>
               <td className="p-2">{e.tipo_at_ep_pct}</td>

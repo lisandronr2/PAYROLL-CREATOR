@@ -9,6 +9,7 @@ class EmpresaBase(BaseModel):
     razon_social: str
     cif: str
     direccion: Optional[str] = None
+    poblacion: Optional[str] = None
     cnae: Optional[str] = None
     codigo_cuenta_cotizacion: Optional[str] = None
     # Tipo de cotización por contingencias profesionales (AT/EP), 100% a
@@ -26,6 +27,7 @@ class EmpresaUpdate(BaseModel):
     razon_social: Optional[str] = None
     cif: Optional[str] = None
     direccion: Optional[str] = None
+    poblacion: Optional[str] = None
     cnae: Optional[str] = None
     codigo_cuenta_cotizacion: Optional[str] = None
     tipo_at_ep_pct: Optional[Decimal] = None

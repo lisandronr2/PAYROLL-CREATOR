@@ -12,6 +12,7 @@ class Empresa(Base):
     razon_social = Column(String, nullable=False)
     cif = Column(String, nullable=False, unique=True)
     direccion = Column(String)
+    poblacion = Column(String)
     cnae = Column(String)
     codigo_cuenta_cotizacion = Column(String)  # CCC de la Seguridad Social
     # Tipo de cotización por contingencias profesionales (AT y EP), 100% a

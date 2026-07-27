@@ -13,7 +13,10 @@ class ContratoBase(BaseModel):
     jornada_porcentaje: Decimal = Decimal("100")
     fecha_inicio: date
     fecha_fin: Optional[date] = None
+    puesto_trabajo: Optional[str] = None
+    seccion: Optional[str] = None
     salario_pactado_mensual: Optional[Decimal] = None
+    complemento_mensual: Decimal = Decimal("0")
     pagas_extra_prorrateadas: bool = False
     fecha_antiguedad: Optional[date] = None
 

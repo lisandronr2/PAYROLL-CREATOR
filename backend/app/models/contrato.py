@@ -17,7 +17,13 @@ class Contrato(Base):
     fecha_inicio = Column(Date, nullable=False)
     fecha_fin = Column(Date, nullable=True)
 
+    puesto_trabajo = Column(String, nullable=True)  # p.ej. "Instalador" (distinto de la categoría de convenio)
+    seccion = Column(String, nullable=True)
+
     salario_pactado_mensual = Column(Numeric(10, 2), nullable=True)  # si difiere del convenio (mejora)
+    # Complemento fijo mensual adicional al salario de convenio (mejora
+    # voluntaria pactada), sujeto a cotización e IRPF igual que el salario.
+    complemento_mensual = Column(Numeric(10, 2), nullable=False, default=0)
     pagas_extra_prorrateadas = Column(Boolean, default=False)
     fecha_antiguedad = Column(Date, nullable=True)  # para trienios/quinquenios, si distinta de fecha_inicio
 

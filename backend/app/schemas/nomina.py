@@ -29,6 +29,7 @@ class NominaLineaOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     bloque: str
     concepto: str
+    cantidad: Optional[Decimal] = None
     base: Optional[Decimal] = None
     tipo_pct: Optional[Decimal] = None
     importe: Decimal

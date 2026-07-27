@@ -54,6 +54,7 @@ export interface Empresa {
   razon_social: string;
   cif: string;
   direccion?: string | null;
+  poblacion?: string | null;
   cnae?: string | null;
   codigo_cuenta_cotizacion?: string | null;
   tipo_at_ep_pct: string;
@@ -102,12 +103,17 @@ export interface Contrato {
   jornada_porcentaje: string;
   fecha_inicio: string;
   fecha_fin?: string | null;
+  puesto_trabajo?: string | null;
+  seccion?: string | null;
+  complemento_mensual: string;
   pagas_extra_prorrateadas: boolean;
+  fecha_antiguedad?: string | null;
 }
 
 export interface NominaLinea {
   bloque: string;
   concepto: string;
+  cantidad?: string | null;
   base?: string | null;
   tipo_pct?: string | null;
   importe: string;

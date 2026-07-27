@@ -232,6 +232,11 @@ export default function GenerarNominaPage() {
                   {lineas.map((l, i) => (
                     <tr key={i} className="border-t align-top">
                       <td className="p-1.5">
+                        {l.cantidad != null && bloque === "devengo" && (
+                          <span className="text-slate-400">
+                            {Number(l.cantidad).toFixed(2)} × {l.base ? Number(l.base).toFixed(4) : "-"} ·{" "}
+                          </span>
+                        )}
                         {l.concepto}
                         {bloque === "devengo" && (
                           <span className="font-semibold"> ({l.cotiza ? "1" : "2"})</span>

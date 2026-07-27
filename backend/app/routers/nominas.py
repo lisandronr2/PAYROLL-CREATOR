@@ -93,6 +93,7 @@ def generar_nomina(payload: GenerarNominaRequest, db: Session = Depends(get_db))
                 nomina_id=nomina.id,
                 bloque=linea.bloque,
                 concepto=linea.concepto,
+                cantidad=linea.cantidad,
                 base=linea.base,
                 tipo_pct=linea.tipo_pct,
                 importe=linea.importe,

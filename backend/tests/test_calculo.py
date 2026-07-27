@@ -76,6 +76,35 @@ def test_at_ep_cotiza_100_por_ciento_a_cargo_de_la_empresa():
     assert not any("AT y EP" in l.concepto for l in resultado.lineas if l.bloque == "cotizacion_trabajador")
 
 
+def test_mejora_voluntaria_cotiza_y_tributa_como_salario():
+    convenio_sin = convenio_metal_grupo5()
+    convenio_con = convenio_metal_grupo5(complemento_mensual=Decimal("192.31"))
+    eventos = EventosMes(periodo_anio=2026, periodo_mes=6, dias_naturales_periodo=30)
+
+    sin = calcular_nomina(convenio_sin, eventos, parametros_2026(), TRAMOS_IRPF_2026)
+    con = calcular_nomina(convenio_con, eventos, parametros_2026(), TRAMOS_IRPF_2026)
+
+    linea_mejora = next(l for l in con.lineas if l.concepto == "Mejora voluntaria")
+    assert linea_mejora.cotiza is True
+    assert linea_mejora.importe == Decimal("192.31")
+    assert linea_mejora.cantidad == Decimal("30")
+    assert con.total_devengado == sin.total_devengado + Decimal("192.31")
+    # A diferencia de las dietas, la mejora voluntaria SÍ debe subir la base de cotización
+    assert con.base_cotizacion_comun > sin.base_cotizacion_comun
+
+
+def test_salario_muestra_cantidad_y_precio_por_dia():
+    convenio = convenio_metal_grupo5()
+    eventos = EventosMes(periodo_anio=2026, periodo_mes=6, dias_naturales_periodo=30)
+    resultado = calcular_nomina(convenio, eventos, parametros_2026(), TRAMOS_IRPF_2026)
+
+    linea_salario = next(l for l in resultado.lineas if l.concepto == "Salario base convenio")
+    assert linea_salario.cantidad == Decimal("30")
+    assert linea_salario.base is not None
+    # cantidad * precio unitario debe reconstruir el importe (con margen de redondeo)
+    assert abs(linea_salario.cantidad * linea_salario.base - linea_salario.importe) < Decimal("0.01")
+
+
 def test_mes_completo_sin_incidencias():
     convenio = convenio_metal_grupo5()
     eventos = EventosMes(periodo_anio=2026, periodo_mes=6, dias_naturales_periodo=30)
