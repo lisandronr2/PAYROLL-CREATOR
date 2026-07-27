@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import ThemeSwitcher from "@/components/ThemeSwitcher";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -28,6 +29,9 @@ export default function LoginPage() {
 
   return (
     <div className="max-w-sm mx-auto mt-16">
+      <div className="flex justify-end mb-2">
+        <ThemeSwitcher />
+      </div>
       <h1 className="text-xl font-semibold mb-4 text-center">PAYROLL CREATOR</h1>
       <form onSubmit={onSubmit} className="bg-white border rounded-lg p-6 space-y-3">
         <input

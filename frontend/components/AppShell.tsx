@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import RequireAuth from "@/components/RequireAuth";
+import ThemeSwitcher from "@/components/ThemeSwitcher";
 import { FULL_VERSION } from "@/lib/version";
 
 const NAV_ITEMS = [
@@ -60,6 +61,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 {usuario.nombre} ({usuario.rol})
               </span>
             )}
+            <ThemeSwitcher />
             <button onClick={logout} className="hover:underline">
               Salir
             </button>

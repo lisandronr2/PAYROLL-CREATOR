@@ -12,15 +12,173 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+body {
+  font-family: Arial, Helvetica, sans-serif;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ============================================================
+   Temas: Claro, Oscuro, Moderno, Monocromo Amarillo, Blanco y Negro
+   Estrategia: en vez de reescribir cada clase de Tailwind en cada
+   página, se sobreescriben las clases de color ya usadas en toda la
+   app (bg-white, bg-slate-900, text-slate-500...) según el atributo
+   data-theme del <html>, apoyándose en variables --pc-*.
+   ============================================================ */
+
+html[data-theme="light"] {
+  --pc-bg: #f8fafc;
+  --pc-surface: #ffffff;
+  --pc-surface-alt: #f1f5f9;
+  --pc-accent: #0f172a;
+  --pc-accent-text: #ffffff;
+  --pc-text: #0f172a;
+  --pc-muted: #64748b;
+  --pc-border: #e2e8f0;
+  --pc-input-bg: #ffffff;
+  --pc-link: #2563eb;
+  --pc-error: #dc2626;
+  --pc-notice-bg: #fffbeb;
+  --pc-notice-border: #fde68a;
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  --pc-bg: #0f172a;
+  --pc-surface: #1e293b;
+  --pc-surface-alt: #334155;
+  --pc-accent: #000000;
+  --pc-accent-text: #f8fafc;
+  --pc-text: #e2e8f0;
+  --pc-muted: #94a3b8;
+  --pc-border: #334155;
+  --pc-input-bg: #1e293b;
+  --pc-link: #60a5fa;
+  --pc-error: #f87171;
+  --pc-notice-bg: #292524;
+  --pc-notice-border: #78350f;
+  color-scheme: dark;
+}
+
+html[data-theme="modern"] {
+  --pc-bg: #eef2ff;
+  --pc-surface: #ffffff;
+  --pc-surface-alt: #e0e7ff;
+  --pc-accent: #4f46e5;
+  --pc-accent-text: #ffffff;
+  --pc-text: #1e1b4b;
+  --pc-muted: #6366f1;
+  --pc-border: #c7d2fe;
+  --pc-input-bg: #ffffff;
+  --pc-link: #4f46e5;
+  --pc-error: #e11d48;
+  --pc-notice-bg: #eef2ff;
+  --pc-notice-border: #a5b4fc;
+  color-scheme: light;
+}
+
+html[data-theme="yellow"] {
+  --pc-bg: #000000;
+  --pc-surface: #111111;
+  --pc-surface-alt: #1c1c1c;
+  --pc-accent: #facc15;
+  --pc-accent-text: #000000;
+  --pc-text: #facc15;
+  --pc-muted: #a16207;
+  --pc-border: #854d0e;
+  --pc-input-bg: #111111;
+  --pc-link: #fde047;
+  --pc-error: #fb923c;
+  --pc-notice-bg: #1c1c1c;
+  --pc-notice-border: #854d0e;
+  color-scheme: dark;
+}
+
+html[data-theme="bw"] {
+  --pc-bg: #ffffff;
+  --pc-surface: #ffffff;
+  --pc-surface-alt: #e5e5e5;
+  --pc-accent: #000000;
+  --pc-accent-text: #ffffff;
+  --pc-text: #000000;
+  --pc-muted: #525252;
+  --pc-border: #000000;
+  --pc-input-bg: #ffffff;
+  --pc-link: #000000;
+  --pc-error: #000000;
+  --pc-notice-bg: #f5f5f5;
+  --pc-notice-border: #000000;
+  color-scheme: light;
+}
+
+html[data-theme] body {
+  background-color: var(--pc-bg);
+  color: var(--pc-text);
+}
+
+html[data-theme] .bg-slate-50 {
+  background-color: var(--pc-bg) !important;
+}
+
+html[data-theme] .bg-white {
+  background-color: var(--pc-surface) !important;
+}
+
+html[data-theme] .bg-slate-100 {
+  background-color: var(--pc-surface-alt) !important;
+}
+
+html[data-theme] .bg-slate-900 {
+  background-color: var(--pc-accent) !important;
+}
+
+html[data-theme] .text-white {
+  color: var(--pc-accent-text) !important;
+}
+
+html[data-theme] .text-slate-900 {
+  color: var(--pc-text) !important;
+}
+
+html[data-theme] .text-slate-500,
+html[data-theme] .text-slate-600,
+html[data-theme] .text-slate-400,
+html[data-theme] .text-slate-300 {
+  color: var(--pc-muted) !important;
+}
+
+html[data-theme] .border,
+html[data-theme] .border-t,
+html[data-theme] .border-b {
+  border-color: var(--pc-border) !important;
+}
+
+html[data-theme] .text-blue-600 {
+  color: var(--pc-link) !important;
+}
+
+html[data-theme] .text-red-600 {
+  color: var(--pc-error) !important;
+}
+
+html[data-theme] .bg-amber-50 {
+  background-color: var(--pc-notice-bg) !important;
+}
+
+html[data-theme] .border-amber-200 {
+  border-color: var(--pc-notice-border) !important;
+}
+
+html[data-theme] input,
+html[data-theme] select,
+html[data-theme] textarea {
+  background-color: var(--pc-input-bg) !important;
+  color: var(--pc-text) !important;
+  border-color: var(--pc-border) !important;
+}
+
+html[data-theme] .hover\:bg-slate-100:hover {
+  background-color: var(--pc-surface-alt) !important;
+}
+
+html[data-theme] .hover\:underline:hover {
+  color: inherit;
 }
