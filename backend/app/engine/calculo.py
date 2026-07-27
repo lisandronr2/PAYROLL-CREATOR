@@ -11,9 +11,13 @@ producción real:
     tienen una cotización adicional específica distinta a la general).
   - IT: se muestra el importe total teórico (60%/75% de la base reguladora
     diaria) sin gestionar el circuito de pago delegado/reembolso INSS-mutua.
-  - IRPF: se usa el procedimiento general simplificado (tabla de tramos +
-    reducción fija por hijos/discapacidad), no el cálculo íntegro del
-    Reglamento IRPF (arts. 80-88) con todas las circunstancias personales.
+  - IRPF: se usa el procedimiento general simplificado (tabla de tramos,
+    reducción por rendimientos del trabajo del Art. 20 LIRPF y mínimo
+    personal/familiar de los Arts. 57-61 LIRPF), pero sin gastos deducibles
+    distintos del genérico de 2.000€, sin ascendientes, sin descendientes
+    menores de 3 años, sin pensiones compensatorias ni situaciones de
+    varios pagadores — no es el cálculo íntegro del Reglamento IRPF
+    (arts. 80-88) con todas las circunstancias personales.
   - Embargos: se aplica el límite de inembargabilidad del SMI de forma
     simplificada, no la escala completa del art. 607 LEC.
 
@@ -443,47 +447,108 @@ def calcular_cotizacion(
     return lineas, base_ajustada, cuota_trabajador_total, cuota_empresa_total
 
 
+GASTO_DEDUCIBLE_GENERICO_ANUAL = Decimal("2000")  # Art. 19.2.f) LIRPF
+MINIMO_CONTRIBUYENTE_ANUAL = Decimal("5550")  # Art. 57 LIRPF
+MINIMO_CONTRIBUYENTE_65_ANUAL = Decimal("1150")  # Art. 57 LIRPF, adicional desde 65 años
+MINIMO_CONTRIBUYENTE_75_ANUAL = Decimal("1400")  # Art. 57 LIRPF, adicional desde 75 años (se suma al de 65)
+MINIMOS_DESCENDIENTES_ANUALES = [Decimal("2400"), Decimal("2700"), Decimal("4000"), Decimal("4500")]  # Art. 58 LIRPF: 1º, 2º, 3º, 4º y siguientes
+MINIMO_DISCAPACIDAD_33_ANUAL = Decimal("3000")  # Art. 60 LIRPF
+MINIMO_DISCAPACIDAD_65_ANUAL = Decimal("9000")  # Art. 60 LIRPF
+
+
+def _reduccion_rendimientos_trabajo(rendimiento_neto_anual: Decimal) -> Decimal:
+    """
+    Art. 20 LIRPF (redacción vigente desde 2023): reducción adicional para
+    rentas bajas del trabajo. Solo aplica si el rendimiento neto del trabajo
+    no supera 14.047,50 €/año (se asume que no hay otras rentas relevantes,
+    dato que este MVP no recoge).
+    """
+    if rendimiento_neto_anual <= Decimal("13115"):
+        return Decimal("6498")
+    if rendimiento_neto_anual < Decimal("14047.5"):
+        reduccion = Decimal("6498") - Decimal("1.14") * (rendimiento_neto_anual - Decimal("13115"))
+        return max(Decimal("0"), reduccion)
+    return Decimal("0")
+
+
+def _minimo_personal_familiar_anual(
+    edad: int | None, hijos_menores_25: int, grado_discapacidad: int
+) -> Decimal:
+    """Arts. 57-61 LIRPF, simplificado (no recoge ascendientes ni descendientes <3 años)."""
+    minimo = MINIMO_CONTRIBUYENTE_ANUAL
+    if edad is not None and edad >= 75:
+        minimo += MINIMO_CONTRIBUYENTE_65_ANUAL + MINIMO_CONTRIBUYENTE_75_ANUAL
+    elif edad is not None and edad >= 65:
+        minimo += MINIMO_CONTRIBUYENTE_65_ANUAL
+
+    for posicion in range(1, hijos_menores_25 + 1):
+        indice = min(posicion, len(MINIMOS_DESCENDIENTES_ANUALES)) - 1
+        minimo += MINIMOS_DESCENDIENTES_ANUALES[indice]
+
+    if grado_discapacidad >= 65:
+        minimo += MINIMO_DISCAPACIDAD_65_ANUAL
+    elif grado_discapacidad >= 33:
+        minimo += MINIMO_DISCAPACIDAD_33_ANUAL
+
+    return minimo
+
+
 def calcular_irpf(
-    base_mensual_irpf: Decimal,
+    base_mensual_bruto: Decimal,
+    cuota_ss_trabajador_mensual: Decimal,
     numero_pagas: int,
     hijos_menores_25: int,
     grado_discapacidad: int,
     tramos: list[tuple[Decimal, Decimal | None, Decimal]],
+    edad: int | None = None,
 ) -> tuple[list[LineaCalculo], Decimal]:
     """
-    Procedimiento general simplificado (art. 82-87 Reglamento IRPF):
-    1) Se estima la base anual a partir de la mensual.
-    2) Se reduce por mínimo familiar simplificado (hijos/discapacidad).
-    3) Se calcula la cuota íntegra aplicando la tarifa por tramos.
-    4) El tipo de retención = cuota íntegra / base anual, aplicado a la base mensual.
+    Procedimiento general simplificado (arts. 80-87 Reglamento IRPF):
+    1) Se estima la retribución anual bruta a partir de la mensual.
+    2) Se calcula el rendimiento neto del trabajo (bruto - cuotas SS - gasto
+       deducible genérico de 2.000 €, Art. 19.2.f LIRPF).
+    3) Se aplica, si corresponde, la reducción por rendimientos del trabajo
+       de rentas bajas (Art. 20 LIRPF) y el mínimo personal y familiar
+       (Arts. 57-61 LIRPF) para obtener la base liquidable.
+    4) Se calcula la cuota íntegra aplicando la tarifa por tramos sobre esa
+       base liquidable.
+    5) El tipo de retención = cuota íntegra / retribución anual bruta,
+       aplicado a la retribución bruta mensual (no se descuentan las cuotas
+       SS de la base sobre la que se aplica el tipo, solo de la que sirve
+       para calcularlo — igual que en el procedimiento oficial).
     `tramos`: lista de (base_desde_anual, base_hasta_anual|None, tipo_pct) ordenada ascendente.
     """
-    if base_mensual_irpf <= 0 or not tramos:
+    if base_mensual_bruto <= 0 or not tramos:
         return [], Decimal("0")
 
-    base_anual_estimada = base_mensual_irpf * numero_pagas
+    base_anual_bruta = base_mensual_bruto * numero_pagas
+    cuotas_ss_anuales = cuota_ss_trabajador_mensual * numero_pagas
 
-    reduccion_hijos = Decimal(hijos_menores_25) * Decimal("2400")  # simplificado, orientativo
-    reduccion_discapacidad = Decimal("3000") if grado_discapacidad >= 33 else Decimal("0")
-    base_anual_ajustada = max(Decimal("0"), base_anual_estimada - reduccion_hijos - reduccion_discapacidad)
+    rendimiento_neto_anual = max(
+        Decimal("0"), base_anual_bruta - cuotas_ss_anuales - GASTO_DEDUCIBLE_GENERICO_ANUAL
+    )
+    reduccion_trabajo = _reduccion_rendimientos_trabajo(rendimiento_neto_anual)
+    minimo_personal_familiar = _minimo_personal_familiar_anual(edad, hijos_menores_25, grado_discapacidad)
+
+    base_liquidable = max(Decimal("0"), rendimiento_neto_anual - reduccion_trabajo - minimo_personal_familiar)
 
     cuota_integra = Decimal("0")
     for desde, hasta, tipo_pct in tramos:
-        techo_tramo = hasta if hasta is not None else base_anual_ajustada
-        if base_anual_ajustada <= desde:
+        techo_tramo = hasta if hasta is not None else base_liquidable
+        if base_liquidable <= desde:
             break
-        base_en_tramo = min(base_anual_ajustada, techo_tramo) - desde
+        base_en_tramo = min(base_liquidable, techo_tramo) - desde
         if base_en_tramo > 0:
             cuota_integra += base_en_tramo * tipo_pct / Decimal(100)
 
-    tipo_medio = (cuota_integra / base_anual_estimada) if base_anual_estimada > 0 else Decimal("0")
+    tipo_medio = (cuota_integra / base_anual_bruta) if base_anual_bruta > 0 else Decimal("0")
     tipo_medio = tipo_medio.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
-    retencion_mensual = _q(base_mensual_irpf * tipo_medio)
+    retencion_mensual = _q(base_mensual_bruto * tipo_medio)
 
     linea = LineaCalculo(
         bloque="deduccion",
         concepto="Retención IRPF",
-        base=base_mensual_irpf,
+        base=base_mensual_bruto,
         tipo_pct=(tipo_medio * 100).quantize(Decimal("0.01")),
         importe=retencion_mensual,
         referencia_legal="Arts. 80-87 Reglamento IRPF (RD 439/2007); procedimiento general simplificado",
@@ -534,6 +599,7 @@ def calcular_nomina(
     tramos_irpf: list[tuple[Decimal, Decimal | None, Decimal]],
     hijos_menores_25: int = 0,
     grado_discapacidad: int = 0,
+    edad: int | None = None,
 ) -> ResultadoNomina:
     resultado = ResultadoNomina()
 
@@ -567,10 +633,14 @@ def calcular_nomina(
 
     # Las dietas no forman parte de la base de IRPF (compensan gastos, no son
     # retribución) — se descuentan del devengado antes de calcular la retención.
-    base_irpf = max(Decimal("0"), resultado.total_devengado - importe_dietas - cuota_trabajador)
+    # Las cuotas SS del trabajador NO se descuentan aquí: en el procedimiento
+    # oficial (Art. 84 Reglamento IRPF) el tipo de retención se aplica sobre
+    # la retribución íntegra; las cuotas SS solo reducen la base que sirve
+    # para CALCULAR ese tipo (ver calcular_irpf).
+    base_irpf = max(Decimal("0"), resultado.total_devengado - importe_dietas)
     resultado.base_sujeta_irpf = _q(base_irpf)
     lineas_irpf, importe_irpf = calcular_irpf(
-        base_irpf, convenio.numero_pagas, hijos_menores_25, grado_discapacidad, tramos_irpf
+        base_irpf, cuota_trabajador, convenio.numero_pagas, hijos_menores_25, grado_discapacidad, tramos_irpf, edad
     )
     resultado.lineas.extend(lineas_irpf)
 

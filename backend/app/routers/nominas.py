@@ -57,6 +57,11 @@ def generar_nomina(payload: GenerarNominaRequest, db: Session = Depends(get_db))
     )
 
     trabajador = contrato.trabajador
+    edad = None
+    if trabajador.fecha_nacimiento:
+        edad = en_fecha.year - trabajador.fecha_nacimiento.year - (
+            (en_fecha.month, en_fecha.day) < (trabajador.fecha_nacimiento.month, trabajador.fecha_nacimiento.day)
+        )
     resultado = calcular_nomina(
         datos_convenio,
         eventos,
@@ -64,6 +69,7 @@ def generar_nomina(payload: GenerarNominaRequest, db: Session = Depends(get_db))
         tramos_irpf,
         hijos_menores_25=trabajador.hijos_menores_25,
         grado_discapacidad=trabajador.grado_discapacidad,
+        edad=edad,
     )
 
     nomina = Nomina(

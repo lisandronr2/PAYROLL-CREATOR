@@ -197,6 +197,36 @@ def test_irpf_creciente_con_salario():
     assert tipo_alto > tipo_bajo  # progresividad
 
 
+def test_reduccion_rendimientos_trabajo_baja_el_irpf_en_rentas_bajas():
+    """Art. 20 LIRPF: con renta anual neta por debajo de ~14.047,50€, la
+    reducción debe bajar sensiblemente el tipo de retención frente a no
+    aplicar ninguna reducción por rentas bajas."""
+    convenio = convenio_metal_grupo5(salario_convenio_mensual=Decimal("1000"))
+    eventos = EventosMes(periodo_anio=2026, periodo_mes=6, dias_naturales_periodo=30)
+    resultado = calcular_nomina(convenio, eventos, parametros_2026(), TRAMOS_IRPF_2026)
+
+    linea_irpf = next(l for l in resultado.lineas if l.concepto == "Retención IRPF")
+    # Con un salario tan bajo, tras la reducción de rentas bajas y el mínimo
+    # personal, la base liquidable debería quedar en 0 y no retener nada.
+    assert linea_irpf.importe == Decimal("0.00")
+
+
+def test_minimo_personal_familiar_reduce_irpf_con_hijos():
+    convenio = convenio_metal_grupo5(salario_convenio_mensual=Decimal("2500"))
+    eventos = EventosMes(periodo_anio=2026, periodo_mes=6, dias_naturales_periodo=30)
+
+    resultado_sin_hijos = calcular_nomina(
+        convenio, eventos, parametros_2026(), TRAMOS_IRPF_2026, hijos_menores_25=0
+    )
+    resultado_con_hijos = calcular_nomina(
+        convenio, eventos, parametros_2026(), TRAMOS_IRPF_2026, hijos_menores_25=2
+    )
+
+    irpf_sin_hijos = next(l.importe for l in resultado_sin_hijos.lineas if l.concepto == "Retención IRPF")
+    irpf_con_hijos = next(l.importe for l in resultado_con_hijos.lineas if l.concepto == "Retención IRPF")
+    assert irpf_con_hijos < irpf_sin_hijos
+
+
 def test_dietas_suman_al_liquido_pero_no_cotizan_ni_tributan():
     convenio = convenio_metal_grupo5()
     sin_dietas = calcular_nomina(
