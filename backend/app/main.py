@@ -5,7 +5,7 @@ from app.config import settings
 from app.database import Base, SessionLocal, engine
 from app import models  # noqa: F401
 from app.routers import empresas, trabajadores, contratos, convenios, nominas, auth, admin
-from app.seed.parametros_legales import seed_parametros_legales
+from app.seed.parametros_legales import seed_parametros_legales, corregir_parametros_legales
 from app.seed.tabla_irpf import seed_tabla_irpf
 from app.seed.convenios import seed_convenios, seed_convenio_dietas
 from app.seed.usuarios import seed_usuario_admin
@@ -30,6 +30,7 @@ def on_startup() -> None:
     db = SessionLocal()
     try:
         seed_parametros_legales(db)
+        corregir_parametros_legales(db)
         seed_tabla_irpf(db)
         seed_convenios(db)
         seed_convenio_dietas(db)

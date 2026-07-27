@@ -29,8 +29,8 @@ PARAMETROS_GENERALES = [
     ("tipo_fp_empresa", Decimal("0.60"), None, "Orden de cotización a la SS (formación profesional, empresa)"),
     ("tipo_fp_trabajador", Decimal("0.10"), None, "Orden de cotización a la SS (formación profesional, trabajador)"),
     ("tipo_fogasa_empresa", Decimal("0.20"), None, "Art. 33 Estatuto de los Trabajadores (FOGASA)"),
-    ("tipo_mei_empresa", Decimal("0.58"), None, "DA 21ª LGSS (Ley 21/2021, Mecanismo de Equidad Intergeneracional)"),
-    ("tipo_mei_trabajador", Decimal("0.12"), None, "DA 21ª LGSS (Ley 21/2021, Mecanismo de Equidad Intergeneracional)"),
+    ("tipo_mei_empresa", Decimal("0.75"), None, "DA 21ª LGSS (Ley 21/2021); Orden PJC/297/2026 — MEI 2026: 0.90% total"),
+    ("tipo_mei_trabajador", Decimal("0.15"), None, "DA 21ª LGSS (Ley 21/2021); Orden PJC/297/2026 — MEI 2026: 0.90% total"),
     ("recargo_hora_extra_pct", Decimal("75"), None, "Art. 35 ET (recargo mínimo 75%, o el pactado en convenio)"),
     ("recargo_hora_extra_nocturna_pct", Decimal("100"), None, "Convenio colectivo aplicable (orientativo)"),
     ("plus_nocturnidad_pct", Decimal("25"), None, "Art. 36 ET (recargo mínimo 25%, o el pactado en convenio)"),
@@ -78,4 +78,27 @@ def seed_parametros_legales(db: Session) -> None:
             )
         )
 
+    db.commit()
+
+
+# Correcciones a valores ya sembrados en despliegues anteriores (no basta con
+# cambiar PARAMETROS_GENERALES arriba porque seed_parametros_legales() no
+# vuelve a ejecutarse si ya hay filas). Idempotente: solo toca la fila si su
+# valor actual coincide con el valor incorrecto conocido.
+CORRECCIONES = [
+    ("tipo_mei_empresa", Decimal("0.58"), Decimal("0.75")),
+    ("tipo_mei_trabajador", Decimal("0.12"), Decimal("0.15")),
+]
+
+
+def corregir_parametros_legales(db: Session) -> None:
+    for clave, valor_incorrecto, valor_correcto in CORRECCIONES:
+        parametro = (
+            db.query(ParametroLegal)
+            .filter(ParametroLegal.clave == clave, ParametroLegal.vigente_hasta.is_(None))
+            .order_by(ParametroLegal.vigente_desde.desc())
+            .first()
+        )
+        if parametro is not None and Decimal(parametro.valor) == valor_incorrecto:
+            parametro.valor = valor_correcto
     db.commit()

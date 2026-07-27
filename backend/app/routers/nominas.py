@@ -31,7 +31,9 @@ def generar_nomina(payload: GenerarNominaRequest, db: Session = Depends(get_db))
 
     try:
         datos_convenio = obtener_datos_convenio_contrato(db, contrato, en_fecha)
-        parametros = obtener_parametros_cotizacion(db, en_fecha, datos_convenio.grupo_cotizacion)
+        parametros = obtener_parametros_cotizacion(
+            db, en_fecha, datos_convenio.grupo_cotizacion, contrato.tipo_contrato
+        )
         tramos_irpf = obtener_tramos_irpf(db, payload.periodo_anio)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))

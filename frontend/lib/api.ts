@@ -56,6 +56,7 @@ export interface Empresa {
   direccion?: string | null;
   cnae?: string | null;
   codigo_cuenta_cotizacion?: string | null;
+  tipo_at_ep_pct: string;
   convenio_id?: number | null;
 }
 

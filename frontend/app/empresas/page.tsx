@@ -3,7 +3,14 @@
 import { useEffect, useState } from "react";
 import { api, Empresa } from "@/lib/api";
 
-const initialForm = { razon_social: "", cif: "", direccion: "", cnae: "", codigo_cuenta_cotizacion: "" };
+const initialForm = {
+  razon_social: "",
+  cif: "",
+  direccion: "",
+  cnae: "",
+  codigo_cuenta_cotizacion: "",
+  tipo_at_ep_pct: "1.50",
+};
 
 export default function EmpresasPage() {
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
@@ -24,7 +31,7 @@ export default function EmpresasPage() {
     setError(null);
     setCargando(true);
     try {
-      await api.empresas.crear(form);
+      await api.empresas.crear({ ...form, tipo_at_ep_pct: form.tipo_at_ep_pct as unknown as string });
       setForm(initialForm);
       await cargar();
     } catch (err) {
@@ -71,6 +78,16 @@ export default function EmpresasPage() {
           value={form.codigo_cuenta_cotizacion}
           onChange={(e) => setForm({ ...form, codigo_cuenta_cotizacion: e.target.value })}
         />
+        <label className="text-xs text-slate-500 flex flex-col gap-1">
+          Tipo AT/EP (contingencias profesionales, % a cargo de la empresa)
+          <input
+            type="number"
+            step="0.001"
+            className="border rounded px-3 py-2"
+            value={form.tipo_at_ep_pct}
+            onChange={(e) => setForm({ ...form, tipo_at_ep_pct: e.target.value })}
+          />
+        </label>
         <button
           disabled={cargando}
           className="sm:col-span-2 bg-slate-900 text-white rounded py-2 disabled:opacity-50"
@@ -78,6 +95,11 @@ export default function EmpresasPage() {
           {cargando ? "Guardando..." : "Crear empresa"}
         </button>
       </form>
+
+      <p className="text-xs text-slate-500 mb-4">
+        El tipo AT/EP depende del CNAE/epígrafe de la empresa (tarifa de primas, DA 61ª LGSS) — verifica
+        el valor exacto aplicable antes de usarlo en una nómina real.
+      </p>
 
       {error && <p className="text-red-600 mb-4 text-sm">{error}</p>}
 
@@ -88,6 +110,7 @@ export default function EmpresasPage() {
             <th className="text-left p-2">CIF</th>
             <th className="text-left p-2">CNAE</th>
             <th className="text-left p-2">CCC</th>
+            <th className="text-left p-2">AT/EP %</th>
           </tr>
         </thead>
         <tbody>
@@ -97,6 +120,7 @@ export default function EmpresasPage() {
               <td className="p-2">{e.cif}</td>
               <td className="p-2">{e.cnae}</td>
               <td className="p-2">{e.codigo_cuenta_cotizacion}</td>
+              <td className="p-2">{e.tipo_at_ep_pct}</td>
             </tr>
           ))}
         </tbody>

@@ -44,6 +44,9 @@ class DatosConvenioContrato:
     media_dieta: Decimal = Decimal("0")
     dieta_completa_corta: Decimal = Decimal("0")  # viaje < 7 días
     dieta_completa_larga: Decimal = Decimal("0")  # viaje >= 7 días
+    # Tipo de cotización por contingencias profesionales (AT/EP) de la
+    # empresa del contrato, 100% a cargo de la empresa (depende del CNAE).
+    tipo_at_ep_pct: Decimal = Decimal("1.50")
 
 
 @dataclass

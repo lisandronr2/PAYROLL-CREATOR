@@ -28,8 +28,8 @@ def parametros_2026(grupo=5):
         tipo_fp_empresa_pct=Decimal("0.60"),
         tipo_fp_trabajador_pct=Decimal("0.10"),
         tipo_fogasa_empresa_pct=Decimal("0.20"),
-        tipo_mei_empresa_pct=Decimal("0.58"),
-        tipo_mei_trabajador_pct=Decimal("0.12"),
+        tipo_mei_empresa_pct=Decimal("0.75"),
+        tipo_mei_trabajador_pct=Decimal("0.15"),
         tope_min_grupo_mensual=topes_min_por_grupo[grupo],
         tope_max_mensual=Decimal("4909.50"),
         smi_mensual=Decimal("1184.00"),
@@ -57,9 +57,23 @@ def convenio_metal_grupo5(**overrides):
         media_dieta=Decimal("12.14"),
         dieta_completa_corta=Decimal("59.17"),
         dieta_completa_larga=Decimal("47.36"),
+        tipo_at_ep_pct=Decimal("2.00"),
     )
     base.update(overrides)
     return DatosConvenioContrato(**base)
+
+
+def test_at_ep_cotiza_100_por_ciento_a_cargo_de_la_empresa():
+    convenio = convenio_metal_grupo5(tipo_at_ep_pct=Decimal("2.00"))
+    eventos = EventosMes(periodo_anio=2026, periodo_mes=6, dias_naturales_periodo=30)
+    resultado = calcular_nomina(convenio, eventos, parametros_2026(), TRAMOS_IRPF_2026)
+
+    linea_at_ep = next(l for l in resultado.lineas if "AT y EP" in l.concepto)
+    assert linea_at_ep.bloque == "cotizacion_empresa"
+    assert linea_at_ep.tipo_pct == Decimal("2.00")
+    assert linea_at_ep.importe == (resultado.base_cotizacion_comun * Decimal("2.00") / 100).quantize(Decimal("0.01"))
+    # No debe existir una línea equivalente a cargo del trabajador
+    assert not any("AT y EP" in l.concepto for l in resultado.lineas if l.bloque == "cotizacion_trabajador")
 
 
 def test_mes_completo_sin_incidencias():

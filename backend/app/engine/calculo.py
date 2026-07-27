@@ -330,7 +330,7 @@ def calcular_dietas(
 
 
 def calcular_cotizacion(
-    parametros: ParametrosCotizacion, base_bruta_cotizable: Decimal
+    parametros: ParametrosCotizacion, base_bruta_cotizable: Decimal, tipo_at_ep_pct: Decimal = Decimal("0")
 ) -> tuple[list[LineaCalculo], Decimal, Decimal, Decimal]:
     """Aplica topes de grupo y calcula cuotas trabajador/empresa.
 
@@ -357,6 +357,11 @@ def calcular_cotizacion(
         ("Formación profesional (empresa)", parametros.tipo_fp_empresa_pct, "Orden anual de cotización"),
         ("FOGASA (empresa)", parametros.tipo_fogasa_empresa_pct, "Art. 33 Estatuto de los Trabajadores"),
         ("MEI - Mecanismo de Equidad Intergeneracional (empresa)", parametros.tipo_mei_empresa_pct, "DA 21ª LGSS (Ley 21/2021)"),
+        (
+            "Contingencias profesionales - AT y EP (empresa)",
+            tipo_at_ep_pct,
+            "DA 61ª LGSS; tarifa de primas (RD-ley 16/2025) según CNAE/epígrafe de la empresa — verificar el tipo aplicable",
+        ),
     ]
 
     cuota_trabajador_total = Decimal("0")
@@ -509,7 +514,7 @@ def calcular_nomina(
 
     base_cotizable = suma_devengos_base + importe_horas + importe_prorrata_cotizable
     lineas_cotizacion, base_ajustada, cuota_trabajador, cuota_empresa = calcular_cotizacion(
-        parametros, base_cotizable
+        parametros, base_cotizable, convenio.tipo_at_ep_pct
     )
     resultado.lineas.extend(lineas_cotizacion)
     resultado.base_cotizacion_comun = base_ajustada

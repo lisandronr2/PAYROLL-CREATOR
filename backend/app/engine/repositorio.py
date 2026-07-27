@@ -27,8 +27,14 @@ def _valor_parametro(db: Session, clave: str, en_fecha: date, grupo_cotizacion: 
     return Decimal(parametro.valor)
 
 
-def obtener_parametros_cotizacion(db: Session, en_fecha: date, grupo_cotizacion: int) -> ParametrosCotizacion:
-    tipo_contrato_desempleo = "indefinido"  # el tipo de desempleo depende del tipo de contrato; ver nota abajo
+def obtener_parametros_cotizacion(
+    db: Session, en_fecha: date, grupo_cotizacion: int, tipo_contrato: str = "indefinido"
+) -> ParametrosCotizacion:
+    # El tipo de cotización por desempleo depende de si el contrato es
+    # indefinido o temporal (art. 227 y ss. LGSS); cualquier otro valor de
+    # tipo_contrato (formación, prácticas...) se trata como "indefinido" por
+    # simplicidad — verificar el tipo aplicable en casos especiales.
+    tipo_contrato_desempleo = "temporal" if tipo_contrato == "temporal" else "indefinido"
     return ParametrosCotizacion(
         tipo_cc_empresa_pct=_valor_parametro(db, "tipo_cc_empresa", en_fecha),
         tipo_cc_trabajador_pct=_valor_parametro(db, "tipo_cc_trabajador", en_fecha),
@@ -121,4 +127,5 @@ def obtener_datos_convenio_contrato(db: Session, contrato: Contrato, en_fecha: d
         media_dieta=Decimal(dieta.media_dieta) if dieta else Decimal("0"),
         dieta_completa_corta=Decimal(dieta.dieta_completa_corta) if dieta else Decimal("0"),
         dieta_completa_larga=Decimal(dieta.dieta_completa_larga) if dieta else Decimal("0"),
+        tipo_at_ep_pct=Decimal(contrato.trabajador.empresa.tipo_at_ep_pct),
     )
