@@ -110,6 +110,26 @@ html[data-theme="bw"] {
   color-scheme: light;
 }
 
+/* Personalizado: valores por defecto (tonos claros); el usuario los
+   sustituye en tiempo real vía variables en línea sobre <html> desde
+   ThemeContext, que tienen prioridad sobre estos. */
+html[data-theme="custom"] {
+  --pc-bg: #f8fafc;
+  --pc-surface: #f8fafc;
+  --pc-surface-alt: #e0f2fe;
+  --pc-accent: #e0f2fe;
+  --pc-accent-text: #475569;
+  --pc-text: #475569;
+  --pc-muted: #475569;
+  --pc-border: #e5e7eb;
+  --pc-input-bg: #ffffff;
+  --pc-link: #475569;
+  --pc-error: #dc2626;
+  --pc-notice-bg: #e0f2fe;
+  --pc-notice-border: #e5e7eb;
+  color-scheme: light;
+}
+
 html[data-theme] body {
   background-color: var(--pc-bg);
   color: var(--pc-text);

@@ -14,6 +14,14 @@ const THEME_INIT_SCRIPT = `
   try {
     var t = window.localStorage.getItem("payroll_theme") || "light";
     document.documentElement.setAttribute("data-theme", t);
+    if (t === "custom") {
+      var raw = window.localStorage.getItem("payroll_custom_colors");
+      var c = raw ? JSON.parse(raw) : {};
+      var s = document.documentElement.style;
+      if (c.base) { s.setProperty("--pc-bg", c.base); s.setProperty("--pc-surface", c.base); }
+      if (c.tituloBg) { s.setProperty("--pc-surface-alt", c.tituloBg); s.setProperty("--pc-accent", c.tituloBg); s.setProperty("--pc-notice-bg", c.tituloBg); }
+      if (c.texto) { s.setProperty("--pc-accent-text", c.texto); s.setProperty("--pc-text", c.texto); s.setProperty("--pc-muted", c.texto); s.setProperty("--pc-link", c.texto); }
+    }
   } catch (e) {
     document.documentElement.setAttribute("data-theme", "light");
   }

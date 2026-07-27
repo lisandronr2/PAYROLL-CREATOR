@@ -2,5 +2,5 @@
 // actualización que se despliegue a producción. Mantener sincronizado con
 // backend/app/version.py y el archivo VERSION en la raíz del proyecto.
 export const VERSION = "1.0.0";
-export const BUILD = "2732";
+export const BUILD = "2733";
 export const FULL_VERSION = `${VERSION}+${BUILD}`;

@@ -10,9 +10,11 @@ import { FULL_VERSION } from "@/lib/version";
 /**
  * Layout para las pantallas "de ejecución" (cualquier opción elegida en el
  * menú). Aquí el menú desaparece: solo queda una barra superior mínima
- * (marca, tema, salir) y, al final del contenido, el botón "Volver" que
- * retrocede en el historial página por página hasta llegar al inicio,
- * donde vuelve a verse el menú.
+ * (marca, tema, salir) y, al final del contenido, el botón "Volver".
+ *
+ * "Volver" navega siempre directamente a "/" (donde vive el menú) en vez de
+ * usar el historial del navegador: así es determinista y siempre lleva a la
+ * opción anterior del menú, sin depender de por dónde se haya entrado.
  */
 export default function FocusLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -43,7 +45,7 @@ export default function FocusLayout({ children }: { children: React.ReactNode })
 
       <div className="max-w-5xl w-full mx-auto px-4 pb-6">
         <button
-          onClick={() => router.back()}
+          onClick={() => router.push("/")}
           className="flex items-center gap-2 border rounded-lg px-4 py-2 text-sm font-medium bg-white hover:bg-slate-100"
         >
           <ArrowLeft size={16} />

@@ -74,7 +74,6 @@ const ADMIN_GROUP: NavGroup = {
   ],
 };
 
-const STORAGE_COLLAPSED = "payroll_sidebar_collapsed";
 const STORAGE_GROUPS = "payroll_sidebar_groups_open";
 const SWIPE_EDGE_PX = 24;
 const SWIPE_THRESHOLD_PX = 50;
@@ -83,7 +82,10 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { usuario, logout } = useAuth();
 
-  const [collapsed, setCollapsed] = useState(false);
+  // El menú siempre arranca contraído: cada vez que se cierra (se navega a
+  // una opción) y se vuelve a abrir (se regresa al inicio), este componente
+  // se remonta y este useState vuelve a su valor inicial "true".
+  const [collapsed, setCollapsed] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     gestion: true,
@@ -95,8 +97,6 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
   const touchStartY = useRef<number | null>(null);
 
   useEffect(() => {
-    const savedCollapsed = window.localStorage.getItem(STORAGE_COLLAPSED);
-    if (savedCollapsed) setCollapsed(savedCollapsed === "1");
     const savedGroups = window.localStorage.getItem(STORAGE_GROUPS);
     if (savedGroups) {
       try {
@@ -124,10 +124,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
   }, [mobileOpen]);
 
   function toggleCollapsed() {
-    setCollapsed((prev) => {
-      window.localStorage.setItem(STORAGE_COLLAPSED, prev ? "0" : "1");
-      return !prev;
-    });
+    setCollapsed((prev) => !prev);
   }
 
   function toggleGroup(id: string) {
@@ -163,7 +160,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
 
-  function renderGroup(group: NavGroup) {
+  function renderGroup(group: NavGroup, effectiveCollapsed: boolean) {
     const abierto = openGroups[group.id] ?? true;
     const activo = group.items.some((i) => isActive(i.href));
     return (
@@ -176,7 +173,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
           title={group.label}
         >
           <group.icon size={18} className="shrink-0" />
-          {!collapsed && (
+          {!effectiveCollapsed && (
             <>
               <span className="flex-1 text-left">{group.label}</span>
               <ChevronDown
@@ -186,7 +183,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
             </>
           )}
         </button>
-        {!collapsed && (
+        {!effectiveCollapsed && (
           <div
             className="overflow-hidden transition-all duration-200 ease-in-out"
             style={{ maxHeight: abierto ? group.items.length * 44 + 8 : 0 }}
@@ -218,54 +215,58 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
 
   const grupos = usuario?.rol === "admin" ? [...GROUPS, ADMIN_GROUP] : GROUPS;
 
-  const sidebarInner = (
-    <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-3 py-4 border-b">
-        {!collapsed && (
-          <Link href="/" className="font-semibold text-base leading-tight">
-            PAYROLL
-            <br />
-            CREATOR
-          </Link>
-        )}
-        <button
-          onClick={toggleCollapsed}
-          className="hidden md:flex p-1.5 rounded hover:bg-slate-100 text-slate-500"
-          title={collapsed ? "Expandir menú" : "Colapsar menú"}
-        >
-          {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
-        </button>
-        <button
-          onClick={() => setMobileOpen(false)}
-          className="md:hidden p-1.5 rounded hover:bg-slate-100 text-slate-500"
-          title="Cerrar menú"
-        >
-          <X size={20} />
-        </button>
-      </div>
-
-      <nav className="flex-1 overflow-y-auto px-2 py-3">{grupos.map(renderGroup)}</nav>
-
-      <div className="border-t px-3 py-3 space-y-2">
-        {!collapsed && usuario && (
-          <div className="text-xs text-slate-500 truncate">
-            {usuario.nombre} <span className="opacity-70">({usuario.rol})</span>
-          </div>
-        )}
-        <div className={`flex items-center gap-2 ${collapsed ? "flex-col" : ""}`}>
-          <ThemeSwitcher className={collapsed ? "w-full text-[10px] px-1" : "flex-1"} />
+  function renderSidebarInner(effectiveCollapsed: boolean) {
+    return (
+      <div className="flex flex-col h-full">
+        <div className="flex items-center justify-between px-3 py-4 border-b">
+          {!effectiveCollapsed && (
+            <Link href="/" className="font-semibold text-base leading-tight">
+              PAYROLL
+              <br />
+              CREATOR
+            </Link>
+          )}
           <button
-            onClick={logout}
-            className="p-2 rounded hover:bg-slate-100 text-slate-500 shrink-0"
-            title="Salir"
+            onClick={toggleCollapsed}
+            className="hidden md:flex p-1.5 rounded hover:bg-slate-100 text-slate-500"
+            title={collapsed ? "Expandir menú" : "Colapsar menú"}
           >
-            <LogOut size={16} />
+            {collapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+          </button>
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="md:hidden p-1.5 rounded hover:bg-slate-100 text-slate-500"
+            title="Cerrar menú"
+          >
+            <X size={20} />
           </button>
         </div>
-        {!collapsed && <div className="text-[10px] text-slate-400">v{FULL_VERSION}</div>}
+
+        <nav className="flex-1 overflow-y-auto px-2 py-3">
+          {grupos.map((g) => renderGroup(g, effectiveCollapsed))}
+        </nav>
+
+        <div className="border-t px-3 py-3 space-y-2">
+          {!effectiveCollapsed && usuario && (
+            <div className="text-xs text-slate-500 truncate">
+              {usuario.nombre} <span className="opacity-70">({usuario.rol})</span>
+            </div>
+          )}
+          <div className={`flex items-center gap-2 ${effectiveCollapsed ? "flex-col" : ""}`}>
+            <ThemeSwitcher direction="up" />
+            <button
+              onClick={logout}
+              className="p-2 rounded hover:bg-slate-100 text-slate-500 shrink-0"
+              title="Salir"
+            >
+              <LogOut size={16} />
+            </button>
+          </div>
+          {!effectiveCollapsed && <div className="text-[10px] text-slate-400">v{FULL_VERSION}</div>}
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   return (
     <div className="flex min-h-screen w-full">
@@ -283,11 +284,11 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
         style={{ width: collapsed ? 64 : 256 }}
       >
         <div className="sticky top-0 h-screen" style={{ width: collapsed ? 64 : 256 }}>
-          {sidebarInner}
+          {renderSidebarInner(collapsed)}
         </div>
       </aside>
 
-      {/* Sidebar móvil (drawer) */}
+      {/* Sidebar móvil (drawer): siempre expandido, no hay rail de iconos en móvil */}
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-40 flex">
           <div className="fixed inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
@@ -296,7 +297,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEndPanel}
           >
-            {sidebarInner}
+            {renderSidebarInner(false)}
           </div>
         </div>
       )}
