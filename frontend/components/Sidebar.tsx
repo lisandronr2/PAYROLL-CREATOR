@@ -111,6 +111,18 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
     setMobileOpen(false);
   }, [pathname]);
 
+  // Con el drawer móvil abierto, el scroll debe quedarse en el propio menú
+  // (nivel más alto), no en la página de fondo.
+  useEffect(() => {
+    if (mobileOpen) {
+      const previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = previousOverflow;
+      };
+    }
+  }, [mobileOpen]);
+
   function toggleCollapsed() {
     setCollapsed((prev) => {
       window.localStorage.setItem(STORAGE_COLLAPSED, prev ? "0" : "1");
