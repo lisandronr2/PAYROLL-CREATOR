@@ -458,15 +458,19 @@ MINIMO_DISCAPACIDAD_65_ANUAL = Decimal("9000")  # Art. 60 LIRPF
 
 def _reduccion_rendimientos_trabajo(rendimiento_neto_anual: Decimal) -> Decimal:
     """
-    Art. 20 LIRPF (redacción vigente desde 2023): reducción adicional para
-    rentas bajas del trabajo. Solo aplica si el rendimiento neto del trabajo
-    no supera 14.047,50 €/año (se asume que no hay otras rentas relevantes,
-    dato que este MVP no recoge).
+    Art. 20 LIRPF, redacción vigente en 2026 (Ley 7/2024): reducción
+    adicional para rentas bajas del trabajo, con dos tramos de minoración.
+    Solo aplica si el rendimiento neto del trabajo no supera 19.747,50 €/año
+    (se asume que no hay otras rentas relevantes, dato que este MVP no
+    recoge).
     """
-    if rendimiento_neto_anual <= Decimal("13115"):
-        return Decimal("6498")
-    if rendimiento_neto_anual < Decimal("14047.5"):
-        reduccion = Decimal("6498") - Decimal("1.14") * (rendimiento_neto_anual - Decimal("13115"))
+    if rendimiento_neto_anual <= Decimal("14852"):
+        return Decimal("7302")
+    if rendimiento_neto_anual < Decimal("17673.52"):
+        reduccion = Decimal("7302") - Decimal("1.75") * (rendimiento_neto_anual - Decimal("14852"))
+        return max(Decimal("0"), reduccion)
+    if rendimiento_neto_anual < Decimal("19747.5"):
+        reduccion = Decimal("2364.34") - Decimal("1.14") * (rendimiento_neto_anual - Decimal("17673.52"))
         return max(Decimal("0"), reduccion)
     return Decimal("0")
 
