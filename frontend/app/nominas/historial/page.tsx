@@ -77,10 +77,10 @@ export default function HistorialNominasPage() {
                   Ver / editar
                 </Link>
                 <button
-                  onClick={() => api.nominas.descargarPdf(n.id, `nomina_${n.periodo_anio}_${n.periodo_mes}.pdf`)}
+                  onClick={() => api.nominas.verPdf(n.id, `nomina_${n.periodo_anio}_${n.periodo_mes}.pdf`)}
                   className="text-blue-600 underline"
                 >
-                  PDF
+                  Ver PDF
                 </button>
                 <button
                   onClick={() => eliminar(n)}

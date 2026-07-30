@@ -268,11 +268,11 @@ function GenerarNominaForm() {
             </h2>
             <button
               onClick={() =>
-                api.nominas.descargarPdf(resultado.id, `nomina_${resultado.periodo_anio}_${resultado.periodo_mes}.pdf`)
+                api.nominas.verPdf(resultado.id, `nomina_${resultado.periodo_anio}_${resultado.periodo_mes}.pdf`)
               }
               className="text-sm bg-slate-900 text-white px-3 py-1.5 rounded"
             >
-              Descargar PDF
+              Ver PDF
             </button>
           </div>
 

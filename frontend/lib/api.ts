@@ -186,21 +186,49 @@ export interface ConvenioDietaRef {
   vigente_hasta?: string | null;
 }
 
-async function descargarPdf(nominaId: number, nombreArchivo: string) {
+/**
+ * Abre el PDF en una pestaña nueva con el visor del navegador (en vez de
+ * descargarlo directamente), para poder verlo antes de decidir imprimirlo o
+ * guardarlo — el propio visor del navegador ya trae esos botones.
+ *
+ * La pestaña se abre ANTES de pedir el PDF (síncronamente, en la misma
+ * pila de llamadas del click) para que el navegador no la bloquee como
+ * ventana emergente; luego se le asigna la URL del PDF ya descargado.
+ */
+async function abrirPdfEnNuevaPestana(url: string, nombreArchivo: string) {
+  const ventana = window.open("", "_blank");
+  try {
+    const blobUrl = await fetchPdfComoBlobUrl(url);
+    if (ventana) {
+      ventana.location.href = blobUrl;
+    } else {
+      // Si aun así el navegador bloqueó la ventana, se descarga directamente
+      // como alternativa (mejor que no hacer nada).
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = nombreArchivo;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+  } catch (err) {
+    ventana?.close();
+    throw err;
+  }
+}
+
+async function fetchPdfComoBlobUrl(url: string): Promise<string> {
   const token = getToken();
-  const res = await fetch(`${API_URL}/nominas/${nominaId}/pdf`, {
+  const res = await fetch(`${API_URL}${url}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
-  if (!res.ok) throw new Error(`Error ${res.status} al descargar el PDF`);
+  if (!res.ok) throw new Error(`Error ${res.status} al abrir el PDF`);
   const blob = await res.blob();
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = nombreArchivo;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  window.URL.revokeObjectURL(url);
+  return window.URL.createObjectURL(blob);
+}
+
+async function verPdfNomina(nominaId: number, nombreArchivo: string) {
+  await abrirPdfEnNuevaPestana(`/nominas/${nominaId}/pdf`, nombreArchivo);
 }
 
 export const api = {
@@ -281,7 +309,7 @@ export const api = {
     actualizar: (id: number, data: Record<string, unknown>) =>
       request<Nomina>(`/nominas/${id}`, { method: "PUT", body: JSON.stringify(data) }),
     eliminar: (id: number) => request<void>(`/nominas/${id}`, { method: "DELETE" }),
-    descargarPdf,
+    verPdf: verPdfNomina,
   },
   referencia: {
     parametrosLegales: () => request<ParametroLegal[]>("/referencia/parametros-legales"),
