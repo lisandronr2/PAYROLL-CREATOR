@@ -80,8 +80,11 @@ def _buscar_fecha_inicio(texto: str) -> date | None:
             fecha = _buscar_fecha(m.group(0))
             if fecha:
                 return fecha
-    # Fallback: primera fecha que aparezca en todo el documento
-    return _buscar_fecha(texto)
+    # Sin contexto claro, no se arriesga una fecha al azar: en plantillas
+    # oficiales (ej. modelos SEPE) la primera fecha del documento suele ser
+    # la de nacimiento del trabajador, no la de inicio del contrato — mejor
+    # no rellenar que rellenar mal.
+    return None
 
 
 def _buscar_tipo_contrato(texto: str) -> str | None:
