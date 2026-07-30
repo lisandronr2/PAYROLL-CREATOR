@@ -41,7 +41,13 @@ def actualizar_trabajador(trabajador_id: int, payload: TrabajadorUpdate, db: Ses
     trabajador = db.get(Trabajador, trabajador_id)
     if not trabajador:
         raise HTTPException(status_code=404, detail="Trabajador no encontrado")
-    for campo, valor in payload.model_dump(exclude_unset=True).items():
+
+    datos = payload.model_dump(exclude_unset=True)
+    if "nif" in datos and datos["nif"] != trabajador.nif:
+        if db.query(Trabajador).filter(Trabajador.nif == datos["nif"], Trabajador.id != trabajador_id).first():
+            raise HTTPException(status_code=409, detail="Ya existe un trabajador con ese NIF")
+
+    for campo, valor in datos.items():
         setattr(trabajador, campo, valor)
     db.commit()
     db.refresh(trabajador)

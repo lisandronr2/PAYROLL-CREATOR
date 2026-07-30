@@ -9,6 +9,7 @@ class TrabajadorBase(BaseModel):
     nombre: str
     apellidos: str
     nif: str
+    tipo_documento: str = "DNI"  # DNI | NIE
     numero_afiliacion_ss: Optional[str] = None
     fecha_nacimiento: Optional[date] = None
     fecha_alta: date
@@ -25,9 +26,14 @@ class TrabajadorCreate(TrabajadorBase):
 
 
 class TrabajadorUpdate(BaseModel):
+    empresa_id: Optional[int] = None
     nombre: Optional[str] = None
     apellidos: Optional[str] = None
+    nif: Optional[str] = None
+    tipo_documento: Optional[str] = None
     numero_afiliacion_ss: Optional[str] = None
+    fecha_nacimiento: Optional[date] = None
+    fecha_alta: Optional[date] = None
     fecha_baja: Optional[date] = None
     situacion_familiar: Optional[str] = None
     hijos_menores_25: Optional[int] = None

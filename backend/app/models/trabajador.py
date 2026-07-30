@@ -12,6 +12,7 @@ class Trabajador(Base):
     nombre = Column(String, nullable=False)
     apellidos = Column(String, nullable=False)
     nif = Column(String, nullable=False, unique=True)
+    tipo_documento = Column(String, nullable=False, default="DNI")  # DNI | NIE
     numero_afiliacion_ss = Column(String)
     fecha_nacimiento = Column(Date)
     fecha_alta = Column(Date, nullable=False)

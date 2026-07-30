@@ -32,6 +32,7 @@ COLUMNAS_NUEVAS = [
     ("nominas", "numero_medias_dietas", "INTEGER DEFAULT 0"),
     ("nominas", "numero_dietas_completas_cortas", "INTEGER DEFAULT 0"),
     ("nominas", "numero_dietas_completas_largas", "INTEGER DEFAULT 0"),
+    ("trabajadores", "tipo_documento", "VARCHAR NOT NULL DEFAULT 'DNI'"),
 ]
 
 

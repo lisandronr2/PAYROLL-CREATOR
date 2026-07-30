@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { api, Empresa, Trabajador } from "@/lib/api";
 
 const initialForm = {
@@ -8,6 +9,7 @@ const initialForm = {
   nombre: "",
   apellidos: "",
   nif: "",
+  tipo_documento: "DNI",
   numero_afiliacion_ss: "",
   fecha_alta: "",
   situacion_familiar: "soltero",
@@ -74,13 +76,23 @@ export default function TrabajadoresPage() {
             </option>
           ))}
         </select>
-        <input
-          required
-          placeholder="NIF"
-          className="border rounded px-3 py-2"
-          value={form.nif}
-          onChange={(e) => setForm({ ...form, nif: e.target.value })}
-        />
+        <div className="flex gap-2">
+          <select
+            className="border rounded px-3 py-2 w-28 shrink-0"
+            value={form.tipo_documento}
+            onChange={(e) => setForm({ ...form, tipo_documento: e.target.value })}
+          >
+            <option value="DNI">DNI</option>
+            <option value="NIE">NIE</option>
+          </select>
+          <input
+            required
+            placeholder={form.tipo_documento === "NIE" ? "NIE (ej. X1234567L)" : "DNI (ej. 12345678A)"}
+            className="border rounded px-3 py-2 flex-1"
+            value={form.nif}
+            onChange={(e) => setForm({ ...form, nif: e.target.value })}
+          />
+        </div>
         <input
           required
           placeholder="Nombre"
@@ -146,9 +158,11 @@ export default function TrabajadoresPage() {
         <thead className="bg-slate-100">
           <tr>
             <th className="text-left p-2">Nombre</th>
+            <th className="text-left p-2">Tipo</th>
             <th className="text-left p-2">NIF</th>
             <th className="text-left p-2">Empresa</th>
             <th className="text-left p-2">Alta</th>
+            <th className="text-right p-2"></th>
           </tr>
         </thead>
         <tbody>
@@ -157,9 +171,15 @@ export default function TrabajadoresPage() {
               <td className="p-2">
                 {t.nombre} {t.apellidos}
               </td>
+              <td className="p-2">{t.tipo_documento}</td>
               <td className="p-2">{t.nif}</td>
               <td className="p-2">{nombreEmpresa(t.empresa_id)}</td>
               <td className="p-2">{t.fecha_alta}</td>
+              <td className="p-2 text-right">
+                <Link href={`/trabajadores/${t.id}`} className="text-blue-600 underline">
+                  Editar
+                </Link>
+              </td>
             </tr>
           ))}
         </tbody>

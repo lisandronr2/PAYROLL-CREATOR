@@ -67,12 +67,15 @@ export interface Trabajador {
   nombre: string;
   apellidos: string;
   nif: string;
+  tipo_documento: string;
   numero_afiliacion_ss?: string | null;
+  fecha_nacimiento?: string | null;
   fecha_alta: string;
   fecha_baja?: string | null;
   situacion_familiar: string;
   hijos_menores_25: number;
   grado_discapacidad: number;
+  iban?: string | null;
   activo: boolean;
 }
 
@@ -224,6 +227,8 @@ export const api = {
     obtener: (id: number) => request<Trabajador>(`/trabajadores/${id}`),
     crear: (data: Partial<Trabajador>) =>
       request<Trabajador>("/trabajadores", { method: "POST", body: JSON.stringify(data) }),
+    actualizar: (id: number, data: Partial<Trabajador>) =>
+      request<Trabajador>(`/trabajadores/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   },
   convenios: {
     listar: () => request<Convenio[]>("/convenios"),
