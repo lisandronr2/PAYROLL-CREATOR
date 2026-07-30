@@ -75,6 +75,9 @@ def enviar_email_recuperacion(destinatario: str, nombre: str, enlace: str) -> No
         headers={
             "Authorization": f"Bearer {settings.resend_api_key}",
             "Content-Type": "application/json",
+            # Cloudflare (delante de la API de Resend) rechaza con "error code:
+            # 1010" las peticiones con el User-Agent por defecto de urllib.
+            "User-Agent": "PayrollCreator/1.0",
         },
     )
 
