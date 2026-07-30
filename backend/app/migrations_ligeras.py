@@ -22,6 +22,8 @@ COLUMNAS_NUEVAS = [
     ("contratos", "seccion", "VARCHAR"),
     ("contratos", "complemento_mensual", "NUMERIC(10, 2) NOT NULL DEFAULT 0"),
     ("nomina_lineas", "cantidad", "NUMERIC(8, 3)"),
+    ("usuarios", "reset_token_hash", "VARCHAR"),
+    ("usuarios", "reset_token_expira", "TIMESTAMP"),
 ]
 
 

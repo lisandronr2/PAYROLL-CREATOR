@@ -17,6 +17,21 @@ class Settings(BaseSettings):
     admin_default_nombre: str = "Administrador"
     admin_default_password: str = "cambiar-esta-clave"
 
+    # URL pública del frontend, usada para construir el enlace del correo de
+    # recuperación de contraseña (ej. https://frontend-fcc-ontrol.vercel.app)
+    frontend_url: str = "http://localhost:3000"
+
+    # SMTP para el correo de recuperación de contraseña. Si smtp_user o
+    # smtp_password están vacíos, no se envía el correo real: el enlace se
+    # registra en el log del servidor (útil en desarrollo local).
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = ""
+    smtp_use_tls: bool = True
+    reset_password_token_minutos: int = 30
+
     class Config:
         env_file = ".env"
         populate_by_name = True

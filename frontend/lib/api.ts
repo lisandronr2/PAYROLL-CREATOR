@@ -187,6 +187,16 @@ export const api = {
     },
     me: () => request<Usuario>("/auth/me"),
     logout: () => clearToken(),
+    solicitarRecuperacion: (email: string) =>
+      request<{ detail: string }>("/auth/solicitar-recuperacion", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      }),
+    restablecerPassword: (token: string, password: string) =>
+      request<{ detail: string }>("/auth/restablecer-password", {
+        method: "POST",
+        body: JSON.stringify({ token, password }),
+      }),
   },
   empresas: {
     listar: () => request<Empresa[]>("/empresas"),

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
@@ -54,6 +55,11 @@ export default function LoginPage() {
         <button disabled={cargando} className="w-full bg-slate-900 text-white rounded py-2 disabled:opacity-50">
           {cargando ? "Entrando..." : "Entrar"}
         </button>
+        <div className="text-center">
+          <Link href="/recuperar-password" className="text-sm text-slate-500 hover:underline">
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </div>
       </form>
     </div>
   );

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class UsuarioCreate(BaseModel):
@@ -37,3 +37,12 @@ class TokenOut(BaseModel):
     access_token: str
     token_type: str = "bearer"
     usuario: UsuarioOut
+
+
+class SolicitarRecuperacionRequest(BaseModel):
+    email: EmailStr
+
+
+class RestablecerPasswordRequest(BaseModel):
+    token: str
+    password: str = Field(min_length=8)

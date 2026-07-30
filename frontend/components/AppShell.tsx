@@ -8,7 +8,9 @@ import FocusLayout from "@/components/FocusLayout";
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  if (pathname === "/login") {
+  const esPaginaPublica =
+    pathname === "/login" || pathname === "/recuperar-password" || pathname === "/restablecer-password";
+  if (esPaginaPublica) {
     return <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-6">{children}</main>;
   }
 

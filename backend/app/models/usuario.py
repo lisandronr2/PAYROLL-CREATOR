@@ -14,3 +14,10 @@ class Usuario(Base):
     rol = Column(String, nullable=False, default="operador")  # admin | operador
     activo = Column(Boolean, default=True)
     creado_en = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Recuperación de contraseña: se guarda el hash del token (no el token en
+    # claro) y su fecha de caducidad, siempre en UTC "naive" (sin tzinfo) para
+    # que la comparación sea consistente entre SQLite y Postgres. Ambos
+    # campos se limpian al usarse o expirar.
+    reset_token_hash = Column(String, nullable=True)
+    reset_token_expira = Column(DateTime(timezone=False), nullable=True)
