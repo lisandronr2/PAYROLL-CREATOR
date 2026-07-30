@@ -21,15 +21,14 @@ class Settings(BaseSettings):
     # recuperación de contraseña (ej. https://frontend-fcc-ontrol.vercel.app)
     frontend_url: str = "http://localhost:3000"
 
-    # SMTP para el correo de recuperación de contraseña. Si smtp_user o
-    # smtp_password están vacíos, no se envía el correo real: el enlace se
+    # Envío de correo de recuperación de contraseña vía la API HTTP de Resend
+    # (https://resend.com). Se usa una API sobre HTTPS y no SMTP porque varios
+    # proveedores de hosting (Render incluido, en su plan gratuito) bloquean
+    # las conexiones salientes por los puertos SMTP (25/465/587).
+    # Si resend_api_key está vacío, no se envía el correo real: el enlace se
     # registra en el log del servidor (útil en desarrollo local).
-    smtp_host: str = "smtp.gmail.com"
-    smtp_port: int = 587
-    smtp_user: str = ""
-    smtp_password: str = ""
-    smtp_from: str = ""
-    smtp_use_tls: bool = True
+    resend_api_key: str = ""
+    resend_from: str = "PAYROLL CREATOR <onboarding@resend.dev>"
     reset_password_token_minutos: int = 30
 
     class Config:

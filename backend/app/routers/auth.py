@@ -1,6 +1,5 @@
 import hashlib
 import secrets
-import smtplib
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -30,17 +29,10 @@ def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
-def _enmascarar_email(email: str) -> str:
-    if not email or "@" not in email:
-        return "(vacío)"
-    local, dominio = email.split("@", 1)
-    return f"{local[:2]}***@{dominio}"
-
-
-# Endpoint temporal de diagnóstico SMTP, protegido por un token fijo en código
-# (no expone contraseñas, solo confirma qué configuración está realmente
-# cargada en el proceso en ejecución, y si el login SMTP funciona). Quitar
-# una vez resuelto el problema de entrega de correos.
+# Endpoint temporal de diagnóstico, protegido por un token fijo en código (no
+# expone la API key, solo confirma qué configuración está realmente cargada
+# en el proceso en ejecución). Quitar una vez resuelto el problema de
+# entrega de correos.
 DIAG_TOKEN = "payroll-diag-2026-smtp"
 
 
@@ -49,28 +41,15 @@ def diagnostico_smtp(token: str):
     if token != DIAG_TOKEN:
         raise HTTPException(status_code=404)
 
-    resultado = {
-        "smtp_host": settings.smtp_host,
-        "smtp_port": settings.smtp_port,
-        "smtp_use_tls": settings.smtp_use_tls,
-        "smtp_user": _enmascarar_email(settings.smtp_user),
-        "smtp_from": _enmascarar_email(settings.smtp_from),
+    api_key = settings.resend_api_key
+    api_key_enmascarada = f"{api_key[:6]}***" if api_key else "(vacío)"
+
+    return {
+        "resend_configurado": bool(api_key),
+        "resend_api_key": api_key_enmascarada,
+        "resend_from": settings.resend_from,
         "frontend_url": settings.frontend_url,
-        "smtp_configurado": bool(settings.smtp_user and settings.smtp_password),
-        "smtp_password_longitud": len(settings.smtp_password or ""),
     }
-
-    if resultado["smtp_configurado"]:
-        try:
-            with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=10) as servidor:
-                if settings.smtp_use_tls:
-                    servidor.starttls()
-                servidor.login(settings.smtp_user, settings.smtp_password)
-            resultado["login_smtp"] = "OK"
-        except Exception as exc:
-            resultado["login_smtp"] = f"FALLÓ: {type(exc).__name__}: {exc}"
-
-    return resultado
 
 
 @router.post("/login", response_model=TokenOut)

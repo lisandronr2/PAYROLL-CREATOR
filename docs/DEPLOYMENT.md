@@ -30,14 +30,14 @@ uno depende del anterior.
    - `FRONTEND_URL`: la URL de Vercel (paso 3) — se usa para construir el
      enlace del correo de "recuperar contraseña". Puedes dejarla pendiente y
      volver a este valor después del paso 3.
-   - `SMTP_USER` / `SMTP_PASSWORD` / `SMTP_FROM`: para enviar el correo de
-     recuperación de contraseña. Con Gmail: activa la verificación en dos
-     pasos en tu cuenta, genera una "contraseña de aplicación" en
-     https://myaccount.google.com/apppasswords, y usa esa cadena de 16
-     caracteres como `SMTP_PASSWORD` (no tu contraseña normal). `SMTP_FROM`
-     puede ser la misma dirección Gmail. Si los dejas vacíos, el flujo sigue
-     funcionando pero el enlace solo queda en los logs de Render (no se
-     envía correo real).
+   - `RESEND_API_KEY`: para enviar el correo de recuperación de contraseña.
+     Crea una cuenta gratis en https://resend.com y una API Key en
+     https://resend.com/api-keys. Se usa la API HTTP de Resend (no SMTP)
+     porque Render, en su plan gratuito, bloquea las conexiones salientes
+     por los puertos SMTP (25/465/587) — un intento con SMTP directo
+     (Gmail, etc.) falla siempre con "Network is unreachable". Si dejas
+     `RESEND_API_KEY` vacío, el flujo sigue funcionando pero el enlace solo
+     queda en los logs de Render (no se envía correo real).
 3. Despliega. Al arrancar, el backend crea las tablas y carga los datos
    semilla (convenios, parámetros legales, tabla IRPF, usuario admin) de
    forma automática (`app/main.py` → `on_startup`).

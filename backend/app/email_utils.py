@@ -1,27 +1,36 @@
 """
 Envío de correos transaccionales (por ahora, solo recuperación de contraseña)
-vía SMTP. Usa smtplib de la librería estándar para no añadir dependencias.
+vía la API HTTP de Resend (https://resend.com/docs/api-reference/emails/send-email).
 
-Si SMTP_USER/SMTP_PASSWORD no están configurados (por ejemplo en desarrollo
-local sin .env), no se envía el correo real: el enlace se registra en el log
-del servidor para poder seguir probando el flujo manualmente.
+Se usa una API sobre HTTPS (puerto 443) en vez de SMTP porque varios
+proveedores de hosting — Render incluido, en su plan gratuito — bloquean las
+conexiones salientes por los puertos SMTP (25/465/587), lo que hace que un
+envío por smtplib nunca llegue a conectar (ver commit que añadió este
+comentario para el diagnóstico completo).
+
+Si RESEND_API_KEY no está configurado, no se envía el correo real: el enlace
+se registra en el log del servidor para poder seguir probando el flujo
+manualmente en desarrollo local.
 """
+import json
 import logging
-import smtplib
-from email.mime.text import MIMEText
+import urllib.error
+import urllib.request
 
 from app.config import settings
 
 logger = logging.getLogger("payroll_creator.email")
 
+RESEND_API_URL = "https://api.resend.com/emails"
 
-def _smtp_configurado() -> bool:
-    return bool(settings.smtp_user and settings.smtp_password)
+
+def _resend_configurado() -> bool:
+    return bool(settings.resend_api_key)
 
 
 def enviar_email_recuperacion(destinatario: str, nombre: str, enlace: str) -> None:
     asunto = "Recuperación de contraseña — PAYROLL CREATOR"
-    cuerpo = (
+    cuerpo_texto = (
         f"Hola {nombre},\n\n"
         "Hemos recibido una solicitud para restablecer tu contraseña en PAYROLL CREATOR.\n"
         f"Para elegir una nueva contraseña, entra en este enlace (caduca en "
@@ -31,22 +40,47 @@ def enviar_email_recuperacion(destinatario: str, nombre: str, enlace: str) -> No
         "actual seguirá siendo válida.\n\n"
         "— PAYROLL CREATOR"
     )
+    cuerpo_html = (
+        f"<p>Hola {nombre},</p>"
+        "<p>Hemos recibido una solicitud para restablecer tu contraseña en "
+        "<strong>PAYROLL CREATOR</strong>.</p>"
+        f"<p>Para elegir una nueva contraseña, entra en este enlace (caduca en "
+        f"{settings.reset_password_token_minutos} minutos):</p>"
+        f'<p><a href="{enlace}">{enlace}</a></p>'
+        "<p>Si no has solicitado este cambio, puedes ignorar este correo: tu contraseña "
+        "actual seguirá siendo válida.</p>"
+        "<p>— PAYROLL CREATOR</p>"
+    )
 
-    if not _smtp_configurado():
+    if not _resend_configurado():
         logger.warning(
-            "SMTP no configurado: no se envía correo real. Enlace de recuperación para %s: %s",
+            "Resend no configurado: no se envía correo real. Enlace de recuperación para %s: %s",
             destinatario,
             enlace,
         )
         return
 
-    mensaje = MIMEText(cuerpo, "plain", "utf-8")
-    mensaje["Subject"] = asunto
-    mensaje["From"] = settings.smtp_from or settings.smtp_user
-    mensaje["To"] = destinatario
+    payload = {
+        "from": settings.resend_from,
+        "to": [destinatario],
+        "subject": asunto,
+        "text": cuerpo_texto,
+        "html": cuerpo_html,
+    }
+    data = json.dumps(payload).encode("utf-8")
+    request = urllib.request.Request(
+        RESEND_API_URL,
+        data=data,
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {settings.resend_api_key}",
+            "Content-Type": "application/json",
+        },
+    )
 
-    with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=10) as servidor:
-        if settings.smtp_use_tls:
-            servidor.starttls()
-        servidor.login(settings.smtp_user, settings.smtp_password)
-        servidor.sendmail(mensaje["From"], [destinatario], mensaje.as_string())
+    try:
+        with urllib.request.urlopen(request, timeout=10) as respuesta:
+            respuesta.read()
+    except urllib.error.HTTPError as exc:
+        detalle = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"Resend respondió {exc.code}: {detalle}") from exc
