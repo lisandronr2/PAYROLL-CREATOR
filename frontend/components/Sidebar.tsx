@@ -58,6 +58,7 @@ const GROUPS: NavGroup[] = [
     items: [
       { href: "/nominas/generar", label: "Generar nómina", icon: Calculator },
       { href: "/nominas/historial", label: "Historial", icon: History },
+      { href: "/parametros", label: "Parámetros aplicados", icon: Percent },
     ],
   },
 ];

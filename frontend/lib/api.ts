@@ -175,6 +175,17 @@ export interface TramoIRPF {
   vigente_hasta?: string | null;
 }
 
+export interface ConvenioDietaRef {
+  id: number;
+  convenio_id: number;
+  anio: number;
+  media_dieta: string;
+  dieta_completa_corta: string;
+  dieta_completa_larga: string;
+  vigente_desde: string;
+  vigente_hasta?: string | null;
+}
+
 async function descargarPdf(nominaId: number, nombreArchivo: string) {
   const token = getToken();
   const res = await fetch(`${API_URL}/nominas/${nominaId}/pdf`, {
@@ -271,6 +282,11 @@ export const api = {
       request<Nomina>(`/nominas/${id}`, { method: "PUT", body: JSON.stringify(data) }),
     eliminar: (id: number) => request<void>(`/nominas/${id}`, { method: "DELETE" }),
     descargarPdf,
+  },
+  referencia: {
+    parametrosLegales: () => request<ParametroLegal[]>("/referencia/parametros-legales"),
+    dietasConvenio: (convenioId: number) =>
+      request<ConvenioDietaRef[]>(`/referencia/convenios/${convenioId}/dietas`),
   },
   admin: {
     usuarios: {
