@@ -47,6 +47,17 @@ class NominaOut(BaseModel):
     tipo: str
     dias_naturales_periodo: int
     dias_trabajados: int
+    horas_extra: Decimal = Decimal("0")
+    horas_extra_nocturnas: Decimal = Decimal("0")
+    horas_nocturnas_ordinarias: Decimal = Decimal("0")
+    dias_it: int = 0
+    dias_vacaciones: int = 0
+    dias_festivos_trabajados: int = 0
+    anticipos: Decimal = Decimal("0")
+    embargo_mensual: Decimal = Decimal("0")
+    numero_medias_dietas: int = 0
+    numero_dietas_completas_cortas: int = 0
+    numero_dietas_completas_largas: int = 0
     total_devengado: Decimal
     total_deducciones: Decimal
     liquido_a_percibir: Decimal

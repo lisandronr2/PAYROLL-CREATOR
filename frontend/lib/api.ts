@@ -105,6 +105,7 @@ export interface Contrato {
   fecha_fin?: string | null;
   puesto_trabajo?: string | null;
   seccion?: string | null;
+  salario_pactado_mensual?: string | null;
   complemento_mensual: string;
   pagas_extra_prorrateadas: boolean;
   fecha_antiguedad?: string | null;
@@ -128,6 +129,19 @@ export interface Nomina {
   periodo_anio: number;
   periodo_mes: number;
   tipo: string;
+  dias_naturales_periodo: number;
+  dias_trabajados: number;
+  horas_extra: string;
+  horas_extra_nocturnas: string;
+  horas_nocturnas_ordinarias: string;
+  dias_it: number;
+  dias_vacaciones: number;
+  dias_festivos_trabajados: number;
+  anticipos: string;
+  embargo_mensual: string;
+  numero_medias_dietas: number;
+  numero_dietas_completas_cortas: number;
+  numero_dietas_completas_largas: number;
   total_devengado: string;
   total_deducciones: string;
   liquido_a_percibir: string;
@@ -200,12 +214,14 @@ export const api = {
   },
   empresas: {
     listar: () => request<Empresa[]>("/empresas"),
+    obtener: (id: number) => request<Empresa>(`/empresas/${id}`),
     crear: (data: Partial<Empresa>) =>
       request<Empresa>("/empresas", { method: "POST", body: JSON.stringify(data) }),
   },
   trabajadores: {
     listar: (empresaId?: number) =>
       request<Trabajador[]>(`/trabajadores${empresaId ? `?empresa_id=${empresaId}` : ""}`),
+    obtener: (id: number) => request<Trabajador>(`/trabajadores/${id}`),
     crear: (data: Partial<Trabajador>) =>
       request<Trabajador>("/trabajadores", { method: "POST", body: JSON.stringify(data) }),
   },
@@ -217,14 +233,38 @@ export const api = {
   contratos: {
     listar: (trabajadorId?: number) =>
       request<Contrato[]>(`/contratos${trabajadorId ? `?trabajador_id=${trabajadorId}` : ""}`),
+    obtener: (id: number) => request<Contrato>(`/contratos/${id}`),
     crear: (data: Partial<Contrato>) =>
       request<Contrato>("/contratos", { method: "POST", body: JSON.stringify(data) }),
+    extraerPdf: async (archivo: File) => {
+      const token = getToken();
+      const formData = new FormData();
+      formData.append("archivo", archivo);
+      const res = await fetch(`${API_URL}/contratos/extraer-pdf`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      if (!res.ok) throw new Error(`Error ${res.status} al leer el PDF`);
+      return res.json() as Promise<{
+        fecha_inicio: string | null;
+        tipo_contrato: string | null;
+        jornada_porcentaje: string | null;
+        salario_pactado_mensual: string | null;
+        puesto_trabajo: string | null;
+        texto_extraido_preview: string;
+      }>;
+    },
   },
   nominas: {
     listar: (contratoId?: number) =>
       request<Nomina[]>(`/nominas${contratoId ? `?contrato_id=${contratoId}` : ""}`),
+    obtener: (id: number) => request<Nomina>(`/nominas/${id}`),
     generar: (data: Record<string, unknown>) =>
       request<Nomina>("/nominas/generar", { method: "POST", body: JSON.stringify(data) }),
+    actualizar: (id: number, data: Record<string, unknown>) =>
+      request<Nomina>(`/nominas/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    eliminar: (id: number) => request<void>(`/nominas/${id}`, { method: "DELETE" }),
     descargarPdf,
   },
   admin: {

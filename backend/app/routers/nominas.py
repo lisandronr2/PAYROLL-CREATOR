@@ -21,8 +21,9 @@ from app.pdf.generador import generar_pdf_nomina
 router = APIRouter(prefix="/nominas", tags=["nominas"], dependencies=[Depends(get_current_usuario)])
 
 
-@router.post("/generar", response_model=NominaOut, status_code=201)
-def generar_nomina(payload: GenerarNominaRequest, db: Session = Depends(get_db)):
+def _calcular_y_poblar(nomina: Nomina, payload: GenerarNominaRequest, db: Session) -> None:
+    """Recalcula la nómina completa (devengos, cotizaciones, IRPF) y actualiza
+    los campos de `nomina` en sitio (sin insertarla ni hacer commit todavía)."""
     contrato = db.get(Contrato, payload.contrato_id)
     if not contrato:
         raise HTTPException(status_code=404, detail="Contrato no encontrado")
@@ -72,27 +73,38 @@ def generar_nomina(payload: GenerarNominaRequest, db: Session = Depends(get_db))
         edad=edad,
     )
 
-    nomina = Nomina(
-        contrato_id=contrato.id,
-        periodo_anio=payload.periodo_anio,
-        periodo_mes=payload.periodo_mes,
-        tipo=payload.tipo,
-        dias_naturales_periodo=payload.dias_naturales_periodo,
-        dias_trabajados=payload.dias_trabajados or (payload.dias_naturales_periodo - payload.dias_it),
-        horas_extra=payload.horas_extra,
-        dias_it=payload.dias_it,
-        dias_vacaciones=payload.dias_vacaciones,
-        total_devengado=resultado.total_devengado,
-        total_deducciones=resultado.total_deducciones,
-        liquido_a_percibir=resultado.liquido_a_percibir,
-        base_cotizacion_comun=resultado.base_cotizacion_comun,
-        base_sujeta_irpf=resultado.base_sujeta_irpf,
-        coste_empresa_total=resultado.coste_empresa_total,
-        total_dietas_exentas=resultado.total_dietas_exentas,
-    )
+    nomina.contrato_id = contrato.id
+    nomina.periodo_anio = payload.periodo_anio
+    nomina.periodo_mes = payload.periodo_mes
+    nomina.tipo = payload.tipo
+    nomina.dias_naturales_periodo = payload.dias_naturales_periodo
+    nomina.dias_trabajados = payload.dias_trabajados or (payload.dias_naturales_periodo - payload.dias_it)
+    nomina.horas_extra = payload.horas_extra
+    nomina.horas_extra_nocturnas = payload.horas_extra_nocturnas
+    nomina.horas_nocturnas_ordinarias = payload.horas_nocturnas_ordinarias
+    nomina.dias_it = payload.dias_it
+    nomina.dias_vacaciones = payload.dias_vacaciones
+    nomina.dias_festivos_trabajados = payload.dias_festivos_trabajados
+    nomina.anticipos = payload.anticipos
+    nomina.embargo_mensual = payload.embargo_mensual
+    nomina.numero_medias_dietas = payload.numero_medias_dietas
+    nomina.numero_dietas_completas_cortas = payload.numero_dietas_completas_cortas
+    nomina.numero_dietas_completas_largas = payload.numero_dietas_completas_largas
+    nomina.total_devengado = resultado.total_devengado
+    nomina.total_deducciones = resultado.total_deducciones
+    nomina.liquido_a_percibir = resultado.liquido_a_percibir
+    nomina.base_cotizacion_comun = resultado.base_cotizacion_comun
+    nomina.base_sujeta_irpf = resultado.base_sujeta_irpf
+    nomina.coste_empresa_total = resultado.coste_empresa_total
+    nomina.total_dietas_exentas = resultado.total_dietas_exentas
+
+    # Con los campos obligatorios ya rellenos, se puede insertar (si es nueva)
+    # o simplemente asegurar que los cambios estén flush-eados (si ya
+    # existía) para poder referenciar nomina.id al crear las líneas.
     db.add(nomina)
     db.flush()
 
+    nomina.lineas.clear()
     for orden, linea in enumerate(resultado.lineas):
         db.add(
             NominaLinea(
@@ -109,6 +121,11 @@ def generar_nomina(payload: GenerarNominaRequest, db: Session = Depends(get_db))
             )
         )
 
+
+@router.post("/generar", response_model=NominaOut, status_code=201)
+def generar_nomina(payload: GenerarNominaRequest, db: Session = Depends(get_db)):
+    nomina = Nomina()
+    _calcular_y_poblar(nomina, payload, db)
     db.commit()
     db.refresh(nomina)
     return nomina
@@ -128,6 +145,29 @@ def obtener_nomina(nomina_id: int, db: Session = Depends(get_db)):
     if not nomina:
         raise HTTPException(status_code=404, detail="Nómina no encontrada")
     return nomina
+
+
+@router.put("/{nomina_id}", response_model=NominaOut)
+def actualizar_nomina(nomina_id: int, payload: GenerarNominaRequest, db: Session = Depends(get_db)):
+    """Recalcula por completo una nómina ya generada con nuevos datos de
+    entrada, conservando su id (para poder corregirla sin duplicarla)."""
+    nomina = db.get(Nomina, nomina_id)
+    if not nomina:
+        raise HTTPException(status_code=404, detail="Nómina no encontrada")
+
+    _calcular_y_poblar(nomina, payload, db)
+    db.commit()
+    db.refresh(nomina)
+    return nomina
+
+
+@router.delete("/{nomina_id}", status_code=204)
+def eliminar_nomina(nomina_id: int, db: Session = Depends(get_db)):
+    nomina = db.get(Nomina, nomina_id)
+    if not nomina:
+        raise HTTPException(status_code=404, detail="Nómina no encontrada")
+    db.delete(nomina)
+    db.commit()
 
 
 @router.get("/{nomina_id}/pdf")

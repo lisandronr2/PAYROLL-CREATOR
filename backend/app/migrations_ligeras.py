@@ -24,6 +24,14 @@ COLUMNAS_NUEVAS = [
     ("nomina_lineas", "cantidad", "NUMERIC(8, 3)"),
     ("usuarios", "reset_token_hash", "VARCHAR"),
     ("usuarios", "reset_token_expira", "TIMESTAMP"),
+    ("nominas", "horas_extra_nocturnas", "NUMERIC(6, 2) DEFAULT 0"),
+    ("nominas", "horas_nocturnas_ordinarias", "NUMERIC(6, 2) DEFAULT 0"),
+    ("nominas", "dias_festivos_trabajados", "INTEGER DEFAULT 0"),
+    ("nominas", "anticipos", "NUMERIC(10, 2) DEFAULT 0"),
+    ("nominas", "embargo_mensual", "NUMERIC(10, 2) DEFAULT 0"),
+    ("nominas", "numero_medias_dietas", "INTEGER DEFAULT 0"),
+    ("nominas", "numero_dietas_completas_cortas", "INTEGER DEFAULT 0"),
+    ("nominas", "numero_dietas_completas_largas", "INTEGER DEFAULT 0"),
 ]
 
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { api, Contrato, Nomina, Trabajador } from "@/lib/api";
 
 export default function HistorialNominasPage() {
@@ -8,8 +9,9 @@ export default function HistorialNominasPage() {
   const [contratos, setContratos] = useState<Contrato[]>([]);
   const [trabajadores, setTrabajadores] = useState<Trabajador[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [eliminando, setEliminando] = useState<number | null>(null);
 
-  useEffect(() => {
+  function cargar() {
     Promise.all([api.nominas.listar(), api.contratos.listar(), api.trabajadores.listar()])
       .then(([n, c, t]) => {
         setNominas(n);
@@ -17,6 +19,10 @@ export default function HistorialNominasPage() {
         setTrabajadores(t);
       })
       .catch((e) => setError(String(e)));
+  }
+
+  useEffect(() => {
+    cargar();
   }, []);
 
   function nombreTrabajador(contratoId: number) {
@@ -24,6 +30,22 @@ export default function HistorialNominasPage() {
     if (!contrato) return `Contrato #${contratoId}`;
     const t = trabajadores.find((x) => x.id === contrato.trabajador_id);
     return t ? `${t.nombre} ${t.apellidos}` : `Contrato #${contratoId}`;
+  }
+
+  async function eliminar(n: Nomina) {
+    const confirmado = window.confirm(
+      `¿Eliminar la nómina ${n.periodo_mes}/${n.periodo_anio} de ${nombreTrabajador(n.contrato_id)}? Esta acción no se puede deshacer.`
+    );
+    if (!confirmado) return;
+    setEliminando(n.id);
+    try {
+      await api.nominas.eliminar(n.id);
+      setNominas((prev) => prev.filter((x) => x.id !== n.id));
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setEliminando(null);
+    }
   }
 
   return (
@@ -38,7 +60,7 @@ export default function HistorialNominasPage() {
             <th className="text-left p-2">Periodo</th>
             <th className="text-left p-2">Tipo</th>
             <th className="text-right p-2">Líquido</th>
-            <th className="text-right p-2">PDF</th>
+            <th className="text-right p-2"></th>
           </tr>
         </thead>
         <tbody>
@@ -50,12 +72,22 @@ export default function HistorialNominasPage() {
               </td>
               <td className="p-2">{n.tipo}</td>
               <td className="p-2 text-right">{Number(n.liquido_a_percibir).toFixed(2)} €</td>
-              <td className="p-2 text-right">
+              <td className="p-2 text-right whitespace-nowrap space-x-3">
+                <Link href={`/nominas/generar?editar=${n.id}`} className="text-blue-600 underline">
+                  Ver / editar
+                </Link>
                 <button
                   onClick={() => api.nominas.descargarPdf(n.id, `nomina_${n.periodo_anio}_${n.periodo_mes}.pdf`)}
                   className="text-blue-600 underline"
                 >
-                  Descargar
+                  PDF
+                </button>
+                <button
+                  onClick={() => eliminar(n)}
+                  disabled={eliminando === n.id}
+                  className="text-red-600 underline disabled:opacity-50"
+                >
+                  {eliminando === n.id ? "Eliminando..." : "Eliminar"}
                 </button>
               </td>
             </tr>

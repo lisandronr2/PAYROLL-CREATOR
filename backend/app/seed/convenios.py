@@ -178,3 +178,136 @@ def seed_convenio_dietas(db: Session) -> None:
             )
         )
     db.commit()
+
+
+# Subniveles reales del Convenio Metal Madrid, tomados del Anexo II
+# ("Grupos Profesionales" — equivalencias orientativas de categorías del
+# convenio anterior integradas en cada Grupo) del texto consolidado
+# 2024-2026 (AECIM/CCOO/UGT). El salario de cada subnivel es el de su Grupo
+# Profesional "padre" (el convenio no publica un salario distinto por
+# subnivel, solo por Grupo) — lo que cambia es la categoría/oficio concreto
+# que se muestra en el contrato y la nómina.
+#
+# grupo_cotizacion: se usa el grupo de cotización a la SS real y reconocible
+# para los oficios manuales (8 = Oficiales de 1ª y 2ª, 9 = Oficiales de 3ª y
+# Especialistas, 10 = Peones), y se mantiene el número de Grupo Profesional
+# como aproximación para el resto de categorías (empleados/técnicos), igual
+# que en las categorías genéricas ya existentes — ver docs/LEGAL_DISCLAIMER.md.
+SUBNIVELES_METAL = {
+    "2": [
+        ("2.1", "Jefe/a de Taller", 2),
+        ("2.2", "Analista Informático/a", 2),
+        ("2.3", "Graduado/a Social / Diplomado/a en Relaciones Laborales", 2),
+        ("2.4", "Ayudante Técnico Sanitario / Diplomado/a en Enfermería", 2),
+    ],
+    "3": [
+        ("3.1", "Delineante Proyectista/Dibujante", 3),
+        ("3.2", "Jefe/a de Organización de 1ª", 3),
+        ("3.3", "Jefe/a de Laboratorio de 2ª", 3),
+        ("3.4", "Jefe/a de 2ª Administrativo/a", 3),
+        ("3.5", "Programador/a Informático/a", 3),
+        ("3.6", "Maestro/a Industrial", 3),
+        ("3.7", "Maestro/a de Taller de 1ª", 3),
+        ("3.8", "Contramaestre", 3),
+        ("3.9", "Maestro/a de Taller de 2ª", 3),
+    ],
+    "4": [
+        ("4.1", "Delineante de 1ª", 4),
+        ("4.2", "Delineante de 2ª", 4),
+        ("4.3", "Operador/a Informático/a", 4),
+        ("4.4", "Analista de Laboratorio de 1ª", 4),
+        ("4.5", "Técnico/a de Organización de 1ª", 4),
+        ("4.6", "Técnico/a de Organización de 2ª", 4),
+        ("4.7", "Oficial Administrativo/a de 1ª", 4),
+        ("4.8", "Oficial Administrativo/a de 2ª", 4),
+        ("4.9", "Conductor/a", 4),
+        ("4.10", "Comercial", 4),
+        ("4.11", "Encargado/a de Sección de Taller", 4),
+    ],
+    "5": [
+        ("5.1", "Oficial de 1ª (de oficio)", 8),
+        ("5.2", "Oficial de 2ª (de oficio)", 8),
+        ("5.3", "Capataz de Especialistas y Peones Ordinarios", 3),
+    ],
+    "6": [
+        ("6.1", "Conserje", 6),
+        ("6.2", "Almacenero/a", 6),
+        ("6.3", "Auxiliar (oficina, laboratorio, administrativo/a u organización)", 6),
+        ("6.4", "Analista de Laboratorio de 2ª", 6),
+        ("6.5", "Ordenanza", 6),
+        ("6.6", "Portero/a", 6),
+        ("6.7", "Telefonista", 6),
+    ],
+    "7": [
+        ("7.1", "Peón/a", 10),
+        ("7.2", "Mozo/a Especialista de Almacén", 9),
+        ("7.3", "Especialista", 9),
+        ("7.4", "Oficial de 3ª (de taller)", 9),
+    ],
+}
+
+
+def seed_subniveles_metal(db: Session) -> None:
+    """
+    Añade los subniveles/categorías reales del Convenio Metal Madrid dentro
+    de cada Grupo Profesional (ej. "5.1 Oficial de 1ª", "7.4 Oficial de 3ª"),
+    reutilizando el salario del Grupo "padre" ya sembrado. Idempotente: solo
+    crea los que aún no existan (comprueba por convenio_id + grupo).
+    """
+    convenio = (
+        db.query(Convenio)
+        .filter(Convenio.nombre == "Industria, Servicios e Instalaciones del Metal de Madrid")
+        .first()
+    )
+    if convenio is None:
+        return
+
+    for grupo_padre, subniveles in SUBNIVELES_METAL.items():
+        categoria_padre = (
+            db.query(CategoriaProfesional)
+            .filter(CategoriaProfesional.convenio_id == convenio.id, CategoriaProfesional.grupo == grupo_padre)
+            .first()
+        )
+        if categoria_padre is None:
+            continue
+        tabla_padre = (
+            db.query(ConvenioTablaSalarial)
+            .filter(ConvenioTablaSalarial.categoria_id == categoria_padre.id)
+            .order_by(ConvenioTablaSalarial.vigente_desde.desc())
+            .first()
+        )
+        if tabla_padre is None:
+            continue
+
+        for codigo, nombre, grupo_cotizacion in subniveles:
+            ya_existe = (
+                db.query(CategoriaProfesional)
+                .filter(CategoriaProfesional.convenio_id == convenio.id, CategoriaProfesional.grupo == codigo)
+                .first()
+            )
+            if ya_existe is not None:
+                continue
+
+            subnivel = CategoriaProfesional(
+                convenio_id=convenio.id,
+                grupo=codigo,
+                nombre=nombre,
+                grupo_cotizacion=grupo_cotizacion,
+            )
+            db.add(subnivel)
+            db.flush()
+            db.add(
+                ConvenioTablaSalarial(
+                    categoria_id=subnivel.id,
+                    anio=tabla_padre.anio,
+                    salario_convenio_anual=tabla_padre.salario_convenio_anual,
+                    salario_convenio_mensual=tabla_padre.salario_convenio_mensual,
+                    base_calculo_complementos_mensual=tabla_padre.base_calculo_complementos_mensual,
+                    valor_quinquenio_o_trienio=tabla_padre.valor_quinquenio_o_trienio,
+                    plus_convenio_mensual=tabla_padre.plus_convenio_mensual,
+                    vigente_desde=tabla_padre.vigente_desde,
+                    vigente_hasta=tabla_padre.vigente_hasta,
+                )
+            )
+
+    db.commit()

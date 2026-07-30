@@ -20,6 +20,18 @@ class Nomina(Base):
     dias_it = Column(Integer, default=0)
     dias_vacaciones = Column(Integer, default=0)
 
+    # Resto de eventos del mes que alimentan el cálculo (se guardan para
+    # poder reabrir y modificar la nómina más adelante sin perder los datos
+    # originales de entrada).
+    horas_extra_nocturnas = Column(Numeric(6, 2), default=0)
+    horas_nocturnas_ordinarias = Column(Numeric(6, 2), default=0)
+    dias_festivos_trabajados = Column(Integer, default=0)
+    anticipos = Column(Numeric(10, 2), default=0)
+    embargo_mensual = Column(Numeric(10, 2), default=0)
+    numero_medias_dietas = Column(Integer, default=0)
+    numero_dietas_completas_cortas = Column(Integer, default=0)
+    numero_dietas_completas_largas = Column(Integer, default=0)
+
     total_devengado = Column(Numeric(10, 2), nullable=False, default=0)
     total_deducciones = Column(Numeric(10, 2), nullable=False, default=0)
     liquido_a_percibir = Column(Numeric(10, 2), nullable=False, default=0)

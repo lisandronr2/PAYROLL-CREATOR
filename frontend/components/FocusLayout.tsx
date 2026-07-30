@@ -22,7 +22,7 @@ export default function FocusLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex min-h-screen w-full flex-col">
-      <header className="bg-slate-900 text-white">
+      <header className="bg-slate-900 text-white print:hidden">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
           <Link href="/" className="font-semibold text-base">
             PAYROLL CREATOR
@@ -43,7 +43,7 @@ export default function FocusLayout({ children }: { children: React.ReactNode })
 
       <main className="flex-1 max-w-5xl w-full mx-auto px-4 py-6">{children}</main>
 
-      <div className="max-w-5xl w-full mx-auto px-4 pb-6">
+      <div className="max-w-5xl w-full mx-auto px-4 pb-6 print:hidden">
         <button
           onClick={() => router.push("/")}
           className="flex items-center gap-2 border rounded-lg px-4 py-2 text-sm font-medium bg-white hover:bg-slate-100"
@@ -53,7 +53,7 @@ export default function FocusLayout({ children }: { children: React.ReactNode })
         </button>
       </div>
 
-      <footer className="text-center text-xs text-slate-500 py-4">
+      <footer className="text-center text-xs text-slate-500 py-4 print:hidden">
         Motor de cálculo MVP — valores legales orientativos, verificar con asesoría antes de uso real.
         <span className="block text-slate-400 mt-1">v{FULL_VERSION}</span>
       </footer>

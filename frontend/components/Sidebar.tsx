@@ -166,7 +166,20 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
     return (
       <div key={group.id} className="mb-1">
         <button
-          onClick={() => toggleGroup(group.id)}
+          onClick={() => {
+            if (effectiveCollapsed) {
+              // Con el rail contraído no hay dónde mostrar los ítems: primero
+              // hay que expandir el menú y dejar el grupo abierto.
+              setCollapsed(false);
+              setOpenGroups((prev) => {
+                const next = { ...prev, [group.id]: true };
+                window.localStorage.setItem(STORAGE_GROUPS, JSON.stringify(next));
+                return next;
+              });
+            } else {
+              toggleGroup(group.id);
+            }
+          }}
           className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-slate-100 ${
             activo ? "text-slate-900" : "text-slate-600"
           }`}

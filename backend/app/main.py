@@ -7,7 +7,7 @@ from app import models  # noqa: F401
 from app.routers import empresas, trabajadores, contratos, convenios, nominas, auth, admin
 from app.seed.parametros_legales import seed_parametros_legales, corregir_parametros_legales
 from app.seed.tabla_irpf import seed_tabla_irpf
-from app.seed.convenios import seed_convenios, seed_convenio_dietas
+from app.seed.convenios import seed_convenios, seed_convenio_dietas, seed_subniveles_metal
 from app.seed.usuarios import seed_usuario_admin
 from app.migrations_ligeras import aplicar_migraciones_ligeras
 from app.version import VERSION, BUILD, FULL_VERSION
@@ -34,6 +34,7 @@ def on_startup() -> None:
         seed_tabla_irpf(db)
         seed_convenios(db)
         seed_convenio_dietas(db)
+        seed_subniveles_metal(db)
         seed_usuario_admin(db)
     finally:
         db.close()

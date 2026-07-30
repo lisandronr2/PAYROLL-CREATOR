@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.auth import get_current_usuario
 from app.database import get_db
 from app.models.contrato import Contrato
+from app.pdf.extractor_contrato import extraer_datos_contrato
 from app.schemas.contrato import ContratoCreate, ContratoOut
 
 router = APIRouter(prefix="/contratos", tags=["contratos"], dependencies=[Depends(get_current_usuario)])
@@ -15,6 +16,24 @@ def listar_contratos(trabajador_id: int | None = None, db: Session = Depends(get
     if trabajador_id is not None:
         query = query.filter(Contrato.trabajador_id == trabajador_id)
     return query.all()
+
+
+@router.post("/extraer-pdf")
+async def extraer_pdf_contrato(archivo: UploadFile):
+    """
+    Lee un contrato ya firmado en PDF y sugiere valores para el formulario de
+    alta (fecha de inicio, tipo de contrato, jornada, salario, puesto). Es
+    heurístico: no garantiza acertar todos los campos y el usuario debe
+    revisar el resultado antes de guardar el contrato.
+    """
+    if archivo.content_type not in ("application/pdf", "application/octet-stream"):
+        raise HTTPException(status_code=422, detail="El archivo debe ser un PDF")
+
+    contenido = await archivo.read()
+    try:
+        return extraer_datos_contrato(contenido)
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=f"No se pudo leer el PDF: {exc}")
 
 
 @router.post("", response_model=ContratoOut, status_code=201)

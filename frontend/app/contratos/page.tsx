@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { api, CategoriaProfesional, Contrato, Convenio, Trabajador } from "@/lib/api";
 
 const initialForm = {
@@ -12,6 +13,7 @@ const initialForm = {
   fecha_inicio: "",
   puesto_trabajo: "",
   seccion: "",
+  salario_pactado_mensual: "",
   complemento_mensual: "0",
   pagas_extra_prorrateadas: false,
 };
@@ -24,6 +26,8 @@ export default function ContratosPage() {
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
+  const [analizando, setAnalizando] = useState(false);
+  const [avisoPdf, setAvisoPdf] = useState<string | null>(null);
 
   async function cargar() {
     const [trab, conv, cont] = await Promise.all([
@@ -59,13 +63,53 @@ export default function ContratosPage() {
         convenio_id: Number(form.convenio_id),
         categoria_id: Number(form.categoria_id),
         jornada_porcentaje: form.jornada_porcentaje as unknown as string,
+        salario_pactado_mensual: form.salario_pactado_mensual
+          ? (form.salario_pactado_mensual as unknown as string)
+          : null,
       });
       setForm(initialForm);
+      setAvisoPdf(null);
       await cargar();
     } catch (err) {
       setError(String(err));
     } finally {
       setCargando(false);
+    }
+  }
+
+  async function onSubirPdf(e: React.ChangeEvent<HTMLInputElement>) {
+    const archivo = e.target.files?.[0];
+    e.target.value = "";
+    if (!archivo) return;
+    setError(null);
+    setAvisoPdf(null);
+    setAnalizando(true);
+    try {
+      const detectado = await api.contratos.extraerPdf(archivo);
+      setForm((prev) => ({
+        ...prev,
+        fecha_inicio: detectado.fecha_inicio ?? prev.fecha_inicio,
+        tipo_contrato: detectado.tipo_contrato ?? prev.tipo_contrato,
+        jornada_porcentaje: detectado.jornada_porcentaje ?? prev.jornada_porcentaje,
+        salario_pactado_mensual: detectado.salario_pactado_mensual ?? prev.salario_pactado_mensual,
+        puesto_trabajo: detectado.puesto_trabajo ?? prev.puesto_trabajo,
+      }));
+      const camposDetectados = [
+        detectado.fecha_inicio && "fecha de inicio",
+        detectado.tipo_contrato && "tipo de contrato",
+        detectado.jornada_porcentaje && "jornada",
+        detectado.salario_pactado_mensual && "salario",
+        detectado.puesto_trabajo && "puesto de trabajo",
+      ].filter(Boolean);
+      setAvisoPdf(
+        camposDetectados.length
+          ? `Detectado automáticamente: ${camposDetectados.join(", ")}. Revisa los datos antes de guardar — la lectura del PDF es orientativa.`
+          : "No se ha podido detectar ningún dato con confianza en ese PDF. Rellena el formulario manualmente."
+      );
+    } catch (err) {
+      setError(String(err));
+    } finally {
+      setAnalizando(false);
     }
   }
 
@@ -77,6 +121,26 @@ export default function ContratosPage() {
   return (
     <div>
       <h1 className="text-xl font-semibold mb-4">Contratos</h1>
+
+      <div className="bg-white border rounded-lg p-4 mb-4 flex items-center gap-3">
+        <label className="text-sm bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded cursor-pointer">
+          {analizando ? "Analizando PDF..." : "Subir contrato en PDF"}
+          <input
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            disabled={analizando}
+            onChange={onSubirPdf}
+          />
+        </label>
+        <p className="text-xs text-slate-500">
+          Sube un contrato ya firmado y se intentarán detectar automáticamente la fecha de inicio, el
+          tipo de contrato, la jornada, el salario y el puesto para rellenar el formulario de abajo.
+        </p>
+      </div>
+      {avisoPdf && (
+        <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded p-2 mb-4">{avisoPdf}</p>
+      )}
 
       <form onSubmit={onSubmit} className="bg-white border rounded-lg p-4 mb-6 grid sm:grid-cols-2 gap-3">
         <select
@@ -157,6 +221,16 @@ export default function ContratosPage() {
           onChange={(e) => setForm({ ...form, seccion: e.target.value })}
         />
         <label className="text-xs text-slate-500 flex flex-col gap-1 sm:col-span-2">
+          Salario pactado mensual (€, opcional — solo si sustituye al de la tabla de convenio)
+          <input
+            type="number"
+            step="0.01"
+            className="border rounded px-3 py-2"
+            value={form.salario_pactado_mensual}
+            onChange={(e) => setForm({ ...form, salario_pactado_mensual: e.target.value })}
+          />
+        </label>
+        <label className="text-xs text-slate-500 flex flex-col gap-1 sm:col-span-2">
           Mejora voluntaria mensual (€, adicional al salario de convenio)
           <input
             type="number"
@@ -192,6 +266,7 @@ export default function ContratosPage() {
             <th className="text-left p-2">Tipo</th>
             <th className="text-left p-2">Jornada</th>
             <th className="text-left p-2">Inicio</th>
+            <th className="text-right p-2"></th>
           </tr>
         </thead>
         <tbody>
@@ -202,6 +277,11 @@ export default function ContratosPage() {
               <td className="p-2">{c.tipo_contrato}</td>
               <td className="p-2">{c.jornada_porcentaje}%</td>
               <td className="p-2">{c.fecha_inicio}</td>
+              <td className="p-2 text-right">
+                <Link href={`/contratos/${c.id}`} className="text-blue-600 underline">
+                  Ver / imprimir
+                </Link>
+              </td>
             </tr>
           ))}
         </tbody>
