@@ -29,29 +29,6 @@ def _hash_token(token: str) -> str:
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
-# Endpoint temporal de diagnóstico, protegido por un token fijo en código (no
-# expone la API key, solo confirma qué configuración está realmente cargada
-# en el proceso en ejecución). Quitar una vez resuelto el problema de
-# entrega de correos.
-DIAG_TOKEN = "payroll-diag-2026-smtp"
-
-
-@router.get("/diagnostico-smtp")
-def diagnostico_smtp(token: str):
-    if token != DIAG_TOKEN:
-        raise HTTPException(status_code=404)
-
-    api_key = settings.resend_api_key
-    api_key_enmascarada = f"{api_key[:6]}***" if api_key else "(vacío)"
-
-    return {
-        "resend_configurado": bool(api_key),
-        "resend_api_key": api_key_enmascarada,
-        "resend_from": settings.resend_from,
-        "frontend_url": settings.frontend_url,
-    }
-
-
 @router.post("/login", response_model=TokenOut)
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
     usuario = db.query(Usuario).filter(Usuario.email == payload.email).first()
