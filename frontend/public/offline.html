@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sin conexión — PAYROLL CREATOR</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 24px;
+      text-align: center;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 32px;
+      max-width: 420px;
+    }
+    h1 { font-size: 1.1rem; margin: 0 0 8px; }
+    p { color: #64748b; font-size: 0.9rem; line-height: 1.5; }
+    button {
+      margin-top: 16px;
+      background: #0f172a;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Sin conexión</h1>
+    <p>
+      No se puede cargar esta página sin conexión porque no se había visitado antes.
+      Vuelve a intentarlo cuando tengas internet, o visita una página que ya hayas
+      consultado con conexión.
+    </p>
+    <button onclick="window.location.reload()">Reintentar</button>
+  </div>
+</body>
+</html>
