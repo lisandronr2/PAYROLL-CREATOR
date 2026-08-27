@@ -186,6 +186,61 @@ export interface ConvenioDietaRef {
   vigente_hasta?: string | null;
 }
 
+export interface ParametroNegocio {
+  id: number;
+  clave: string;
+  valor: string;
+  descripcion?: string | null;
+}
+
+export interface PresupuestoLineaPersonal {
+  id?: number;
+  categoria_id: number;
+  cantidad_personas: number;
+  jornada_porcentaje: string;
+  dias_dedicacion: string;
+  pagas_extra_prorrateadas: boolean;
+  complemento_mensual: string;
+  numero_medias_dietas: number;
+  numero_dietas_completas_cortas: number;
+  numero_dietas_completas_largas: number;
+  coste_unitario?: string;
+  coste_total_linea?: string;
+}
+
+export interface PresupuestoLineaOtroCoste {
+  id?: number;
+  concepto: string;
+  cantidad: string;
+  precio_unitario: string;
+  importe?: string;
+}
+
+export interface Presupuesto {
+  id: number;
+  empresa_id: number;
+  convenio_id: number;
+  nombre: string;
+  cliente_nombre?: string | null;
+  cliente_nif?: string | null;
+  fecha: string;
+  notas?: string | null;
+  margen_beneficio_pct: string;
+  gastos_generales_pct: string;
+  iva_pct: string;
+  coste_directo_personal: string;
+  coste_directo_otros: string;
+  coste_directo_total: string;
+  gastos_generales_importe: string;
+  coste_total: string;
+  margen_importe: string;
+  precio_venta: string;
+  iva_importe: string;
+  precio_total_cliente: string;
+  lineas_personal: PresupuestoLineaPersonal[];
+  lineas_otros: PresupuestoLineaOtroCoste[];
+}
+
 /**
  * Abre el PDF en una pestaña nueva con el visor del navegador (en vez de
  * descargarlo directamente), para poder verlo antes de decidir imprimirlo o
@@ -229,6 +284,10 @@ async function fetchPdfComoBlobUrl(url: string): Promise<string> {
 
 async function verPdfNomina(nominaId: number, nombreArchivo: string) {
   await abrirPdfEnNuevaPestana(`/nominas/${nominaId}/pdf`, nombreArchivo);
+}
+
+async function verPdfPresupuesto(presupuestoId: number, tipo: "cliente" | "interno", nombreArchivo: string) {
+  await abrirPdfEnNuevaPestana(`/presupuestos/${presupuestoId}/pdf?tipo=${tipo}`, nombreArchivo);
 }
 
 export const api = {
@@ -315,6 +374,17 @@ export const api = {
     parametrosLegales: () => request<ParametroLegal[]>("/referencia/parametros-legales"),
     dietasConvenio: (convenioId: number) =>
       request<ConvenioDietaRef[]>(`/referencia/convenios/${convenioId}/dietas`),
+    parametrosNegocio: () => request<ParametroNegocio[]>("/referencia/parametros-negocio"),
+  },
+  presupuestos: {
+    listar: () => request<Presupuesto[]>("/presupuestos"),
+    obtener: (id: number) => request<Presupuesto>(`/presupuestos/${id}`),
+    crear: (data: Record<string, unknown>) =>
+      request<Presupuesto>("/presupuestos", { method: "POST", body: JSON.stringify(data) }),
+    actualizar: (id: number, data: Record<string, unknown>) =>
+      request<Presupuesto>(`/presupuestos/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    eliminar: (id: number) => request<void>(`/presupuestos/${id}`, { method: "DELETE" }),
+    verPdf: verPdfPresupuesto,
   },
   admin: {
     usuarios: {
@@ -332,6 +402,14 @@ export const api = {
       actualizar: (id: number, data: Partial<ParametroLegal>) =>
         request<ParametroLegal>(`/admin/parametros-legales/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
       eliminar: (id: number) => request<void>(`/admin/parametros-legales/${id}`, { method: "DELETE" }),
+    },
+    parametrosNegocio: {
+      listar: () => request<ParametroNegocio[]>("/admin/parametros-negocio"),
+      actualizar: (id: number, valor: string) =>
+        request<ParametroNegocio>(`/admin/parametros-negocio/${id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ valor }),
+        }),
     },
     tablaIrpf: {
       listar: (anio?: number) => request<TramoIRPF[]>(`/admin/tabla-irpf${anio ? `?anio=${anio}` : ""}`),

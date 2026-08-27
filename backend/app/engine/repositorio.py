@@ -5,7 +5,8 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from app.models.contrato import Contrato
-from app.models.convenio import ConvenioDieta, ConvenioTablaSalarial
+from app.models.convenio import CategoriaProfesional, ConvenioDieta, ConvenioTablaSalarial
+from app.models.empresa import Empresa
 from app.models.parametro_legal import ParametroLegal
 from app.models.tabla_irpf import TablaIRPF
 from app.engine.tipos import DatosConvenioContrato, ParametrosCotizacion
@@ -129,4 +130,80 @@ def obtener_datos_convenio_contrato(db: Session, contrato: Contrato, en_fecha: d
         dieta_completa_larga=Decimal(dieta.dieta_completa_larga) if dieta else Decimal("0"),
         tipo_at_ep_pct=Decimal(contrato.trabajador.empresa.tipo_at_ep_pct),
         complemento_mensual=Decimal(contrato.complemento_mensual or 0),
+    )
+
+
+def obtener_datos_convenio_categoria(
+    db: Session,
+    categoria_id: int,
+    empresa_id: int,
+    en_fecha: date,
+    jornada_porcentaje: Decimal = Decimal("100"),
+    complemento_mensual: Decimal = Decimal("0"),
+    pagas_extra_prorrateadas: bool = True,
+) -> DatosConvenioContrato:
+    """
+    Igual que `obtener_datos_convenio_contrato`, pero sin necesitar un
+    contrato real: se usa para simular el coste de una categoría de convenio
+    en una empresa concreta (presupuestos de proyecto). No hay antigüedad
+    real, así que se asume 0 quinquenios/trienios.
+    """
+    categoria = db.get(CategoriaProfesional, categoria_id)
+    if categoria is None:
+        raise ValueError("Categoría profesional no encontrada")
+
+    empresa = db.get(Empresa, empresa_id)
+    if empresa is None:
+        raise ValueError("Empresa no encontrada")
+
+    tabla = (
+        db.query(ConvenioTablaSalarial)
+        .filter(
+            ConvenioTablaSalarial.categoria_id == categoria_id,
+            ConvenioTablaSalarial.vigente_desde <= en_fecha,
+        )
+        .filter(
+            (ConvenioTablaSalarial.vigente_hasta.is_(None))
+            | (ConvenioTablaSalarial.vigente_hasta >= en_fecha)
+        )
+        .order_by(ConvenioTablaSalarial.vigente_desde.desc())
+        .first()
+    )
+    if tabla is None:
+        raise ValueError("No hay tabla salarial vigente para esta categoría en la fecha indicada")
+
+    convenio = categoria.convenio
+
+    dieta = (
+        db.query(ConvenioDieta)
+        .filter(
+            ConvenioDieta.convenio_id == convenio.id,
+            ConvenioDieta.vigente_desde <= en_fecha,
+        )
+        .filter((ConvenioDieta.vigente_hasta.is_(None)) | (ConvenioDieta.vigente_hasta >= en_fecha))
+        .order_by(ConvenioDieta.vigente_desde.desc())
+        .first()
+    )
+
+    return DatosConvenioContrato(
+        nombre_convenio=convenio.nombre,
+        numero_pagas=convenio.numero_pagas,
+        jornada_anual_horas=Decimal(convenio.jornada_anual_horas),
+        salario_convenio_mensual=Decimal(tabla.salario_convenio_mensual),
+        base_calculo_complementos_mensual=Decimal(
+            tabla.base_calculo_complementos_mensual or tabla.salario_convenio_mensual
+        ),
+        valor_quinquenio_o_trienio=Decimal(tabla.valor_quinquenio_o_trienio or 0),
+        plus_convenio_mensual=Decimal(tabla.plus_convenio_mensual or 0),
+        jornada_porcentaje=jornada_porcentaje,
+        tipo_contrato="indefinido",
+        pagas_extra_prorrateadas=pagas_extra_prorrateadas,
+        numero_quinquenios_o_trienios=0,
+        grupo_cotizacion=categoria.grupo_cotizacion,
+        salario_pactado_mensual=None,
+        media_dieta=Decimal(dieta.media_dieta) if dieta else Decimal("0"),
+        dieta_completa_corta=Decimal(dieta.dieta_completa_corta) if dieta else Decimal("0"),
+        dieta_completa_larga=Decimal(dieta.dieta_completa_larga) if dieta else Decimal("0"),
+        tipo_at_ep_pct=Decimal(empresa.tipo_at_ep_pct),
+        complemento_mensual=complemento_mensual,
     )

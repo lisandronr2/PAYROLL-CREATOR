@@ -14,7 +14,9 @@ from app.auth import get_current_usuario
 from app.database import get_db
 from app.models.convenio import ConvenioDieta
 from app.models.parametro_legal import ParametroLegal
+from app.models.parametro_negocio import ParametroNegocio
 from app.schemas.parametro_legal import ParametroLegalOut
+from app.schemas.parametro_negocio import ParametroNegocioOut
 from app.schemas.referencia import ConvenioDietaOut
 
 router = APIRouter(prefix="/referencia", tags=["referencia"], dependencies=[Depends(get_current_usuario)])
@@ -30,6 +32,11 @@ def parametros_legales_vigentes(db: Session = Depends(get_db)):
         .order_by(ParametroLegal.clave, ParametroLegal.grupo_cotizacion)
         .all()
     )
+
+
+@router.get("/parametros-negocio", response_model=list[ParametroNegocioOut])
+def parametros_negocio(db: Session = Depends(get_db)):
+    return db.query(ParametroNegocio).order_by(ParametroNegocio.clave).all()
 
 
 @router.get("/convenios/{convenio_id}/dietas", response_model=list[ConvenioDietaOut])

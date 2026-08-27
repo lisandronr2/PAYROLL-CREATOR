@@ -4,10 +4,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.database import Base, SessionLocal, engine
 from app import models  # noqa: F401
-from app.routers import empresas, trabajadores, contratos, convenios, nominas, auth, admin, referencia
+from app.routers import empresas, trabajadores, contratos, convenios, nominas, auth, admin, referencia, presupuestos
 from app.seed.parametros_legales import seed_parametros_legales, corregir_parametros_legales
 from app.seed.tabla_irpf import seed_tabla_irpf, corregir_tabla_irpf
 from app.seed.convenios import seed_convenios, seed_convenio_dietas, seed_subniveles_metal
+from app.seed.parametros_negocio import seed_parametros_negocio
 from app.seed.usuarios import seed_usuario_admin
 from app.migrations_ligeras import aplicar_migraciones_ligeras
 from app.version import VERSION, BUILD, FULL_VERSION
@@ -36,6 +37,7 @@ def on_startup() -> None:
         seed_convenios(db)
         seed_convenio_dietas(db)
         seed_subniveles_metal(db)
+        seed_parametros_negocio(db)
         seed_usuario_admin(db)
     finally:
         db.close()
@@ -49,6 +51,7 @@ app.include_router(contratos.router)
 app.include_router(convenios.router)
 app.include_router(nominas.router)
 app.include_router(referencia.router)
+app.include_router(presupuestos.router)
 
 
 @app.get("/health")

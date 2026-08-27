@@ -8,6 +8,8 @@ from app.models.nomina import Nomina, NominaLinea
 from app.models.calendario import CalendarioLaboral
 from app.models.historial import HistorialModificacion
 from app.models.usuario import Usuario
+from app.models.parametro_negocio import ParametroNegocio
+from app.models.presupuesto import Presupuesto, PresupuestoLineaPersonal, PresupuestoLineaOtroCoste
 
 __all__ = [
     "Usuario",
@@ -24,4 +26,8 @@ __all__ = [
     "NominaLinea",
     "CalendarioLaboral",
     "HistorialModificacion",
+    "ParametroNegocio",
+    "Presupuesto",
+    "PresupuestoLineaPersonal",
+    "PresupuestoLineaOtroCoste",
 ]

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 1.2cm; }
+  body { font-family: Helvetica, Arial, sans-serif; font-size: 8pt; color: #1a1a1a; line-height: 1.2; }
+  h1 { font-size: 13pt; margin: 0 0 4px 0; }
+  .subtitulo { font-size: 8pt; color: #666; margin-bottom: 10px; }
+
+  table.ficha { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  table.ficha th { background: #eee; border: 0.5px solid #999; text-align: left; font-size: 6.8pt; font-weight: normal; color: #555; padding: 2px 5px; }
+  table.ficha td { border: 0.5px solid #999; padding: 3px 5px; font-size: 8.5pt; font-weight: bold; }
+
+  table.detalle { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+  table.detalle th { text-align: left; background: #eee; padding: 3px 5px; font-size: 7.5pt; border-bottom: 1px solid #999; }
+  table.detalle td { padding: 3px 5px; border-bottom: 0.5px solid #ddd; font-size: 8pt; vertical-align: top; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  .total-row td { font-weight: bold; border-top: 1px solid #333; }
+  .seccion-titulo { font-weight: bold; margin: 8px 0 3px 0; font-size: 9.5pt; }
+
+  .resumen { margin-top: 10px; border: 1px solid #222; padding: 6px 10px; }
+  .resumen table { width: 100%; border-collapse: collapse; }
+  .resumen td { border: none; padding: 2px 5px; font-size: 8.5pt; }
+  .resumen .total-final td { font-size: 12pt; font-weight: bold; border-top: 1.5px solid #222; padding-top: 6px; }
+
+  .aviso { margin-top: 12px; font-size: 6.4pt; color: #888; border-top: 0.5px solid #ccc; padding-top: 4px; }
+  .etiqueta-interno { display: inline-block; background: #b91c1c; color: #fff; font-size: 7pt; padding: 2px 8px; border-radius: 3px; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+  {% if tipo == "interno" %}
+  <div class="etiqueta-interno">USO INTERNO — NO ENVIAR AL CLIENTE</div>
+  {% endif %}
+
+  <h1>Presupuesto — {{ presupuesto.nombre }}</h1>
+  <div class="subtitulo">Fecha: {{ fecha }} · Convenio de referencia: {{ convenio.nombre }}</div>
+
+  <table class="ficha">
+    <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+    <tr>
+      <th>EMPRESA QUE EJECUTA</th>
+      <th>CLIENTE</th>
+    </tr>
+    <tr>
+      <td>{{ empresa.razon_social }} ({{ empresa.cif }})</td>
+      <td>{{ presupuesto.cliente_nombre or "-" }}{% if presupuesto.cliente_nif %} ({{ presupuesto.cliente_nif }}){% endif %}</td>
+    </tr>
+  </table>
+
+  <div class="seccion-titulo">Mano de obra</div>
+  <table class="detalle">
+    <tr>
+      <th>Categoría</th>
+      <th class="num">Personas</th>
+      <th class="num">Días</th>
+      <th class="num">Jornada</th>
+      {% if tipo == "interno" %}<th class="num">Coste</th>{% endif %}
+      <th class="num">{{ "Coste" if tipo == "interno" else "Importe" }} (€)</th>
+    </tr>
+    {% for l in lineas_personal %}
+    <tr>
+      <td>{{ l.categoria_grupo }} — {{ l.categoria_nombre }}</td>
+      <td class="num">{{ l.cantidad_personas }}</td>
+      <td class="num">{{ "%.0f"|format(l.dias_dedicacion) }}</td>
+      <td class="num">{{ "%.0f"|format(l.jornada_porcentaje) }}%</td>
+      {% if tipo == "interno" %}
+      <td class="num">{{ "%.2f"|format(l.coste_total_linea) }}</td>
+      <td class="num">{{ "%.2f"|format(l.coste_total_linea) }}</td>
+      {% else %}
+      <td class="num">{{ "%.2f"|format(l.precio_venta_linea) }}</td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+  </table>
+
+  {% if lineas_otros %}
+  <div class="seccion-titulo">Materiales y otros costes</div>
+  <table class="detalle">
+    <tr>
+      <th>Concepto</th>
+      <th class="num">Cantidad</th>
+      <th class="num">Precio unitario</th>
+      <th class="num">{{ "Coste" if tipo == "interno" else "Importe" }} (€)</th>
+    </tr>
+    {% for o in lineas_otros %}
+    <tr>
+      <td>{{ o.concepto }}</td>
+      <td class="num">{{ "%.2f"|format(o.cantidad) }}</td>
+      <td class="num">{{ "%.2f"|format(o.precio_unitario) }}</td>
+      <td class="num">{{ "%.2f"|format(o.importe if tipo == "interno" else o.precio_venta_linea) }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+
+  {% if tipo == "interno" %}
+  <div class="resumen">
+    <table>
+      <tr><td>Coste directo — personal</td><td class="num">{{ "%.2f"|format(presupuesto.coste_directo_personal) }} €</td></tr>
+      <tr><td>Coste directo — materiales y otros</td><td class="num">{{ "%.2f"|format(presupuesto.coste_directo_otros) }} €</td></tr>
+      <tr><td><strong>Coste directo total</strong></td><td class="num"><strong>{{ "%.2f"|format(presupuesto.coste_directo_total) }} €</strong></td></tr>
+      <tr><td>Gastos generales ({{ "%.2f"|format(presupuesto.gastos_generales_pct) }}%)</td><td class="num">{{ "%.2f"|format(presupuesto.gastos_generales_importe) }} €</td></tr>
+      <tr><td><strong>Coste total</strong></td><td class="num"><strong>{{ "%.2f"|format(presupuesto.coste_total) }} €</strong></td></tr>
+      <tr><td>Margen de beneficio ({{ "%.2f"|format(presupuesto.margen_beneficio_pct) }}%)</td><td class="num">{{ "%.2f"|format(presupuesto.margen_importe) }} €</td></tr>
+      <tr><td><strong>Precio de venta (sin IVA)</strong></td><td class="num"><strong>{{ "%.2f"|format(presupuesto.precio_venta) }} €</strong></td></tr>
+      <tr><td>IVA ({{ "%.2f"|format(presupuesto.iva_pct) }}%)</td><td class="num">{{ "%.2f"|format(presupuesto.iva_importe) }} €</td></tr>
+      <tr class="total-final"><td>PRECIO TOTAL AL CLIENTE</td><td class="num">{{ "%.2f"|format(presupuesto.precio_total_cliente) }} €</td></tr>
+    </table>
+  </div>
+  {% else %}
+  <div class="resumen">
+    <table>
+      <tr><td>Subtotal</td><td class="num">{{ "%.2f"|format(presupuesto.precio_venta) }} €</td></tr>
+      <tr><td>IVA ({{ "%.2f"|format(presupuesto.iva_pct) }}%)</td><td class="num">{{ "%.2f"|format(presupuesto.iva_importe) }} €</td></tr>
+      <tr class="total-final"><td>TOTAL PRESUPUESTO</td><td class="num">{{ "%.2f"|format(presupuesto.precio_total_cliente) }} €</td></tr>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if presupuesto.notas %}
+  <div class="seccion-titulo">Notas</div>
+  <p style="font-size:8pt;">{{ presupuesto.notas }}</p>
+  {% endif %}
+
+  <div class="aviso">
+    Documento generado por PAYROLL CREATOR. Presupuesto orientativo basado en los datos del convenio
+    colectivo indicado y en los parámetros de negocio configurados (gastos generales, margen e IVA) —
+    verifica las condiciones reales antes de formalizar el proyecto. · PAYROLL CREATOR v{{ app_version }}
+  </div>
+</body>
+</html>

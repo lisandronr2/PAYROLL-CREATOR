@@ -5,6 +5,7 @@ from app.auth import hash_password, require_admin
 from app.database import get_db
 from app.models.convenio import CategoriaProfesional, Convenio, ConvenioTablaSalarial
 from app.models.parametro_legal import ParametroLegal
+from app.models.parametro_negocio import ParametroNegocio
 from app.models.tabla_irpf import TablaIRPF
 from app.models.usuario import Usuario
 from app.schemas.convenio import (
@@ -24,6 +25,7 @@ from app.schemas.parametro_legal import (
     TablaIRPFOut,
     TablaIRPFUpdate,
 )
+from app.schemas.parametro_negocio import ParametroNegocioOut, ParametroNegocioUpdate
 from app.schemas.usuario import UsuarioCreate, UsuarioOut, UsuarioUpdate
 
 router = APIRouter(prefix="/admin", tags=["admin"], dependencies=[Depends(require_admin)])
@@ -109,6 +111,23 @@ def eliminar_parametro_legal(parametro_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Parámetro no encontrado")
     db.delete(parametro)
     db.commit()
+
+
+# ---------- Parámetros de negocio (margen, gastos generales, IVA por defecto) ----------
+@router.get("/parametros-negocio", response_model=list[ParametroNegocioOut])
+def listar_parametros_negocio(db: Session = Depends(get_db)):
+    return db.query(ParametroNegocio).order_by(ParametroNegocio.clave).all()
+
+
+@router.patch("/parametros-negocio/{parametro_id}", response_model=ParametroNegocioOut)
+def actualizar_parametro_negocio(parametro_id: int, payload: ParametroNegocioUpdate, db: Session = Depends(get_db)):
+    parametro = db.get(ParametroNegocio, parametro_id)
+    if not parametro:
+        raise HTTPException(status_code=404, detail="Parámetro no encontrado")
+    parametro.valor = payload.valor
+    db.commit()
+    db.refresh(parametro)
+    return parametro
 
 
 # ---------- Tabla IRPF ----------

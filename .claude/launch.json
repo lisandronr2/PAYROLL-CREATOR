@@ -6,6 +6,10 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "frontend", "run", "dev"],
       "port": 3000
+    },
+    {
+      "name": "payroll-creator-backend",
+      "url": "http://127.0.0.1:8000"
     }
   ]
 }

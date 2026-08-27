@@ -21,6 +21,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
+  Receipt,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
@@ -61,6 +62,12 @@ const GROUPS: NavGroup[] = [
       { href: "/parametros", label: "Parámetros aplicados", icon: Percent },
     ],
   },
+  {
+    id: "presupuestos",
+    label: "Presupuestos",
+    icon: Receipt,
+    items: [{ href: "/presupuestos", label: "Presupuestos de proyecto", icon: Receipt }],
+  },
 ];
 
 const ADMIN_GROUP: NavGroup = {
@@ -69,6 +76,7 @@ const ADMIN_GROUP: NavGroup = {
   icon: ShieldCheck,
   items: [
     { href: "/admin/parametros", label: "Parámetros legales", icon: SlidersHorizontal },
+    { href: "/admin/parametros-negocio", label: "Parámetros de negocio", icon: Receipt },
     { href: "/admin/tabla-irpf", label: "Tabla IRPF", icon: Percent },
     { href: "/admin/convenios", label: "Convenios (editar)", icon: BookOpenCheck },
     { href: "/admin/usuarios", label: "Usuarios", icon: UserCog },
