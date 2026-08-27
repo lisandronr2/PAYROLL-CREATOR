@@ -206,6 +206,8 @@ export interface PresupuestoLineaPersonal {
   numero_dietas_completas_largas: number;
   coste_unitario?: string;
   coste_total_linea?: string;
+  coste_mano_obra_total?: string;
+  coste_dietas_total?: string;
 }
 
 export interface PresupuestoLineaOtroCoste {
@@ -228,7 +230,8 @@ export interface Presupuesto {
   margen_beneficio_pct: string;
   gastos_generales_pct: string;
   iva_pct: string;
-  coste_directo_personal: string;
+  coste_directo_mano_obra: string;
+  coste_directo_dietas: string;
   coste_directo_otros: string;
   coste_directo_total: string;
   gastos_generales_importe: string;

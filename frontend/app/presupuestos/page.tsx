@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   api,
   CategoriaProfesional,
@@ -35,7 +36,11 @@ function valorDefecto(parametros: ParametroNegocio[], clave: string): string {
   return parametros.find((p) => p.clave === clave)?.valor ?? "";
 }
 
-export default function PresupuestosPage() {
+function PresupuestosForm() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const presupuestoEditarId = searchParams.get("editar");
+
   const [presupuestos, setPresupuestos] = useState<Presupuesto[]>([]);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [convenios, setConvenios] = useState<Convenio[]>([]);
@@ -57,6 +62,7 @@ export default function PresupuestosPage() {
 
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
+  const [cargandoEdicion, setCargandoEdicion] = useState(!!presupuestoEditarId);
 
   function cargar() {
     Promise.all([
@@ -70,15 +76,18 @@ export default function PresupuestosPage() {
         setEmpresas(e);
         setConvenios(c);
         setParametrosNegocio(pn);
-        setMargenPct((prev) => prev || valorDefecto(pn, "margen_beneficio_pct_defecto"));
-        setGastosPct((prev) => prev || valorDefecto(pn, "gastos_generales_pct_defecto"));
-        setIvaPct((prev) => prev || valorDefecto(pn, "iva_pct_defecto"));
+        if (!presupuestoEditarId) {
+          setMargenPct((prev) => prev || valorDefecto(pn, "margen_beneficio_pct_defecto"));
+          setGastosPct((prev) => prev || valorDefecto(pn, "gastos_generales_pct_defecto"));
+          setIvaPct((prev) => prev || valorDefecto(pn, "iva_pct_defecto"));
+        }
       })
       .catch((e) => setError(String(e)));
   }
 
   useEffect(() => {
     cargar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -88,6 +97,49 @@ export default function PresupuestosPage() {
     }
     api.convenios.categorias(Number(convenioId)).then(setCategorias);
   }, [convenioId]);
+
+  // Al editar un presupuesto existente, precargar todos sus datos en el formulario.
+  useEffect(() => {
+    if (!presupuestoEditarId) return;
+    api.presupuestos
+      .obtener(Number(presupuestoEditarId))
+      .then((p) => {
+        setEmpresaId(String(p.empresa_id));
+        setConvenioId(String(p.convenio_id));
+        setNombre(p.nombre);
+        setClienteNombre(p.cliente_nombre ?? "");
+        setClienteNif(p.cliente_nif ?? "");
+        setFecha(p.fecha);
+        setMargenPct(p.margen_beneficio_pct);
+        setGastosPct(p.gastos_generales_pct);
+        setIvaPct(p.iva_pct);
+        setNotas(p.notas ?? "");
+        setLineasPersonal(
+          p.lineas_personal.length
+            ? p.lineas_personal.map((l) => ({
+                categoria_id: l.categoria_id,
+                cantidad_personas: l.cantidad_personas,
+                jornada_porcentaje: l.jornada_porcentaje,
+                dias_dedicacion: l.dias_dedicacion,
+                pagas_extra_prorrateadas: l.pagas_extra_prorrateadas,
+                complemento_mensual: l.complemento_mensual,
+                numero_medias_dietas: l.numero_medias_dietas,
+                numero_dietas_completas_cortas: l.numero_dietas_completas_cortas,
+                numero_dietas_completas_largas: l.numero_dietas_completas_largas,
+              }))
+            : [{ ...lineaPersonalVacia }]
+        );
+        setLineasOtros(
+          p.lineas_otros.map((l) => ({
+            concepto: l.concepto,
+            cantidad: l.cantidad,
+            precio_unitario: l.precio_unitario,
+          }))
+        );
+      })
+      .catch((e) => setError(String(e)))
+      .finally(() => setCargandoEdicion(false));
+  }, [presupuestoEditarId]);
 
   function nombreEmpresa(id: number) {
     return empresas.find((e) => e.id === id)?.razon_social ?? id;
@@ -115,7 +167,7 @@ export default function PresupuestosPage() {
     setError(null);
     setCargando(true);
     try {
-      await api.presupuestos.crear({
+      const payload = {
         empresa_id: Number(empresaId),
         convenio_id: Number(convenioId),
         nombre,
@@ -142,9 +194,16 @@ export default function PresupuestosPage() {
         lineas_otros: lineasOtros
           .filter((l) => l.concepto)
           .map((l) => ({ concepto: l.concepto, cantidad: l.cantidad, precio_unitario: l.precio_unitario })),
-      });
-      limpiarFormulario();
-      cargar();
+      };
+
+      if (presupuestoEditarId) {
+        await api.presupuestos.actualizar(Number(presupuestoEditarId), payload);
+        router.push(`/presupuestos/${presupuestoEditarId}`);
+      } else {
+        await api.presupuestos.crear(payload);
+        limpiarFormulario();
+        cargar();
+      }
     } catch (err) {
       setError(String(err));
     } finally {
@@ -154,8 +213,13 @@ export default function PresupuestosPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-semibold mb-4">Presupuestos</h1>
+      <h1 className="text-xl font-semibold mb-4">
+        {presupuestoEditarId ? "Editar presupuesto" : "Presupuestos"}
+      </h1>
 
+      {cargandoEdicion ? (
+        <p className="text-sm text-slate-500 mb-4">Cargando datos del presupuesto...</p>
+      ) : (
       <form onSubmit={onSubmit} className="bg-white border rounded-lg p-4 mb-6 space-y-4">
         <div className="grid sm:grid-cols-2 gap-3">
           <select required className="border rounded px-3 py-2" value={empresaId} onChange={(e) => setEmpresaId(e.target.value)}>
@@ -237,7 +301,7 @@ export default function PresupuestosPage() {
                 />
               </label>
               <label className="flex flex-col gap-0.5 text-xs text-slate-500">
-                Días de dedicación
+                Días laborables de dedicación
                 <input
                   type="number"
                   min={0}
@@ -321,6 +385,12 @@ export default function PresupuestosPage() {
               )}
             </div>
           ))}
+          <p className="text-xs text-slate-400">
+            El coste de mano de obra se calcula tomando el sueldo mensual del convenio (con la paga extra
+            prorrateada y las cotizaciones a cargo de la empresa) y dividiéndolo entre 20 días laborables, no
+            entre los días naturales del mes — así se ajusta mejor a los días que la persona realmente va a
+            trabajar en el proyecto.
+          </p>
         </div>
 
         <div>
@@ -416,13 +486,26 @@ export default function PresupuestosPage() {
           onChange={(e) => setNotas(e.target.value)}
         />
 
-        <button disabled={cargando} className="bg-slate-900 text-white rounded py-2 px-4 disabled:opacity-50">
-          {cargando ? "Calculando..." : "Crear presupuesto"}
-        </button>
+        <div className="flex gap-2">
+          <button disabled={cargando} className="bg-slate-900 text-white rounded py-2 px-4 disabled:opacity-50">
+            {cargando ? "Calculando..." : presupuestoEditarId ? "Guardar cambios" : "Crear presupuesto"}
+          </button>
+          {presupuestoEditarId && (
+            <button
+              type="button"
+              onClick={() => router.push(`/presupuestos/${presupuestoEditarId}`)}
+              className="px-4 rounded border text-sm"
+            >
+              Cancelar
+            </button>
+          )}
+        </div>
       </form>
+      )}
 
       {error && <p className="text-red-600 mb-4 text-sm">{error}</p>}
 
+      {!presupuestoEditarId && (
       <table className="w-full bg-white border rounded-lg overflow-hidden text-sm">
         <thead className="bg-slate-100">
           <tr>
@@ -451,6 +534,15 @@ export default function PresupuestosPage() {
           ))}
         </tbody>
       </table>
+      )}
     </div>
+  );
+}
+
+export default function PresupuestosPage() {
+  return (
+    <Suspense fallback={<p className="text-sm text-slate-500">Cargando...</p>}>
+      <PresupuestosForm />
+    </Suspense>
   );
 }

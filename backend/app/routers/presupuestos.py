@@ -32,7 +32,8 @@ def _valor_negocio(db: Session, clave: str) -> Decimal:
 def _calcular_y_poblar(presupuesto: Presupuesto, payload: PresupuestoCreate, db: Session) -> None:
     en_fecha: date = payload.fecha
 
-    coste_directo_personal = Decimal("0")
+    coste_directo_mano_obra = Decimal("0")
+    coste_directo_dietas = Decimal("0")
     lineas_personal_calculadas = []
     for linea_in in payload.lineas_personal:
         categoria = db.get(CategoriaProfesional, linea_in.categoria_id)
@@ -61,14 +62,15 @@ def _calcular_y_poblar(presupuesto: Presupuesto, payload: PresupuestoCreate, db:
             numero_dietas_completas_largas=linea_in.numero_dietas_completas_largas,
         )
         resultado_linea = calcular_linea_personal(datos_convenio, parametros, entrada, en_fecha.year, en_fecha.month)
-        coste_directo_personal += resultado_linea.coste_total_linea
+        coste_directo_mano_obra += resultado_linea.coste_mano_obra_total
+        coste_directo_dietas += resultado_linea.coste_dietas_total
         lineas_personal_calculadas.append((linea_in, resultado_linea))
 
-    coste_directo_otros = Decimal("0")
+    coste_directo_materiales = Decimal("0")
     lineas_otros_calculadas = []
     for otro_in in payload.lineas_otros:
         importe = _q(otro_in.cantidad * otro_in.precio_unitario)
-        coste_directo_otros += importe
+        coste_directo_materiales += importe
         lineas_otros_calculadas.append((otro_in, importe))
 
     margen_pct = (
@@ -85,7 +87,9 @@ def _calcular_y_poblar(presupuesto: Presupuesto, payload: PresupuestoCreate, db:
         payload.iva_pct if payload.iva_pct is not None else _valor_negocio(db, "iva_pct_defecto")
     )
 
-    totales = calcular_totales_presupuesto(coste_directo_personal, coste_directo_otros, gastos_pct, margen_pct, iva_pct)
+    totales = calcular_totales_presupuesto(
+        coste_directo_mano_obra, coste_directo_dietas, coste_directo_materiales, gastos_pct, margen_pct, iva_pct
+    )
 
     presupuesto.empresa_id = payload.empresa_id
     presupuesto.convenio_id = payload.convenio_id
@@ -97,8 +101,12 @@ def _calcular_y_poblar(presupuesto: Presupuesto, payload: PresupuestoCreate, db:
     presupuesto.margen_beneficio_pct = margen_pct
     presupuesto.gastos_generales_pct = gastos_pct
     presupuesto.iva_pct = iva_pct
-    presupuesto.coste_directo_personal = totales.coste_directo_personal
-    presupuesto.coste_directo_otros = totales.coste_directo_otros
+    presupuesto.coste_directo_mano_obra = totales.coste_directo_mano_obra
+    presupuesto.coste_directo_dietas = totales.coste_directo_dietas
+    # Campo heredado (ver comentario en el modelo): se mantiene relleno solo
+    # por compatibilidad con la columna NOT NULL ya existente.
+    presupuesto.coste_directo_personal = _q(totales.coste_directo_mano_obra + totales.coste_directo_dietas)
+    presupuesto.coste_directo_otros = totales.coste_directo_materiales
     presupuesto.coste_directo_total = totales.coste_directo_total
     presupuesto.gastos_generales_importe = totales.gastos_generales_importe
     presupuesto.coste_total = totales.coste_total
@@ -126,6 +134,8 @@ def _calcular_y_poblar(presupuesto: Presupuesto, payload: PresupuestoCreate, db:
                 numero_dietas_completas_largas=linea_in.numero_dietas_completas_largas,
                 coste_unitario=resultado_linea.coste_unitario,
                 coste_total_linea=resultado_linea.coste_total_linea,
+                coste_mano_obra_total=resultado_linea.coste_mano_obra_total,
+                coste_dietas_total=resultado_linea.coste_dietas_total,
             )
         )
 

@@ -49,14 +49,13 @@
     </tr>
   </table>
 
-  <div class="seccion-titulo">Mano de obra</div>
+  <div class="seccion-titulo">Personal</div>
   <table class="detalle">
     <tr>
       <th>Categoría</th>
       <th class="num">Personas</th>
       <th class="num">Días</th>
       <th class="num">Jornada</th>
-      {% if tipo == "interno" %}<th class="num">Coste</th>{% endif %}
       <th class="num">{{ "Coste" if tipo == "interno" else "Importe" }} (€)</th>
     </tr>
     {% for l in lineas_personal %}
@@ -66,14 +65,52 @@
       <td class="num">{{ "%.0f"|format(l.dias_dedicacion) }}</td>
       <td class="num">{{ "%.0f"|format(l.jornada_porcentaje) }}%</td>
       {% if tipo == "interno" %}
-      <td class="num">{{ "%.2f"|format(l.coste_total_linea) }}</td>
-      <td class="num">{{ "%.2f"|format(l.coste_total_linea) }}</td>
+      <td class="num">{{ "%.2f"|format(l.coste_mano_obra_total) }}</td>
       {% else %}
-      <td class="num">{{ "%.2f"|format(l.precio_venta_linea) }}</td>
+      <td class="num">{{ "%.2f"|format(l.precio_venta_mano_obra) }}</td>
       {% endif %}
     </tr>
     {% endfor %}
+    <tr class="total-row">
+      <td colspan="4">Total mano de obra</td>
+      <td class="num">{{ "%.2f"|format(presupuesto.coste_directo_mano_obra if tipo == "interno" else precio_venta_mano_obra) }}</td>
+    </tr>
   </table>
+
+  {% set hay_dietas = lineas_personal|selectattr("numero_medias_dietas")|list
+       or lineas_personal|selectattr("numero_dietas_completas_cortas")|list
+       or lineas_personal|selectattr("numero_dietas_completas_largas")|list %}
+  {% if hay_dietas %}
+  <div class="seccion-titulo">Dietas y desplazamiento</div>
+  <table class="detalle">
+    <tr>
+      <th>Categoría</th>
+      <th class="num">Medias dietas</th>
+      <th class="num">Completas &lt;7 días</th>
+      <th class="num">Completas ≥7 días</th>
+      <th class="num">{{ "Coste" if tipo == "interno" else "Importe" }} (€)</th>
+    </tr>
+    {% for l in lineas_personal %}
+    {% if l.numero_medias_dietas or l.numero_dietas_completas_cortas or l.numero_dietas_completas_largas %}
+    <tr>
+      <td>{{ l.categoria_grupo }} — {{ l.categoria_nombre }} ({{ l.cantidad_personas }} pers.)</td>
+      <td class="num">{{ l.numero_medias_dietas }}</td>
+      <td class="num">{{ l.numero_dietas_completas_cortas }}</td>
+      <td class="num">{{ l.numero_dietas_completas_largas }}</td>
+      {% if tipo == "interno" %}
+      <td class="num">{{ "%.2f"|format(l.coste_dietas_total) }}</td>
+      {% else %}
+      <td class="num">{{ "%.2f"|format(l.precio_venta_dietas) }}</td>
+      {% endif %}
+    </tr>
+    {% endif %}
+    {% endfor %}
+    <tr class="total-row">
+      <td colspan="4">Total dietas y desplazamiento</td>
+      <td class="num">{{ "%.2f"|format(presupuesto.coste_directo_dietas if tipo == "interno" else precio_venta_dietas) }}</td>
+    </tr>
+  </table>
+  {% endif %}
 
   {% if lineas_otros %}
   <div class="seccion-titulo">Materiales y otros costes</div>
@@ -92,14 +129,19 @@
       <td class="num">{{ "%.2f"|format(o.importe if tipo == "interno" else o.precio_venta_linea) }}</td>
     </tr>
     {% endfor %}
+    <tr class="total-row">
+      <td colspan="3">Total materiales y otros costes</td>
+      <td class="num">{{ "%.2f"|format(presupuesto.coste_directo_otros if tipo == "interno" else precio_venta_materiales) }}</td>
+    </tr>
   </table>
   {% endif %}
 
   {% if tipo == "interno" %}
   <div class="resumen">
     <table>
-      <tr><td>Coste directo — personal</td><td class="num">{{ "%.2f"|format(presupuesto.coste_directo_personal) }} €</td></tr>
-      <tr><td>Coste directo — materiales y otros</td><td class="num">{{ "%.2f"|format(presupuesto.coste_directo_otros) }} €</td></tr>
+      <tr><td>Total mano de obra</td><td class="num">{{ "%.2f"|format(presupuesto.coste_directo_mano_obra) }} €</td></tr>
+      <tr><td>Total dietas y desplazamiento</td><td class="num">{{ "%.2f"|format(presupuesto.coste_directo_dietas) }} €</td></tr>
+      <tr><td>Total materiales y otros costes</td><td class="num">{{ "%.2f"|format(presupuesto.coste_directo_otros) }} €</td></tr>
       <tr><td><strong>Coste directo total</strong></td><td class="num"><strong>{{ "%.2f"|format(presupuesto.coste_directo_total) }} €</strong></td></tr>
       <tr><td>Gastos generales ({{ "%.2f"|format(presupuesto.gastos_generales_pct) }}%)</td><td class="num">{{ "%.2f"|format(presupuesto.gastos_generales_importe) }} €</td></tr>
       <tr><td><strong>Coste total</strong></td><td class="num"><strong>{{ "%.2f"|format(presupuesto.coste_total) }} €</strong></td></tr>
@@ -112,7 +154,10 @@
   {% else %}
   <div class="resumen">
     <table>
-      <tr><td>Subtotal</td><td class="num">{{ "%.2f"|format(presupuesto.precio_venta) }} €</td></tr>
+      <tr><td>Mano de obra</td><td class="num">{{ "%.2f"|format(precio_venta_mano_obra) }} €</td></tr>
+      {% if hay_dietas %}<tr><td>Dietas y desplazamiento</td><td class="num">{{ "%.2f"|format(precio_venta_dietas) }} €</td></tr>{% endif %}
+      {% if lineas_otros %}<tr><td>Materiales y otros costes</td><td class="num">{{ "%.2f"|format(precio_venta_materiales) }} €</td></tr>{% endif %}
+      <tr><td><strong>Subtotal</strong></td><td class="num"><strong>{{ "%.2f"|format(presupuesto.precio_venta) }} €</strong></td></tr>
       <tr><td>IVA ({{ "%.2f"|format(presupuesto.iva_pct) }}%)</td><td class="num">{{ "%.2f"|format(presupuesto.iva_importe) }} €</td></tr>
       <tr class="total-final"><td>TOTAL PRESUPUESTO</td><td class="num">{{ "%.2f"|format(presupuesto.precio_total_cliente) }} €</td></tr>
     </table>

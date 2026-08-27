@@ -32,8 +32,15 @@ class Presupuesto(Base):
     iva_pct = Column(Numeric(6, 3), nullable=False)
 
     # Totales calculados (se recalculan por completo cada vez que se guarda).
+    # coste_directo_personal es un campo heredado de la primera versión (antes
+    # de separar dietas de mano de obra): la columna ya existe como NOT NULL
+    # en despliegues anteriores, así que se sigue rellenando (con la suma de
+    # mano_obra + dietas) para no romper esa restricción — no se usa para
+    # ningún cálculo nuevo, solo por compatibilidad con la tabla ya creada.
     coste_directo_personal = Column(Numeric(12, 2), nullable=False, default=0)
-    coste_directo_otros = Column(Numeric(12, 2), nullable=False, default=0)
+    coste_directo_mano_obra = Column(Numeric(12, 2), nullable=False, default=0)
+    coste_directo_dietas = Column(Numeric(12, 2), nullable=False, default=0)
+    coste_directo_otros = Column(Numeric(12, 2), nullable=False, default=0)  # materiales/otros costes sueltos
     coste_directo_total = Column(Numeric(12, 2), nullable=False, default=0)
     gastos_generales_importe = Column(Numeric(12, 2), nullable=False, default=0)
     coste_total = Column(Numeric(12, 2), nullable=False, default=0)
@@ -77,6 +84,9 @@ class PresupuestoLineaPersonal(Base):
     # Resultado calculado (por una persona, y total con la cantidad de personas).
     coste_unitario = Column(Numeric(12, 2), nullable=False, default=0)
     coste_total_linea = Column(Numeric(12, 2), nullable=False, default=0)
+    # Desglose del total de la línea: mano de obra sola vs dietas solas.
+    coste_mano_obra_total = Column(Numeric(12, 2), nullable=False, default=0)
+    coste_dietas_total = Column(Numeric(12, 2), nullable=False, default=0)
 
     presupuesto = relationship("Presupuesto", back_populates="lineas_personal")
     categoria = relationship("CategoriaProfesional")

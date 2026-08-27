@@ -29,6 +29,9 @@ def generar_pdf_presupuesto(presupuesto: Presupuesto, tipo: str = "cliente") -> 
     """
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+    # Factor único para repartir gastos generales + margen proporcionalmente
+    # sobre cada partida en la versión "cliente", sin revelar el coste real
+    # ni el margen de cada una — el cliente solo ve el precio de venta.
     coste_directo_total = Decimal(presupuesto.coste_directo_total)
     factor_venta = (
         (Decimal(presupuesto.precio_venta) / coste_directo_total) if coste_directo_total > 0 else Decimal("1")
@@ -36,7 +39,8 @@ def generar_pdf_presupuesto(presupuesto: Presupuesto, tipo: str = "cliente") -> 
 
     lineas_personal_vista = []
     for linea in presupuesto.lineas_personal:
-        importe_coste = Decimal(linea.coste_total_linea)
+        coste_mano_obra = Decimal(linea.coste_mano_obra_total)
+        coste_dietas = Decimal(linea.coste_dietas_total)
         lineas_personal_vista.append(
             {
                 "categoria_nombre": linea.categoria.nombre,
@@ -44,9 +48,13 @@ def generar_pdf_presupuesto(presupuesto: Presupuesto, tipo: str = "cliente") -> 
                 "cantidad_personas": linea.cantidad_personas,
                 "dias_dedicacion": linea.dias_dedicacion,
                 "jornada_porcentaje": linea.jornada_porcentaje,
-                "coste_unitario": linea.coste_unitario,
-                "coste_total_linea": importe_coste,
-                "precio_venta_linea": (importe_coste * factor_venta).quantize(Decimal("0.01")),
+                "numero_medias_dietas": linea.numero_medias_dietas,
+                "numero_dietas_completas_cortas": linea.numero_dietas_completas_cortas,
+                "numero_dietas_completas_largas": linea.numero_dietas_completas_largas,
+                "coste_mano_obra_total": coste_mano_obra,
+                "coste_dietas_total": coste_dietas,
+                "precio_venta_mano_obra": (coste_mano_obra * factor_venta).quantize(Decimal("0.01")),
+                "precio_venta_dietas": (coste_dietas * factor_venta).quantize(Decimal("0.01")),
             }
         )
 
@@ -63,6 +71,11 @@ def generar_pdf_presupuesto(presupuesto: Presupuesto, tipo: str = "cliente") -> 
             }
         )
 
+    # Totales de las 3 categorías a precio de venta (para la versión cliente).
+    precio_venta_mano_obra = (Decimal(presupuesto.coste_directo_mano_obra) * factor_venta).quantize(Decimal("0.01"))
+    precio_venta_dietas = (Decimal(presupuesto.coste_directo_dietas) * factor_venta).quantize(Decimal("0.01"))
+    precio_venta_materiales = (Decimal(presupuesto.coste_directo_otros) * factor_venta).quantize(Decimal("0.01"))
+
     template = _env.get_template("presupuesto.html")
     html_str = template.render(
         presupuesto=presupuesto,
@@ -72,6 +85,9 @@ def generar_pdf_presupuesto(presupuesto: Presupuesto, tipo: str = "cliente") -> 
         fecha=_fecha_es(presupuesto.fecha),
         lineas_personal=lineas_personal_vista,
         lineas_otros=lineas_otros_vista,
+        precio_venta_mano_obra=precio_venta_mano_obra,
+        precio_venta_dietas=precio_venta_dietas,
+        precio_venta_materiales=precio_venta_materiales,
         app_version=FULL_VERSION,
     )
 

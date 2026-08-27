@@ -54,6 +54,8 @@ class PresupuestoLineaPersonalOut(BaseModel):
     numero_dietas_completas_largas: int
     coste_unitario: Decimal
     coste_total_linea: Decimal
+    coste_mano_obra_total: Decimal
+    coste_dietas_total: Decimal
 
 
 class PresupuestoLineaOtroCosteOut(BaseModel):
@@ -78,7 +80,8 @@ class PresupuestoOut(BaseModel):
     margen_beneficio_pct: Decimal
     gastos_generales_pct: Decimal
     iva_pct: Decimal
-    coste_directo_personal: Decimal
+    coste_directo_mano_obra: Decimal
+    coste_directo_dietas: Decimal
     coste_directo_otros: Decimal
     coste_directo_total: Decimal
     gastos_generales_importe: Decimal

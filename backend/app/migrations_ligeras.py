@@ -33,6 +33,10 @@ COLUMNAS_NUEVAS = [
     ("nominas", "numero_dietas_completas_cortas", "INTEGER DEFAULT 0"),
     ("nominas", "numero_dietas_completas_largas", "INTEGER DEFAULT 0"),
     ("trabajadores", "tipo_documento", "VARCHAR NOT NULL DEFAULT 'DNI'"),
+    ("presupuestos", "coste_directo_mano_obra", "NUMERIC(12, 2) NOT NULL DEFAULT 0"),
+    ("presupuestos", "coste_directo_dietas", "NUMERIC(12, 2) NOT NULL DEFAULT 0"),
+    ("presupuesto_lineas_personal", "coste_mano_obra_total", "NUMERIC(12, 2) NOT NULL DEFAULT 0"),
+    ("presupuesto_lineas_personal", "coste_dietas_total", "NUMERIC(12, 2) NOT NULL DEFAULT 0"),
 ]
 
 
