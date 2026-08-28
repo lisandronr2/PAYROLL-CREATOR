@@ -6,12 +6,10 @@ from pydantic import BaseModel, ConfigDict
 
 
 class PresupuestoLineaPersonalCreate(BaseModel):
-    categoria_id: int
+    categoria_id: int  # solo como referencia/etiqueta, no se usa para calcular el coste
     cantidad_personas: int = 1
-    jornada_porcentaje: Decimal = Decimal("100")
-    dias_dedicacion: Decimal
-    pagas_extra_prorrateadas: bool = True
-    complemento_mensual: Decimal = Decimal("0")
+    precio_hora: Decimal
+    dias_dedicacion: Decimal  # días de dedicación al proyecto (jornadas normales de 8h)
     numero_medias_dietas: int = 0
     numero_dietas_completas_cortas: int = 0
     numero_dietas_completas_largas: int = 0
@@ -45,10 +43,8 @@ class PresupuestoLineaPersonalOut(BaseModel):
     id: int
     categoria_id: int
     cantidad_personas: int
-    jornada_porcentaje: Decimal
+    precio_hora: Decimal
     dias_dedicacion: Decimal
-    pagas_extra_prorrateadas: bool
-    complemento_mensual: Decimal
     numero_medias_dietas: int
     numero_dietas_completas_cortas: int
     numero_dietas_completas_largas: int

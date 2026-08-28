@@ -197,10 +197,8 @@ export interface PresupuestoLineaPersonal {
   id?: number;
   categoria_id: number;
   cantidad_personas: number;
-  jornada_porcentaje: string;
+  precio_hora: string;
   dias_dedicacion: string;
-  pagas_extra_prorrateadas: boolean;
-  complemento_mensual: string;
   numero_medias_dietas: number;
   numero_dietas_completas_cortas: number;
   numero_dietas_completas_largas: number;

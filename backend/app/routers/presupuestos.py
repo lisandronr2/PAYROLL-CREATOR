@@ -8,8 +8,7 @@ from sqlalchemy.orm import Session
 from app.auth import get_current_usuario
 from app.database import get_db
 from app.engine.presupuesto import LineaPersonalInput, calcular_linea_personal, calcular_totales_presupuesto
-from app.engine.repositorio import obtener_datos_convenio_categoria, obtener_parametros_cotizacion
-from app.models.convenio import CategoriaProfesional
+from app.models.convenio import CategoriaProfesional, ConvenioDieta
 from app.models.parametro_negocio import ParametroNegocio
 from app.models.presupuesto import Presupuesto, PresupuestoLineaOtroCoste, PresupuestoLineaPersonal
 from app.pdf.generador_presupuesto import generar_pdf_presupuesto
@@ -29,8 +28,24 @@ def _valor_negocio(db: Session, clave: str) -> Decimal:
     return Decimal(parametro.valor)
 
 
+def _obtener_dietas_convenio(db: Session, convenio_id: int, en_fecha: date) -> ConvenioDieta | None:
+    return (
+        db.query(ConvenioDieta)
+        .filter(ConvenioDieta.convenio_id == convenio_id)
+        .filter(ConvenioDieta.vigente_desde <= en_fecha)
+        .filter((ConvenioDieta.vigente_hasta.is_(None)) | (ConvenioDieta.vigente_hasta >= en_fecha))
+        .order_by(ConvenioDieta.vigente_desde.desc())
+        .first()
+    )
+
+
 def _calcular_y_poblar(presupuesto: Presupuesto, payload: PresupuestoCreate, db: Session) -> None:
     en_fecha: date = payload.fecha
+
+    dietas_convenio = _obtener_dietas_convenio(db, payload.convenio_id, en_fecha)
+    media_dieta = dietas_convenio.media_dieta if dietas_convenio else Decimal("0")
+    dieta_completa_corta = dietas_convenio.dieta_completa_corta if dietas_convenio else Decimal("0")
+    dieta_completa_larga = dietas_convenio.dieta_completa_larga if dietas_convenio else Decimal("0")
 
     coste_directo_mano_obra = Decimal("0")
     coste_directo_dietas = Decimal("0")
@@ -40,28 +55,15 @@ def _calcular_y_poblar(presupuesto: Presupuesto, payload: PresupuestoCreate, db:
         if categoria is None:
             raise HTTPException(status_code=404, detail=f"Categoría {linea_in.categoria_id} no encontrada")
 
-        try:
-            datos_convenio = obtener_datos_convenio_categoria(
-                db,
-                linea_in.categoria_id,
-                payload.empresa_id,
-                en_fecha,
-                jornada_porcentaje=linea_in.jornada_porcentaje,
-                complemento_mensual=linea_in.complemento_mensual,
-                pagas_extra_prorrateadas=linea_in.pagas_extra_prorrateadas,
-            )
-            parametros = obtener_parametros_cotizacion(db, en_fecha, categoria.grupo_cotizacion, "indefinido")
-        except ValueError as exc:
-            raise HTTPException(status_code=422, detail=str(exc))
-
         entrada = LineaPersonalInput(
+            precio_hora=linea_in.precio_hora,
             cantidad_personas=linea_in.cantidad_personas,
             dias_dedicacion=linea_in.dias_dedicacion,
             numero_medias_dietas=linea_in.numero_medias_dietas,
             numero_dietas_completas_cortas=linea_in.numero_dietas_completas_cortas,
             numero_dietas_completas_largas=linea_in.numero_dietas_completas_largas,
         )
-        resultado_linea = calcular_linea_personal(datos_convenio, parametros, entrada, en_fecha.year, en_fecha.month)
+        resultado_linea = calcular_linea_personal(entrada, media_dieta, dieta_completa_corta, dieta_completa_larga)
         coste_directo_mano_obra += resultado_linea.coste_mano_obra_total
         coste_directo_dietas += resultado_linea.coste_dietas_total
         lineas_personal_calculadas.append((linea_in, resultado_linea))
@@ -125,10 +127,12 @@ def _calcular_y_poblar(presupuesto: Presupuesto, payload: PresupuestoCreate, db:
                 presupuesto_id=presupuesto.id,
                 categoria_id=linea_in.categoria_id,
                 cantidad_personas=linea_in.cantidad_personas,
-                jornada_porcentaje=linea_in.jornada_porcentaje,
+                precio_hora=linea_in.precio_hora,
                 dias_dedicacion=linea_in.dias_dedicacion,
-                pagas_extra_prorrateadas=linea_in.pagas_extra_prorrateadas,
-                complemento_mensual=linea_in.complemento_mensual,
+                # Campos heredados, ya no se usan (ver modelo) — valor fijo.
+                jornada_porcentaje=Decimal("100"),
+                pagas_extra_prorrateadas=False,
+                complemento_mensual=Decimal("0"),
                 numero_medias_dietas=linea_in.numero_medias_dietas,
                 numero_dietas_completas_cortas=linea_in.numero_dietas_completas_cortas,
                 numero_dietas_completas_largas=linea_in.numero_dietas_completas_largas,

@@ -11,36 +11,26 @@ Metodología igual a la usada en licitaciones de obra en España:
         + IVA (%)
         = Precio final al cliente
 
-El coste de personal se apoya en el motor de nóminas ya existente
-(`calcular_nomina`) para obtener el coste real por categoría de convenio
-(salario + cotizaciones a cargo de la empresa + prorrata de pagas extra),
-evitando duplicar esa lógica. Las dietas se calculan aparte, como un coste
-directo por unidad para todo el periodo del proyecto (no se prorratean
-mensualmente como el salario).
+El coste de personal ya NO se calcula a partir del salario de convenio: se
+introduce un precio por hora (el que la empresa pacte según el cliente o
+proyecto) y se aplica sobre jornadas normales de 8 horas por cada día de
+dedicación. La categoría del convenio se conserva solo como referencia/
+etiqueta en el presupuesto, no para calcular el coste.
 
-El coste mensual completo de un trabajador (salario + prorrata de pagas
-extra + todas las cotizaciones a cargo de la empresa) se prorratea por
-DÍAS LABORABLES (20 días/mes de referencia), no por días naturales (30):
-un trabajador cobra el sueldo íntegro del mes trabajando solo ~20-22 días
-efectivos (los findes no se trabajan pero sí se cobran), así que el coste
-real por día de dedicación a un proyecto es más alto que si se repartiera
-entre los 30 días naturales. Esto es una decisión de la empresa, no un dato
-legal — ver docs/LEGAL_DISCLAIMER.md.
+Las dietas SÍ se siguen tomando del convenio elegido (media dieta, dieta
+completa <7 días, dieta completa ≥7 días), como un coste directo por unidad
+para todo el periodo del proyecto (no se prorratean).
 
 ⚠️ Es una estimación: no sustituye un estudio de costes real de la empresa.
-Los porcentajes de gastos generales, margen e IVA son decisiones de negocio
-del usuario, no datos legales — ver ParametroNegocio.
+El precio por hora, los gastos generales, el margen y el IVA son decisiones
+de negocio del usuario, no datos legales — ver ParametroNegocio.
 """
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from decimal import Decimal, ROUND_HALF_UP
 
-from app.engine.calculo import calcular_nomina
-from app.engine.tipos import DatosConvenioContrato, ParametrosCotizacion, EventosMes
-
-# Días laborables de referencia al mes, usados para calcular el coste por
-# día de dedicación a un proyecto (ver nota arriba). No confundir con los
-# 30 días naturales que usa el motor de nóminas para el sueldo mensual.
-DIAS_LABORABLES_MES_REFERENCIA = Decimal("20")
+# Horas de una jornada normal, usadas para convertir "días de dedicación" en
+# horas facturables al precio/hora indicado.
+HORAS_JORNADA_NORMAL = Decimal("8")
 
 
 def _q(valor: Decimal) -> Decimal:
@@ -49,6 +39,7 @@ def _q(valor: Decimal) -> Decimal:
 
 @dataclass
 class LineaPersonalInput:
+    precio_hora: Decimal
     cantidad_personas: int
     dias_dedicacion: Decimal
     numero_medias_dietas: int = 0
@@ -58,7 +49,6 @@ class LineaPersonalInput:
 
 @dataclass
 class LineaPersonalResultado:
-    coste_salarial_mensual_completo: Decimal
     coste_mano_obra_unitario: Decimal  # por una persona, para su dedicación al proyecto (sin dietas)
     coste_dietas_unitario: Decimal  # por una persona
     coste_unitario: Decimal  # mano_obra_unitario + dietas_unitario
@@ -68,36 +58,21 @@ class LineaPersonalResultado:
 
 
 def calcular_linea_personal(
-    datos_convenio: DatosConvenioContrato,
-    parametros: ParametrosCotizacion,
     entrada: LineaPersonalInput,
-    anio: int,
-    mes: int,
+    media_dieta: Decimal,
+    dieta_completa_corta: Decimal,
+    dieta_completa_larga: Decimal,
 ) -> LineaPersonalResultado:
-    # 1) Coste de un mes natural completo (30 días), sin dietas — la jornada,
-    # la mejora voluntaria y si prorratea pagas extra ya vienen incluidas en
-    # `datos_convenio`. Este coste YA incluye salario + prorrata de pagas
-    # extra + todas las cotizaciones a cargo de la empresa.
-    datos_sin_dietas = replace(
-        datos_convenio,
-        media_dieta=Decimal("0"),
-        dieta_completa_corta=Decimal("0"),
-        dieta_completa_larga=Decimal("0"),
-    )
-    eventos_mes_completo = EventosMes(periodo_anio=anio, periodo_mes=mes, dias_naturales_periodo=30)
-    resultado_mensual = calcular_nomina(datos_sin_dietas, eventos_mes_completo, parametros, [])
-    coste_salarial_mensual_completo = resultado_mensual.coste_empresa_total
+    # 1) Mano de obra: precio/hora pactado × 8 horas de jornada normal × días
+    # de dedicación al proyecto. No interviene el convenio ni las cotizaciones.
+    coste_mano_obra_unitario = _q(entrada.precio_hora * HORAS_JORNADA_NORMAL * entrada.dias_dedicacion)
 
-    # 2) Prorrateo por los días laborables reales de dedicación al proyecto
-    # (base 20 días laborables/mes, no 30 días naturales — ver cabecera).
-    factor_dias = entrada.dias_dedicacion / DIAS_LABORABLES_MES_REFERENCIA
-    coste_mano_obra_unitario = _q(coste_salarial_mensual_completo * factor_dias)
-
-    # 3) Dietas: coste directo por unidad para todo el periodo (no se prorratean).
+    # 2) Dietas: sí vienen del convenio elegido, como coste directo por
+    # unidad para todo el periodo (no se prorratean).
     coste_dietas_unitario = _q(
-        entrada.numero_medias_dietas * datos_convenio.media_dieta
-        + entrada.numero_dietas_completas_cortas * datos_convenio.dieta_completa_corta
-        + entrada.numero_dietas_completas_largas * datos_convenio.dieta_completa_larga
+        entrada.numero_medias_dietas * media_dieta
+        + entrada.numero_dietas_completas_cortas * dieta_completa_corta
+        + entrada.numero_dietas_completas_largas * dieta_completa_larga
     )
 
     coste_unitario = _q(coste_mano_obra_unitario + coste_dietas_unitario)
@@ -106,7 +81,6 @@ def calcular_linea_personal(
     coste_total_linea = _q(coste_mano_obra_total + coste_dietas_total)
 
     return LineaPersonalResultado(
-        coste_salarial_mensual_completo=coste_salarial_mensual_completo,
         coste_mano_obra_unitario=coste_mano_obra_unitario,
         coste_dietas_unitario=coste_dietas_unitario,
         coste_unitario=coste_unitario,

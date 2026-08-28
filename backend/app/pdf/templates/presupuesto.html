@@ -55,7 +55,7 @@
       <th>Categoría</th>
       <th class="num">Personas</th>
       <th class="num">Días</th>
-      <th class="num">Jornada</th>
+      <th class="num">Precio/hora</th>
       <th class="num">{{ "Coste" if tipo == "interno" else "Importe" }} (€)</th>
     </tr>
     {% for l in lineas_personal %}
@@ -63,7 +63,7 @@
       <td>{{ l.categoria_grupo }} — {{ l.categoria_nombre }}</td>
       <td class="num">{{ l.cantidad_personas }}</td>
       <td class="num">{{ "%.0f"|format(l.dias_dedicacion) }}</td>
-      <td class="num">{{ "%.0f"|format(l.jornada_porcentaje) }}%</td>
+      <td class="num">{{ "%.2f"|format(l.precio_hora) }} €</td>
       {% if tipo == "interno" %}
       <td class="num">{{ "%.2f"|format(l.coste_mano_obra_total) }}</td>
       {% else %}

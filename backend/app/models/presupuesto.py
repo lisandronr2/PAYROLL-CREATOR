@@ -62,9 +62,10 @@ class Presupuesto(Base):
 
 
 class PresupuestoLineaPersonal(Base):
-    """Un perfil de personal dentro del presupuesto: categoría del convenio,
-    cuántas personas, jornada, días de dedicación al proyecto y dietas
-    estimadas para todo el periodo (no por mes)."""
+    """Un perfil de personal dentro del presupuesto: categoría del convenio
+    (solo como referencia/etiqueta), cuántas personas, precio/hora pactado,
+    días de dedicación al proyecto (jornadas normales de 8h) y dietas
+    estimadas para todo el periodo (no por mes, y sí tomadas del convenio)."""
     __tablename__ = "presupuesto_lineas_personal"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -72,10 +73,16 @@ class PresupuestoLineaPersonal(Base):
     categoria_id = Column(Integer, ForeignKey("categorias_profesionales.id"), nullable=False)
 
     cantidad_personas = Column(Integer, nullable=False, default=1)
+    precio_hora = Column(Numeric(8, 2), nullable=False, default=0)  # €/hora pactado, define el usuario
+    dias_dedicacion = Column(Numeric(6, 2), nullable=False)  # días de dedicación (jornadas de 8h)
+
+    # Campos heredados de la versión anterior (cálculo basado en el salario
+    # de convenio): ya no se usan para calcular nada — ver
+    # app/engine/presupuesto.py — pero la columna sigue siendo NOT NULL en la
+    # tabla ya desplegada, así que se rellenan con un valor fijo al crear.
     jornada_porcentaje = Column(Numeric(5, 2), nullable=False, default=100)
-    dias_dedicacion = Column(Numeric(6, 2), nullable=False)  # días naturales de dedicación al proyecto
     pagas_extra_prorrateadas = Column(Boolean, nullable=False, default=True)
-    complemento_mensual = Column(Numeric(10, 2), nullable=False, default=0)  # mejora voluntaria, si aplica
+    complemento_mensual = Column(Numeric(10, 2), nullable=False, default=0)
 
     numero_medias_dietas = Column(Integer, nullable=False, default=0)
     numero_dietas_completas_cortas = Column(Integer, nullable=False, default=0)

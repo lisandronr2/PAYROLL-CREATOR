@@ -118,8 +118,8 @@ export default function DetallePresupuestoPage() {
               <tr>
                 <th className="text-left p-1.5">Categoría</th>
                 <th className="text-right p-1.5">Personas</th>
-                <th className="text-right p-1.5">Días laborables</th>
-                <th className="text-right p-1.5">Jornada</th>
+                <th className="text-right p-1.5">Días (8h)</th>
+                <th className="text-right p-1.5">Precio/hora</th>
                 <th className="text-right p-1.5">Coste mano de obra</th>
               </tr>
             </thead>
@@ -129,7 +129,7 @@ export default function DetallePresupuestoPage() {
                   <td className="p-1.5">{nombreCategoria(l.categoria_id)}</td>
                   <td className="p-1.5 text-right">{l.cantidad_personas}</td>
                   <td className="p-1.5 text-right">{Number(l.dias_dedicacion).toFixed(0)}</td>
-                  <td className="p-1.5 text-right">{Number(l.jornada_porcentaje).toFixed(0)}%</td>
+                  <td className="p-1.5 text-right">{Number(l.precio_hora).toFixed(2)} €</td>
                   <td className="p-1.5 text-right">{Number(l.coste_mano_obra_total ?? 0).toFixed(2)} €</td>
                 </tr>
               ))}

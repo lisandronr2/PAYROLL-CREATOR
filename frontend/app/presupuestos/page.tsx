@@ -17,10 +17,8 @@ import {
 const lineaPersonalVacia: PresupuestoLineaPersonal = {
   categoria_id: 0,
   cantidad_personas: 1,
-  jornada_porcentaje: "100",
+  precio_hora: "0",
   dias_dedicacion: "20",
-  pagas_extra_prorrateadas: true,
-  complemento_mensual: "0",
   numero_medias_dietas: 0,
   numero_dietas_completas_cortas: 0,
   numero_dietas_completas_largas: 0,
@@ -119,10 +117,8 @@ function PresupuestosForm() {
             ? p.lineas_personal.map((l) => ({
                 categoria_id: l.categoria_id,
                 cantidad_personas: l.cantidad_personas,
-                jornada_porcentaje: l.jornada_porcentaje,
+                precio_hora: l.precio_hora,
                 dias_dedicacion: l.dias_dedicacion,
-                pagas_extra_prorrateadas: l.pagas_extra_prorrateadas,
-                complemento_mensual: l.complemento_mensual,
                 numero_medias_dietas: l.numero_medias_dietas,
                 numero_dietas_completas_cortas: l.numero_dietas_completas_cortas,
                 numero_dietas_completas_largas: l.numero_dietas_completas_largas,
@@ -183,10 +179,8 @@ function PresupuestosForm() {
           .map((l) => ({
             categoria_id: l.categoria_id,
             cantidad_personas: l.cantidad_personas,
-            jornada_porcentaje: l.jornada_porcentaje,
+            precio_hora: l.precio_hora,
             dias_dedicacion: l.dias_dedicacion,
-            pagas_extra_prorrateadas: l.pagas_extra_prorrateadas,
-            complemento_mensual: l.complemento_mensual,
             numero_medias_dietas: l.numero_medias_dietas,
             numero_dietas_completas_cortas: l.numero_dietas_completas_cortas,
             numero_dietas_completas_largas: l.numero_dietas_completas_largas,
@@ -301,7 +295,7 @@ function PresupuestosForm() {
                 />
               </label>
               <label className="flex flex-col gap-0.5 text-xs text-slate-500">
-                Días laborables de dedicación
+                Días de trabajo (jornadas de 8h)
                 <input
                   type="number"
                   min={0}
@@ -311,14 +305,14 @@ function PresupuestosForm() {
                 />
               </label>
               <label className="flex flex-col gap-0.5 text-xs text-slate-500">
-                Jornada %
+                Precio por hora (€)
                 <input
                   type="number"
-                  min={1}
-                  max={100}
+                  min={0}
+                  step="0.01"
                   className="border rounded px-2 py-1"
-                  value={linea.jornada_porcentaje}
-                  onChange={(e) => actualizarLineaPersonal(i, { jornada_porcentaje: e.target.value })}
+                  value={linea.precio_hora}
+                  onChange={(e) => actualizarLineaPersonal(i, { precio_hora: e.target.value })}
                 />
               </label>
               <label className="flex flex-col gap-0.5 text-xs text-slate-500">
@@ -355,25 +349,6 @@ function PresupuestosForm() {
                   }
                 />
               </label>
-              <label className="flex flex-col gap-0.5 text-xs text-slate-500">
-                Mejora voluntaria mensual (€)
-                <input
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  className="border rounded px-2 py-1"
-                  value={linea.complemento_mensual}
-                  onChange={(e) => actualizarLineaPersonal(i, { complemento_mensual: e.target.value })}
-                />
-              </label>
-              <label className="flex items-center gap-1.5 text-xs text-slate-500">
-                <input
-                  type="checkbox"
-                  checked={linea.pagas_extra_prorrateadas}
-                  onChange={(e) => actualizarLineaPersonal(i, { pagas_extra_prorrateadas: e.target.checked })}
-                />
-                Prorratear pagas extra
-              </label>
               {lineasPersonal.length > 1 && (
                 <button
                   type="button"
@@ -386,10 +361,9 @@ function PresupuestosForm() {
             </div>
           ))}
           <p className="text-xs text-slate-400">
-            El coste de mano de obra se calcula tomando el sueldo mensual del convenio (con la paga extra
-            prorrateada y las cotizaciones a cargo de la empresa) y dividiéndolo entre 20 días laborables, no
-            entre los días naturales del mes — así se ajusta mejor a los días que la persona realmente va a
-            trabajar en el proyecto.
+            El coste de mano de obra se calcula como precio/hora × 8 horas × días de trabajo — el precio por
+            hora lo fijas tú según el cliente o proyecto, no se toma del convenio. Las dietas sí se calculan
+            con las tarifas del convenio elegido arriba.
           </p>
         </div>
 

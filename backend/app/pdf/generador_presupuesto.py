@@ -47,7 +47,7 @@ def generar_pdf_presupuesto(presupuesto: Presupuesto, tipo: str = "cliente") -> 
                 "categoria_grupo": linea.categoria.grupo,
                 "cantidad_personas": linea.cantidad_personas,
                 "dias_dedicacion": linea.dias_dedicacion,
-                "jornada_porcentaje": linea.jornada_porcentaje,
+                "precio_hora": linea.precio_hora,
                 "numero_medias_dietas": linea.numero_medias_dietas,
                 "numero_dietas_completas_cortas": linea.numero_dietas_completas_cortas,
                 "numero_dietas_completas_largas": linea.numero_dietas_completas_largas,
