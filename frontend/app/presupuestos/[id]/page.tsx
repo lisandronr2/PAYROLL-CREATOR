@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { Printer } from "lucide-react";
 import { api, CategoriaProfesional, Convenio, Empresa, Presupuesto } from "@/lib/api";
 
 export default function DetallePresupuestoPage() {
@@ -78,8 +79,10 @@ export default function DetallePresupuestoPage() {
           </Link>
           <button
             onClick={() => api.presupuestos.verPdf(presupuesto.id, "cliente", `presupuesto_${presupuesto.id}_cliente.pdf`)}
-            className="text-sm bg-slate-900 text-white px-3 py-1.5 rounded"
+            className="text-sm bg-slate-900 text-white px-3 py-1.5 rounded flex items-center gap-1.5"
+            title="Ver / imprimir PDF para el cliente"
           >
+            <Printer size={14} />
             Ver PDF (cliente)
           </button>
           <button

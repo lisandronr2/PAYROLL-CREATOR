@@ -26,16 +26,26 @@
 
   .aviso { margin-top: 12px; font-size: 6.4pt; color: #888; border-top: 0.5px solid #ccc; padding-top: 4px; }
   .etiqueta-interno { display: inline-block; background: #b91c1c; color: #fff; font-size: 7pt; padding: 2px 8px; border-radius: 3px; margin-bottom: 8px; }
+  .validez { margin-top: 12px; font-size: 7.5pt; color: #555; border-top: 0.5px solid #ccc; padding-top: 5px; text-align: center; }
+  .encabezado-cliente { text-align: center; margin-bottom: 10px; }
+  .encabezado-cliente h1 { font-size: 15pt; letter-spacing: 1px; }
+  .encabezado-cliente .linea-trabajo { font-size: 9.5pt; font-weight: bold; margin: 2px 0; }
+  .encabezado-cliente .linea-fecha { font-size: 8pt; color: #666; }
 </style>
 </head>
 <body>
 
   {% if tipo == "interno" %}
   <div class="etiqueta-interno">USO INTERNO — NO ENVIAR AL CLIENTE</div>
-  {% endif %}
-
   <h1>Presupuesto — {{ presupuesto.nombre }}</h1>
   <div class="subtitulo">Fecha: {{ fecha }} · Convenio de referencia: {{ convenio.nombre }}</div>
+  {% else %}
+  <div class="encabezado-cliente">
+    <h1>PRESUPUESTO</h1>
+    <div class="linea-trabajo">TRABAJO A REALIZAR: {{ presupuesto.nombre }}</div>
+    <div class="linea-fecha">Fecha: {{ fecha }}</div>
+  </div>
+  {% endif %}
 
   <table class="ficha">
     <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
@@ -157,9 +167,7 @@
       <tr><td>Mano de obra</td><td class="num">{{ "%.2f"|format(precio_venta_mano_obra) }} €</td></tr>
       {% if hay_dietas %}<tr><td>Dietas y desplazamiento</td><td class="num">{{ "%.2f"|format(precio_venta_dietas) }} €</td></tr>{% endif %}
       {% if lineas_otros %}<tr><td>Materiales y otros costes</td><td class="num">{{ "%.2f"|format(precio_venta_materiales) }} €</td></tr>{% endif %}
-      <tr><td><strong>Subtotal</strong></td><td class="num"><strong>{{ "%.2f"|format(presupuesto.precio_venta) }} €</strong></td></tr>
-      <tr><td>IVA ({{ "%.2f"|format(presupuesto.iva_pct) }}%)</td><td class="num">{{ "%.2f"|format(presupuesto.iva_importe) }} €</td></tr>
-      <tr class="total-final"><td>TOTAL PRESUPUESTO</td><td class="num">{{ "%.2f"|format(presupuesto.precio_total_cliente) }} €</td></tr>
+      <tr class="total-final"><td>TOTAL PRESUPUESTO (IVA no incluido)</td><td class="num">{{ "%.2f"|format(presupuesto.precio_venta) }} €</td></tr>
     </table>
   </div>
   {% endif %}
@@ -169,10 +177,16 @@
   <p style="font-size:8pt;">{{ presupuesto.notas }}</p>
   {% endif %}
 
+  {% if tipo == "cliente" %}
+  <div class="validez">
+    Presupuesto válido durante 15 días naturales a partir de la fecha de creación ({{ fecha }}).
+  </div>
+  {% else %}
   <div class="aviso">
     Documento generado por PAYROLL CREATOR. Presupuesto orientativo basado en los datos del convenio
     colectivo indicado y en los parámetros de negocio configurados (gastos generales, margen e IVA) —
     verifica las condiciones reales antes de formalizar el proyecto. · PAYROLL CREATOR v{{ app_version }}
   </div>
+  {% endif %}
 </body>
 </html>
