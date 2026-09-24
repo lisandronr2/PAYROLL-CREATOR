@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 1.2cm; }
+  body { font-family: Helvetica, Arial, sans-serif; font-size: 8pt; color: #1a1a1a; line-height: 1.2; }
+  h1 { font-size: 13pt; margin: 0 0 4px 0; }
+  .subtitulo { font-size: 8pt; color: #666; margin-bottom: 10px; }
+
+  table.ficha { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  table.ficha th { background: #eee; border: 0.5px solid #999; text-align: left; font-size: 6.8pt; font-weight: normal; color: #555; padding: 2px 5px; }
+  table.ficha td { border: 0.5px solid #999; padding: 3px 5px; font-size: 8.5pt; font-weight: bold; }
+
+  table.detalle { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+  table.detalle th { text-align: left; background: #eee; padding: 3px 5px; font-size: 7.5pt; border-bottom: 1px solid #999; }
+  table.detalle td { padding: 3px 5px; border-bottom: 0.5px solid #ddd; font-size: 8pt; vertical-align: top; }
+  td.num, th.num { text-align: right; white-space: nowrap; }
+  .total-row td { font-weight: bold; border-top: 1px solid #333; }
+  .seccion-titulo { font-weight: bold; margin: 8px 0 3px 0; font-size: 9.5pt; }
+
+  .resumen { margin-top: 10px; border: 1px solid #222; padding: 6px 10px; }
+  .resumen table { width: 100%; border-collapse: collapse; }
+  .resumen td { border: none; padding: 2px 5px; font-size: 8.5pt; }
+  .resumen .total-final td { font-size: 12pt; font-weight: bold; border-top: 1.5px solid #222; padding-top: 6px; }
+
+  .aviso { margin-top: 12px; font-size: 6.4pt; color: #888; border-top: 0.5px solid #ccc; padding-top: 4px; }
+  .etiqueta-interno { display: inline-block; background: #b91c1c; color: #fff; font-size: 7pt; padding: 2px 8px; border-radius: 3px; margin-bottom: 8px; }
+  .validez { margin-top: 12px; font-size: 7.5pt; color: #555; border-top: 0.5px solid #ccc; padding-top: 5px; text-align: center; }
+  .encabezado-cliente { margin-bottom: 10px; }
+  .encabezado-cliente h1 { text-align: center; font-size: 15pt; letter-spacing: 1px; }
+  .encabezado-cliente .linea-trabajo { text-align: left; font-size: 9.5pt; font-weight: bold; margin: 2px 0; }
+  .encabezado-cliente .linea-fecha { text-align: left; font-size: 8pt; color: #666; }
+</style>
+</head>
+<body>
+
+  {% if tipo == "interno" %}
+  <div class="etiqueta-interno">USO INTERNO — NO ENVIAR AL CLIENTE</div>
+  <h1>Presupuesto por items — {{ presupuesto.nombre }}</h1>
+  <div class="subtitulo">Fecha: {{ fecha }}</div>
+  {% else %}
+  <div class="encabezado-cliente">
+    <h1>PRESUPUESTO</h1>
+    <div class="linea-trabajo">TRABAJO A REALIZAR: {{ presupuesto.nombre }}</div>
+    <div class="linea-fecha">Fecha: {{ fecha }}</div>
+  </div>
+  {% endif %}
+
+  <table class="ficha">
+    <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+    <tr>
+      <th>EMPRESA QUE EJECUTA</th>
+      <th>CLIENTE</th>
+    </tr>
+    <tr>
+      <td>{{ empresa.razon_social }} ({{ empresa.cif }}){% if empresa.direccion %}<br>{{ empresa.direccion }}{% endif %}</td>
+      <td>{{ presupuesto.cliente_nombre or "-" }}{% if presupuesto.cliente_nif %} ({{ presupuesto.cliente_nif }}){% endif %}</td>
+    </tr>
+  </table>
+
+  <div class="seccion-titulo">Partidas</div>
+  <table class="detalle">
+    <tr>
+      <th>Familia</th>
+      <th>Partida</th>
+      <th class="num">Unidad</th>
+      <th class="num">Cantidad</th>
+      {% if tipo == "interno" %}
+      <th class="num">Coste unit. (€)</th>
+      <th class="num">Margen %</th>
+      {% endif %}
+      <th class="num">Precio unit. (€)</th>
+      {% if hay_descuentos %}<th class="num">Descuento %</th>{% endif %}
+      <th class="num">Importe (€)</th>
+    </tr>
+    {% for l in lineas %}
+    <tr>
+      <td>{{ l.familia }}</td>
+      <td>{{ l.nombre }}</td>
+      <td class="num">{{ l.unidad }}</td>
+      <td class="num">{{ "%.2f"|format(l.cantidad) }}</td>
+      {% if tipo == "interno" %}
+      <td class="num">{{ "%.2f"|format(l.coste_directo_unitario) }}</td>
+      <td class="num">{{ "%.2f"|format(l.margen_pct) }}%</td>
+      {% endif %}
+      <td class="num">{{ "%.2f"|format(l.precio_unitario) }}</td>
+      {% if hay_descuentos %}<td class="num">{{ "%.2f"|format(l.descuento_pct) }}%</td>{% endif %}
+      <td class="num">{{ "%.2f"|format(l.importe) }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="total-row">
+      <td colspan="{{ columnas_antes_importe }}">Subtotal</td>
+      <td class="num">{{ "%.2f"|format(presupuesto.subtotal) }}</td>
+    </tr>
+  </table>
+
+  <div class="resumen">
+    <table>
+      <tr><td>Subtotal</td><td class="num">{{ "%.2f"|format(presupuesto.subtotal) }} €</td></tr>
+      <tr><td>IVA ({{ "%.2f"|format(presupuesto.iva_pct) }}%)</td><td class="num">{{ "%.2f"|format(presupuesto.iva_importe) }} €</td></tr>
+      <tr class="total-final"><td>{{ "TOTAL PRESUPUESTO" if tipo == "interno" else "TOTAL PRESUPUESTO" }}</td><td class="num">{{ "%.2f"|format(presupuesto.precio_total_cliente) }} €</td></tr>
+    </table>
+  </div>
+
+  {% if presupuesto.notas %}
+  <div class="seccion-titulo">Notas</div>
+  <p style="font-size:8pt;">{{ presupuesto.notas }}</p>
+  {% endif %}
+
+  {% if tipo == "cliente" %}
+  <div class="validez">
+    Presupuesto válido durante 15 días naturales a partir de la fecha de creación ({{ fecha }}).
+  </div>
+  {% else %}
+  <div class="aviso">
+    Documento generado por PAYROLL CREATOR. Presupuesto orientativo basado en el catálogo de precios por
+    partidas configurado — verifica las condiciones reales antes de formalizar el proyecto. ·
+    PAYROLL CREATOR v{{ app_version }}
+  </div>
+  {% endif %}
+</body>
+</html>

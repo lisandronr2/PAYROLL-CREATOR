@@ -244,6 +244,50 @@ export interface Presupuesto {
   lineas_otros: PresupuestoLineaOtroCoste[];
 }
 
+export interface PartidaCatalogo {
+  id: number;
+  familia: string;
+  nombre: string;
+  unidad: string;
+  precio_coste_mo: string;
+  precio_material: string;
+  precio_medios_aux: string;
+  coste_directo: string;
+  margen_pct: string;
+  precio_venta: string;
+  observaciones?: string | null;
+  activo: boolean;
+}
+
+export interface PresupuestoItemsLinea {
+  id?: number;
+  partida_id: number;
+  familia?: string;
+  nombre?: string;
+  unidad?: string;
+  coste_directo_unitario?: string;
+  margen_pct?: string;
+  precio_unitario?: string;
+  cantidad: string;
+  descuento_pct: string;
+  importe?: string;
+}
+
+export interface PresupuestoItems {
+  id: number;
+  empresa_id: number;
+  nombre: string;
+  cliente_nombre?: string | null;
+  cliente_nif?: string | null;
+  fecha: string;
+  notas?: string | null;
+  iva_pct: string;
+  subtotal: string;
+  iva_importe: string;
+  precio_total_cliente: string;
+  lineas: PresupuestoItemsLinea[];
+}
+
 /**
  * Abre el PDF en una pestaña nueva con el visor del navegador (en vez de
  * descargarlo directamente), para poder verlo antes de decidir imprimirlo o
@@ -291,6 +335,10 @@ async function verPdfNomina(nominaId: number, nombreArchivo: string) {
 
 async function verPdfPresupuesto(presupuestoId: number, tipo: "cliente" | "interno", nombreArchivo: string) {
   await abrirPdfEnNuevaPestana(`/presupuestos/${presupuestoId}/pdf?tipo=${tipo}`, nombreArchivo);
+}
+
+async function verPdfPresupuestoItems(presupuestoId: number, tipo: "cliente" | "interno", nombreArchivo: string) {
+  await abrirPdfEnNuevaPestana(`/presupuestos-items/${presupuestoId}/pdf?tipo=${tipo}`, nombreArchivo);
 }
 
 export const api = {
@@ -388,6 +436,24 @@ export const api = {
       request<Presupuesto>(`/presupuestos/${id}`, { method: "PUT", body: JSON.stringify(data) }),
     eliminar: (id: number) => request<void>(`/presupuestos/${id}`, { method: "DELETE" }),
     verPdf: verPdfPresupuesto,
+  },
+  partidasCatalogo: {
+    listar: (soloActivas = true) =>
+      request<PartidaCatalogo[]>(`/partidas-catalogo?solo_activas=${soloActivas}`),
+    crear: (data: Partial<PartidaCatalogo>) =>
+      request<PartidaCatalogo>("/partidas-catalogo", { method: "POST", body: JSON.stringify(data) }),
+    actualizar: (id: number, data: Partial<PartidaCatalogo>) =>
+      request<PartidaCatalogo>(`/partidas-catalogo/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  },
+  presupuestosItems: {
+    listar: () => request<PresupuestoItems[]>("/presupuestos-items"),
+    obtener: (id: number) => request<PresupuestoItems>(`/presupuestos-items/${id}`),
+    crear: (data: Record<string, unknown>) =>
+      request<PresupuestoItems>("/presupuestos-items", { method: "POST", body: JSON.stringify(data) }),
+    actualizar: (id: number, data: Record<string, unknown>) =>
+      request<PresupuestoItems>(`/presupuestos-items/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    eliminar: (id: number) => request<void>(`/presupuestos-items/${id}`, { method: "DELETE" }),
+    verPdf: verPdfPresupuestoItems,
   },
   admin: {
     usuarios: {

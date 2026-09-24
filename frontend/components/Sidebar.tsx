@@ -22,6 +22,7 @@ import {
   PanelLeftOpen,
   LogOut,
   Receipt,
+  ListChecks,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
@@ -66,7 +67,10 @@ const GROUPS: NavGroup[] = [
     id: "presupuestos",
     label: "Presupuestos",
     icon: Receipt,
-    items: [{ href: "/presupuestos", label: "Presupuestos de proyecto", icon: Receipt }],
+    items: [
+      { href: "/presupuestos", label: "Presupuestos de proyecto", icon: Receipt },
+      { href: "/presupuestos-items", label: "Presupuesto por items", icon: ListChecks },
+    ],
   },
 ];
 
@@ -77,6 +81,7 @@ const ADMIN_GROUP: NavGroup = {
   items: [
     { href: "/admin/parametros", label: "Parámetros legales", icon: SlidersHorizontal },
     { href: "/admin/parametros-negocio", label: "Parámetros de negocio", icon: Receipt },
+    { href: "/admin/partidas-catalogo", label: "Catálogo de partidas", icon: ListChecks },
     { href: "/admin/tabla-irpf", label: "Tabla IRPF", icon: Percent },
     { href: "/admin/convenios", label: "Convenios (editar)", icon: BookOpenCheck },
     { href: "/admin/usuarios", label: "Usuarios", icon: UserCog },
