@@ -54,7 +54,7 @@
       <th>CLIENTE</th>
     </tr>
     <tr>
-      <td>{{ empresa.razon_social }} ({{ empresa.cif }})</td>
+      <td>{{ empresa.razon_social }} ({{ empresa.cif }}){% if empresa.direccion %}<br>{{ empresa.direccion }}{% endif %}</td>
       <td>{{ presupuesto.cliente_nombre or "-" }}{% if presupuesto.cliente_nif %} ({{ presupuesto.cliente_nif }}){% endif %}</td>
     </tr>
   </table>
@@ -122,6 +122,33 @@
   </table>
   {% endif %}
 
+  {% set hay_hotel_combustible = presupuesto.coste_directo_hotel or presupuesto.coste_directo_combustible %}
+  {% if hay_hotel_combustible %}
+  <div class="seccion-titulo">Hotel y combustible</div>
+  <table class="detalle">
+    <tr>
+      <th>Concepto</th>
+      <th class="num">{{ "Coste" if tipo == "interno" else "Importe" }} (€)</th>
+    </tr>
+    {% if presupuesto.coste_directo_hotel %}
+    <tr>
+      <td>Hotel</td>
+      <td class="num">{{ "%.2f"|format(presupuesto.coste_directo_hotel if tipo == "interno" else precio_venta_hotel) }}</td>
+    </tr>
+    {% endif %}
+    {% if presupuesto.coste_directo_combustible %}
+    <tr>
+      <td>Combustible</td>
+      <td class="num">{{ "%.2f"|format(presupuesto.coste_directo_combustible if tipo == "interno" else precio_venta_combustible) }}</td>
+    </tr>
+    {% endif %}
+    <tr class="total-row">
+      <td>Total hotel y combustible</td>
+      <td class="num">{{ "%.2f"|format((presupuesto.coste_directo_hotel + presupuesto.coste_directo_combustible) if tipo == "interno" else (precio_venta_hotel + precio_venta_combustible)) }}</td>
+    </tr>
+  </table>
+  {% endif %}
+
   {% if lineas_otros %}
   <div class="seccion-titulo">Materiales y otros costes</div>
   <table class="detalle">
@@ -150,8 +177,10 @@
   <div class="resumen">
     <table>
       <tr><td>Total mano de obra</td><td class="num">{{ "%.2f"|format(presupuesto.coste_directo_mano_obra) }} €</td></tr>
-      <tr><td>Total dietas y desplazamiento</td><td class="num">{{ "%.2f"|format(presupuesto.coste_directo_dietas) }} €</td></tr>
-      <tr><td>Total materiales y otros costes</td><td class="num">{{ "%.2f"|format(presupuesto.coste_directo_otros) }} €</td></tr>
+      {% if hay_dietas %}<tr><td>Total dietas y desplazamiento</td><td class="num">{{ "%.2f"|format(presupuesto.coste_directo_dietas) }} €</td></tr>{% endif %}
+      {% if presupuesto.coste_directo_hotel %}<tr><td>Hotel</td><td class="num">{{ "%.2f"|format(presupuesto.coste_directo_hotel) }} €</td></tr>{% endif %}
+      {% if presupuesto.coste_directo_combustible %}<tr><td>Combustible</td><td class="num">{{ "%.2f"|format(presupuesto.coste_directo_combustible) }} €</td></tr>{% endif %}
+      {% if lineas_otros %}<tr><td>Total materiales y otros costes</td><td class="num">{{ "%.2f"|format(presupuesto.coste_directo_otros) }} €</td></tr>{% endif %}
       <tr><td><strong>Coste directo total</strong></td><td class="num"><strong>{{ "%.2f"|format(presupuesto.coste_directo_total) }} €</strong></td></tr>
       <tr><td>Gastos generales ({{ "%.2f"|format(presupuesto.gastos_generales_pct) }}%)</td><td class="num">{{ "%.2f"|format(presupuesto.gastos_generales_importe) }} €</td></tr>
       <tr><td><strong>Coste total</strong></td><td class="num"><strong>{{ "%.2f"|format(presupuesto.coste_total) }} €</strong></td></tr>
@@ -166,6 +195,8 @@
     <table>
       <tr><td>Mano de obra</td><td class="num">{{ "%.2f"|format(precio_venta_mano_obra) }} €</td></tr>
       {% if hay_dietas %}<tr><td>Dietas y desplazamiento</td><td class="num">{{ "%.2f"|format(precio_venta_dietas) }} €</td></tr>{% endif %}
+      {% if presupuesto.coste_directo_hotel %}<tr><td>Hotel</td><td class="num">{{ "%.2f"|format(precio_venta_hotel) }} €</td></tr>{% endif %}
+      {% if presupuesto.coste_directo_combustible %}<tr><td>Combustible</td><td class="num">{{ "%.2f"|format(precio_venta_combustible) }} €</td></tr>{% endif %}
       {% if lineas_otros %}<tr><td>Materiales y otros costes</td><td class="num">{{ "%.2f"|format(precio_venta_materiales) }} €</td></tr>{% endif %}
       <tr class="total-final"><td>TOTAL PRESUPUESTO (IVA no incluido)</td><td class="num">{{ "%.2f"|format(presupuesto.precio_venta) }} €</td></tr>
     </table>

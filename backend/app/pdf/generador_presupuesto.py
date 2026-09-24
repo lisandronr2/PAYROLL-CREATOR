@@ -71,9 +71,13 @@ def generar_pdf_presupuesto(presupuesto: Presupuesto, tipo: str = "cliente") -> 
             }
         )
 
-    # Totales de las 3 categorías a precio de venta (para la versión cliente).
+    # Totales de las categorías a precio de venta (para la versión cliente).
     precio_venta_mano_obra = (Decimal(presupuesto.coste_directo_mano_obra) * factor_venta).quantize(Decimal("0.01"))
     precio_venta_dietas = (Decimal(presupuesto.coste_directo_dietas) * factor_venta).quantize(Decimal("0.01"))
+    precio_venta_hotel = (Decimal(presupuesto.coste_directo_hotel) * factor_venta).quantize(Decimal("0.01"))
+    precio_venta_combustible = (Decimal(presupuesto.coste_directo_combustible) * factor_venta).quantize(
+        Decimal("0.01")
+    )
     precio_venta_materiales = (Decimal(presupuesto.coste_directo_otros) * factor_venta).quantize(Decimal("0.01"))
 
     template = _env.get_template("presupuesto.html")
@@ -87,6 +91,8 @@ def generar_pdf_presupuesto(presupuesto: Presupuesto, tipo: str = "cliente") -> 
         lineas_otros=lineas_otros_vista,
         precio_venta_mano_obra=precio_venta_mano_obra,
         precio_venta_dietas=precio_venta_dietas,
+        precio_venta_hotel=precio_venta_hotel,
+        precio_venta_combustible=precio_venta_combustible,
         precio_venta_materiales=precio_venta_materiales,
         app_version=FULL_VERSION,
     )

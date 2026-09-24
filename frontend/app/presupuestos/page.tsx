@@ -55,6 +55,8 @@ function PresupuestosForm() {
   const [gastosPct, setGastosPct] = useState("");
   const [ivaPct, setIvaPct] = useState("");
   const [notas, setNotas] = useState("");
+  const [gastoHotel, setGastoHotel] = useState("0");
+  const [gastoCombustible, setGastoCombustible] = useState("0");
   const [lineasPersonal, setLineasPersonal] = useState<PresupuestoLineaPersonal[]>([{ ...lineaPersonalVacia }]);
   const [lineasOtros, setLineasOtros] = useState<PresupuestoLineaOtroCoste[]>([]);
 
@@ -112,6 +114,8 @@ function PresupuestosForm() {
         setGastosPct(p.gastos_generales_pct);
         setIvaPct(p.iva_pct);
         setNotas(p.notas ?? "");
+        setGastoHotel(p.coste_directo_hotel);
+        setGastoCombustible(p.coste_directo_combustible);
         setLineasPersonal(
           p.lineas_personal.length
             ? p.lineas_personal.map((l) => ({
@@ -154,6 +158,8 @@ function PresupuestosForm() {
     setClienteNombre("");
     setClienteNif("");
     setNotas("");
+    setGastoHotel("0");
+    setGastoCombustible("0");
     setLineasPersonal([{ ...lineaPersonalVacia }]);
     setLineasOtros([]);
   }
@@ -174,6 +180,8 @@ function PresupuestosForm() {
         gastos_generales_pct: gastosPct,
         iva_pct: ivaPct,
         notas: notas || null,
+        gasto_hotel: gastoHotel || "0",
+        gasto_combustible: gastoCombustible || "0",
         lineas_personal: lineasPersonal
           .filter((l) => l.categoria_id)
           .map((l) => ({
@@ -365,6 +373,34 @@ function PresupuestosForm() {
             hora lo fijas tú según el cliente o proyecto, no se toma del convenio. Las dietas sí se calculan
             con las tarifas del convenio elegido arriba.
           </p>
+        </div>
+
+        <div>
+          <h2 className="font-medium text-sm mb-2">Hotel y combustible (opcional)</h2>
+          <div className="grid sm:grid-cols-2 gap-2">
+            <label className="flex flex-col gap-0.5 text-xs text-slate-500">
+              Gasto de hotel (€)
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                className="border rounded px-2 py-1"
+                value={gastoHotel}
+                onChange={(e) => setGastoHotel(e.target.value)}
+              />
+            </label>
+            <label className="flex flex-col gap-0.5 text-xs text-slate-500">
+              Gasto de combustible (€)
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                className="border rounded px-2 py-1"
+                value={gastoCombustible}
+                onChange={(e) => setGastoCombustible(e.target.value)}
+              />
+            </label>
+          </div>
         </div>
 
         <div>

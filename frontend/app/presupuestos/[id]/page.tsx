@@ -178,6 +178,28 @@ export default function DetallePresupuestoPage() {
           </section>
         )}
 
+        {(Number(presupuesto.coste_directo_hotel) > 0 || Number(presupuesto.coste_directo_combustible) > 0) && (
+          <section>
+            <h2 className="text-sm font-semibold text-slate-600 mb-1">Hotel y combustible</h2>
+            <table className="w-full text-sm">
+              <tbody>
+                {Number(presupuesto.coste_directo_hotel) > 0 && (
+                  <tr className="border-t">
+                    <td className="p-1.5">Hotel</td>
+                    <td className="p-1.5 text-right">{Number(presupuesto.coste_directo_hotel).toFixed(2)} €</td>
+                  </tr>
+                )}
+                {Number(presupuesto.coste_directo_combustible) > 0 && (
+                  <tr className="border-t">
+                    <td className="p-1.5">Combustible</td>
+                    <td className="p-1.5 text-right">{Number(presupuesto.coste_directo_combustible).toFixed(2)} €</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </section>
+        )}
+
         {presupuesto.lineas_otros.length > 0 && (
           <section>
             <h2 className="text-sm font-semibold text-slate-600 mb-1">Materiales y otros costes</h2>
@@ -210,8 +232,18 @@ export default function DetallePresupuestoPage() {
 
         <section className="border-t pt-3 grid sm:grid-cols-2 gap-1 text-sm">
           <div>Total mano de obra: <strong>{Number(presupuesto.coste_directo_mano_obra).toFixed(2)} €</strong></div>
-          <div>Total dietas y desplazamiento: <strong>{Number(presupuesto.coste_directo_dietas).toFixed(2)} €</strong></div>
-          <div>Total materiales y otros costes: <strong>{Number(presupuesto.coste_directo_otros).toFixed(2)} €</strong></div>
+          {lineasConDietas.length > 0 && (
+            <div>Total dietas y desplazamiento: <strong>{Number(presupuesto.coste_directo_dietas).toFixed(2)} €</strong></div>
+          )}
+          {Number(presupuesto.coste_directo_hotel) > 0 && (
+            <div>Hotel: <strong>{Number(presupuesto.coste_directo_hotel).toFixed(2)} €</strong></div>
+          )}
+          {Number(presupuesto.coste_directo_combustible) > 0 && (
+            <div>Combustible: <strong>{Number(presupuesto.coste_directo_combustible).toFixed(2)} €</strong></div>
+          )}
+          {presupuesto.lineas_otros.length > 0 && (
+            <div>Total materiales y otros costes: <strong>{Number(presupuesto.coste_directo_otros).toFixed(2)} €</strong></div>
+          )}
           <div>Coste directo total: <strong>{Number(presupuesto.coste_directo_total).toFixed(2)} €</strong></div>
           <div>Gastos generales ({Number(presupuesto.gastos_generales_pct).toFixed(2)}%): <strong>{Number(presupuesto.gastos_generales_importe).toFixed(2)} €</strong></div>
           <div>Coste total: <strong>{Number(presupuesto.coste_total).toFixed(2)} €</strong></div>

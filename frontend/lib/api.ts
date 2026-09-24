@@ -230,6 +230,8 @@ export interface Presupuesto {
   iva_pct: string;
   coste_directo_mano_obra: string;
   coste_directo_dietas: string;
+  coste_directo_hotel: string;
+  coste_directo_combustible: string;
   coste_directo_otros: string;
   coste_directo_total: string;
   gastos_generales_importe: string;

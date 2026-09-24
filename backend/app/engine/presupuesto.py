@@ -94,6 +94,8 @@ def calcular_linea_personal(
 class ResultadoPresupuesto:
     coste_directo_mano_obra: Decimal
     coste_directo_dietas: Decimal
+    coste_directo_hotel: Decimal
+    coste_directo_combustible: Decimal
     coste_directo_materiales: Decimal
     coste_directo_total: Decimal
     gastos_generales_importe: Decimal
@@ -107,12 +109,20 @@ class ResultadoPresupuesto:
 def calcular_totales_presupuesto(
     coste_directo_mano_obra: Decimal,
     coste_directo_dietas: Decimal,
+    coste_directo_hotel: Decimal,
+    coste_directo_combustible: Decimal,
     coste_directo_materiales: Decimal,
     gastos_generales_pct: Decimal,
     margen_beneficio_pct: Decimal,
     iva_pct: Decimal,
 ) -> ResultadoPresupuesto:
-    coste_directo_total = _q(coste_directo_mano_obra + coste_directo_dietas + coste_directo_materiales)
+    coste_directo_total = _q(
+        coste_directo_mano_obra
+        + coste_directo_dietas
+        + coste_directo_hotel
+        + coste_directo_combustible
+        + coste_directo_materiales
+    )
     gastos_generales_importe = _q(coste_directo_total * gastos_generales_pct / Decimal(100))
     coste_total = _q(coste_directo_total + gastos_generales_importe)
     margen_importe = _q(coste_total * margen_beneficio_pct / Decimal(100))
@@ -123,6 +133,8 @@ def calcular_totales_presupuesto(
     return ResultadoPresupuesto(
         coste_directo_mano_obra=_q(coste_directo_mano_obra),
         coste_directo_dietas=_q(coste_directo_dietas),
+        coste_directo_hotel=_q(coste_directo_hotel),
+        coste_directo_combustible=_q(coste_directo_combustible),
         coste_directo_materiales=_q(coste_directo_materiales),
         coste_directo_total=coste_directo_total,
         gastos_generales_importe=gastos_generales_importe,

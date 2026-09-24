@@ -38,6 +38,8 @@ COLUMNAS_NUEVAS = [
     ("presupuesto_lineas_personal", "coste_mano_obra_total", "NUMERIC(12, 2) NOT NULL DEFAULT 0"),
     ("presupuesto_lineas_personal", "coste_dietas_total", "NUMERIC(12, 2) NOT NULL DEFAULT 0"),
     ("presupuesto_lineas_personal", "precio_hora", "NUMERIC(8, 2) NOT NULL DEFAULT 0"),
+    ("presupuestos", "coste_directo_hotel", "NUMERIC(12, 2) NOT NULL DEFAULT 0"),
+    ("presupuestos", "coste_directo_combustible", "NUMERIC(12, 2) NOT NULL DEFAULT 0"),
 ]
 
 

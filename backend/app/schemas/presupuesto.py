@@ -34,6 +34,8 @@ class PresupuestoCreate(BaseModel):
     gastos_generales_pct: Optional[Decimal] = None
     iva_pct: Optional[Decimal] = None
     notas: Optional[str] = None
+    gasto_hotel: Decimal = Decimal("0")
+    gasto_combustible: Decimal = Decimal("0")
     lineas_personal: list[PresupuestoLineaPersonalCreate] = []
     lineas_otros: list[PresupuestoLineaOtroCosteCreate] = []
 
@@ -78,6 +80,8 @@ class PresupuestoOut(BaseModel):
     iva_pct: Decimal
     coste_directo_mano_obra: Decimal
     coste_directo_dietas: Decimal
+    coste_directo_hotel: Decimal
+    coste_directo_combustible: Decimal
     coste_directo_otros: Decimal
     coste_directo_total: Decimal
     gastos_generales_importe: Decimal

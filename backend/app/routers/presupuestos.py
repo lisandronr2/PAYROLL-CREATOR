@@ -90,7 +90,14 @@ def _calcular_y_poblar(presupuesto: Presupuesto, payload: PresupuestoCreate, db:
     )
 
     totales = calcular_totales_presupuesto(
-        coste_directo_mano_obra, coste_directo_dietas, coste_directo_materiales, gastos_pct, margen_pct, iva_pct
+        coste_directo_mano_obra,
+        coste_directo_dietas,
+        payload.gasto_hotel,
+        payload.gasto_combustible,
+        coste_directo_materiales,
+        gastos_pct,
+        margen_pct,
+        iva_pct,
     )
 
     presupuesto.empresa_id = payload.empresa_id
@@ -105,6 +112,8 @@ def _calcular_y_poblar(presupuesto: Presupuesto, payload: PresupuestoCreate, db:
     presupuesto.iva_pct = iva_pct
     presupuesto.coste_directo_mano_obra = totales.coste_directo_mano_obra
     presupuesto.coste_directo_dietas = totales.coste_directo_dietas
+    presupuesto.coste_directo_hotel = totales.coste_directo_hotel
+    presupuesto.coste_directo_combustible = totales.coste_directo_combustible
     # Campo heredado (ver comentario en el modelo): se mantiene relleno solo
     # por compatibilidad con la columna NOT NULL ya existente.
     presupuesto.coste_directo_personal = _q(totales.coste_directo_mano_obra + totales.coste_directo_dietas)

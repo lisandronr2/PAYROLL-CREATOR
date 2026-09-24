@@ -40,6 +40,8 @@ class Presupuesto(Base):
     coste_directo_personal = Column(Numeric(12, 2), nullable=False, default=0)
     coste_directo_mano_obra = Column(Numeric(12, 2), nullable=False, default=0)
     coste_directo_dietas = Column(Numeric(12, 2), nullable=False, default=0)
+    coste_directo_hotel = Column(Numeric(12, 2), nullable=False, default=0)
+    coste_directo_combustible = Column(Numeric(12, 2), nullable=False, default=0)
     coste_directo_otros = Column(Numeric(12, 2), nullable=False, default=0)  # materiales/otros costes sueltos
     coste_directo_total = Column(Numeric(12, 2), nullable=False, default=0)
     gastos_generales_importe = Column(Numeric(12, 2), nullable=False, default=0)
