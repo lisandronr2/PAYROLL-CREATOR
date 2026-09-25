@@ -23,6 +23,7 @@ import {
   LogOut,
   Receipt,
   ListChecks,
+  Clock,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
@@ -60,6 +61,7 @@ const GROUPS: NavGroup[] = [
     items: [
       { href: "/nominas/generar", label: "Generar nómina", icon: Calculator },
       { href: "/nominas/historial", label: "Historial", icon: History },
+      { href: "/nominas/coste-categoria", label: "Coste por categoría", icon: Clock },
       { href: "/parametros", label: "Parámetros aplicados", icon: Percent },
     ],
   },

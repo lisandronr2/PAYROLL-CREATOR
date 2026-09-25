@@ -186,6 +186,23 @@ export interface ConvenioDietaRef {
   vigente_hasta?: string | null;
 }
 
+export interface CosteCategoria {
+  anio: number;
+  mes: number;
+  dias_naturales_mes: number;
+  dias_laborables_mes: number;
+  horas_mes: string;
+  convenio_nombre: string;
+  categoria_grupo: string;
+  categoria_nombre: string;
+  salario_base_mensual: string;
+  prorrata_pagas_extra_mensual: string;
+  total_devengado_mensual: string;
+  cuota_empresa_ss_mensual: string;
+  coste_empresa_mensual: string;
+  coste_empresa_por_hora: string;
+}
+
 export interface ParametroNegocio {
   id: number;
   clave: string;
@@ -426,6 +443,16 @@ export const api = {
     dietasConvenio: (convenioId: number) =>
       request<ConvenioDietaRef[]>(`/referencia/convenios/${convenioId}/dietas`),
     parametrosNegocio: () => request<ParametroNegocio[]>("/referencia/parametros-negocio"),
+    costeCategoria: (params: {
+      empresa_id: number;
+      categoria_id: number;
+      anio: number;
+      mes: number;
+      festivos_adicionales?: number;
+    }) =>
+      request<CosteCategoria>(
+        `/referencia/coste-categoria?empresa_id=${params.empresa_id}&categoria_id=${params.categoria_id}&anio=${params.anio}&mes=${params.mes}&festivos_adicionales=${params.festivos_adicionales ?? 0}`
+      ),
   },
   presupuestos: {
     listar: () => request<Presupuesto[]>("/presupuestos"),
