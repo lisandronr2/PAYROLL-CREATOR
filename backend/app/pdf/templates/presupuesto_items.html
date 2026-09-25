@@ -98,8 +98,12 @@
   <div class="resumen">
     <table>
       <tr><td>Subtotal</td><td class="num">{{ "%.2f"|format(presupuesto.subtotal) }} €</td></tr>
+      {% if presupuesto.iva_pct %}
       <tr><td>IVA ({{ "%.2f"|format(presupuesto.iva_pct) }}%)</td><td class="num">{{ "%.2f"|format(presupuesto.iva_importe) }} €</td></tr>
-      <tr class="total-final"><td>{{ "TOTAL PRESUPUESTO" if tipo == "interno" else "TOTAL PRESUPUESTO" }}</td><td class="num">{{ "%.2f"|format(presupuesto.precio_total_cliente) }} €</td></tr>
+      <tr class="total-final"><td>TOTAL PRESUPUESTO</td><td class="num">{{ "%.2f"|format(presupuesto.precio_total_cliente) }} €</td></tr>
+      {% else %}
+      <tr class="total-final"><td>TOTAL PRESUPUESTO (IVA no incluido)</td><td class="num">{{ "%.2f"|format(presupuesto.precio_total_cliente) }} €</td></tr>
+      {% endif %}
     </table>
   </div>
 

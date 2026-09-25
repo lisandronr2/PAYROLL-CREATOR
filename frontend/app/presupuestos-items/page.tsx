@@ -31,6 +31,7 @@ function PresupuestosItemsForm() {
   const [clienteNif, setClienteNif] = useState("");
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10));
   const [ivaPct, setIvaPct] = useState("");
+  const [sinIva, setSinIva] = useState(false);
   const [notas, setNotas] = useState("");
   const [lineas, setLineas] = useState<PresupuestoItemsLinea[]>([{ ...lineaVacia }]);
 
@@ -68,6 +69,7 @@ function PresupuestosItemsForm() {
         setClienteNif(p.cliente_nif ?? "");
         setFecha(p.fecha);
         setIvaPct(p.iva_pct);
+        setSinIva(Number(p.iva_pct) === 0);
         setNotas(p.notas ?? "");
         setLineas(
           p.lineas.length
@@ -105,13 +107,15 @@ function PresupuestosItemsForm() {
   }
 
   const subtotal = lineas.reduce((acc, l) => acc + importeLinea(l), 0);
-  const ivaImporte = subtotal * (Number(ivaPct) || 0) / 100;
+  const ivaPctEfectivo = sinIva ? 0 : Number(ivaPct) || 0;
+  const ivaImporte = (subtotal * ivaPctEfectivo) / 100;
 
   function limpiarFormulario() {
     setNombre("");
     setClienteNombre("");
     setClienteNif("");
     setNotas("");
+    setSinIva(false);
     setLineas([{ ...lineaVacia }]);
   }
 
@@ -126,7 +130,7 @@ function PresupuestosItemsForm() {
         cliente_nombre: clienteNombre || null,
         cliente_nif: clienteNif || null,
         fecha,
-        iva_pct: ivaPct,
+        iva_pct: sinIva ? "0" : ivaPct,
         notas: notas || null,
         lineas: lineas
           .filter((l) => l.partida_id)
@@ -202,12 +206,31 @@ function PresupuestosItemsForm() {
             <input
               type="number"
               step="0.01"
-              className="border rounded px-3 py-2 flex-1"
-              value={ivaPct}
+              disabled={sinIva}
+              className="border rounded px-3 py-2 flex-1 disabled:bg-slate-100 disabled:text-slate-400"
+              value={sinIva ? "0" : ivaPct}
               onChange={(e) => setIvaPct(e.target.value)}
             />
           </label>
         </div>
+
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={sinIva}
+            onChange={(e) => {
+              const marcado = e.target.checked;
+              setSinIva(marcado);
+              if (!marcado) setIvaPct((prev) => prev || valorDefecto(parametrosNegocio, "iva_pct_defecto"));
+            }}
+          />
+          No incluir IVA en este presupuesto
+        </label>
+        {sinIva && (
+          <p className="text-xs text-amber-700">
+            El precio final se mostrará como "IVA no incluido" en el PDF y en el resumen.
+          </p>
+        )}
 
         <div>
           <div className="flex justify-between items-center mb-2">
@@ -288,9 +311,11 @@ function PresupuestosItemsForm() {
 
         <div className="bg-slate-50 border rounded p-3 text-sm space-y-1">
           <div className="flex justify-between"><span>Subtotal</span><strong>{subtotal.toFixed(2)} €</strong></div>
-          <div className="flex justify-between"><span>IVA ({ivaPct || 0}%)</span><strong>{ivaImporte.toFixed(2)} €</strong></div>
+          {!sinIva && (
+            <div className="flex justify-between"><span>IVA ({ivaPctEfectivo}%)</span><strong>{ivaImporte.toFixed(2)} €</strong></div>
+          )}
           <div className="flex justify-between text-base border-t pt-1 mt-1">
-            <span>Total</span><strong>{(subtotal + ivaImporte).toFixed(2)} €</strong>
+            <span>Total{sinIva ? " (IVA no incluido)" : ""}</span><strong>{(subtotal + ivaImporte).toFixed(2)} €</strong>
           </div>
         </div>
 

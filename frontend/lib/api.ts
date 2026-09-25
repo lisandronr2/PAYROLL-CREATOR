@@ -203,6 +203,31 @@ export interface CosteCategoria {
   coste_empresa_por_hora: string;
 }
 
+export interface CostePlantilla {
+  anio: number;
+  mes: number;
+  dias_naturales_mes: number;
+  dias_laborables_mes: number;
+  horas_mes: string;
+  convenio_nombre: string;
+  categoria_grupo: string;
+  categoria_nombre: string;
+  numero_empleados: number;
+  precio_hora_real: string;
+  salario_base_mensual_individual: string;
+  prorrata_pagas_extra_individual: string;
+  horas_extra_total: string;
+  horas_extra_individual: string;
+  importe_horas_extra_individual: string;
+  total_devengado_individual: string;
+  cuota_empresa_ss_individual: string;
+  coste_laboral_individual: string;
+  gastos_reparto_total: string;
+  gastos_reparto_individual: string;
+  coste_real_individual: string;
+  coste_total_plantilla: string;
+}
+
 export interface ParametroNegocio {
   id: number;
   clave: string;
@@ -453,6 +478,34 @@ export const api = {
       request<CosteCategoria>(
         `/referencia/coste-categoria?empresa_id=${params.empresa_id}&categoria_id=${params.categoria_id}&anio=${params.anio}&mes=${params.mes}&festivos_adicionales=${params.festivos_adicionales ?? 0}`
       ),
+    costePlantilla: (params: {
+      empresa_id: number;
+      categoria_id: number;
+      anio: number;
+      mes: number;
+      numero_empleados: number;
+      festivos_adicionales?: number;
+      horas_extra_total?: string;
+      combustible?: string;
+      alojamiento?: string;
+      dietas?: string;
+      gastos_varios?: string;
+    }) => {
+      const query = new URLSearchParams({
+        empresa_id: String(params.empresa_id),
+        categoria_id: String(params.categoria_id),
+        anio: String(params.anio),
+        mes: String(params.mes),
+        numero_empleados: String(params.numero_empleados),
+        festivos_adicionales: String(params.festivos_adicionales ?? 0),
+        horas_extra_total: params.horas_extra_total ?? "0",
+        combustible: params.combustible ?? "0",
+        alojamiento: params.alojamiento ?? "0",
+        dietas: params.dietas ?? "0",
+        gastos_varios: params.gastos_varios ?? "0",
+      });
+      return request<CostePlantilla>(`/referencia/coste-plantilla?${query.toString()}`);
+    },
   },
   presupuestos: {
     listar: () => request<Presupuesto[]>("/presupuestos"),

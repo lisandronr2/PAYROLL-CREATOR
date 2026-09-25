@@ -54,6 +54,7 @@ function PresupuestosForm() {
   const [margenPct, setMargenPct] = useState("");
   const [gastosPct, setGastosPct] = useState("");
   const [ivaPct, setIvaPct] = useState("");
+  const [sinIva, setSinIva] = useState(false);
   const [notas, setNotas] = useState("");
   const [gastoHotel, setGastoHotel] = useState("0");
   const [gastoCombustible, setGastoCombustible] = useState("0");
@@ -113,6 +114,7 @@ function PresupuestosForm() {
         setMargenPct(p.margen_beneficio_pct);
         setGastosPct(p.gastos_generales_pct);
         setIvaPct(p.iva_pct);
+        setSinIva(Number(p.iva_pct) === 0);
         setNotas(p.notas ?? "");
         setGastoHotel(p.coste_directo_hotel);
         setGastoCombustible(p.coste_directo_combustible);
@@ -160,6 +162,7 @@ function PresupuestosForm() {
     setNotas("");
     setGastoHotel("0");
     setGastoCombustible("0");
+    setSinIva(false);
     setLineasPersonal([{ ...lineaPersonalVacia }]);
     setLineasOtros([]);
   }
@@ -178,7 +181,7 @@ function PresupuestosForm() {
         fecha,
         margen_beneficio_pct: margenPct,
         gastos_generales_pct: gastosPct,
-        iva_pct: ivaPct,
+        iva_pct: sinIva ? "0" : ivaPct,
         notas: notas || null,
         gasto_hotel: gastoHotel || "0",
         gasto_combustible: gastoCombustible || "0",
@@ -477,12 +480,30 @@ function PresupuestosForm() {
             <input
               type="number"
               step="0.01"
-              className="border rounded px-3 py-2"
-              value={ivaPct}
+              disabled={sinIva}
+              className="border rounded px-3 py-2 disabled:bg-slate-100 disabled:text-slate-400"
+              value={sinIva ? "0" : ivaPct}
               onChange={(e) => setIvaPct(e.target.value)}
             />
           </label>
         </div>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={sinIva}
+            onChange={(e) => {
+              const marcado = e.target.checked;
+              setSinIva(marcado);
+              if (!marcado) setIvaPct(valorDefecto(parametrosNegocio, "iva_pct_defecto"));
+            }}
+          />
+          No incluir IVA en este presupuesto
+        </label>
+        {sinIva && (
+          <p className="text-xs text-amber-700">
+            El precio final se mostrará como "IVA no incluido" en el PDF y en el resumen.
+          </p>
+        )}
         <p className="text-xs text-slate-400">
           Valores por defecto configurables en Admin → Parámetros de negocio. Puedes cambiarlos solo para este
           presupuesto sin afectar al resto.

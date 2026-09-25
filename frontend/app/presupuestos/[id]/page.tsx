@@ -249,9 +249,12 @@ export default function DetallePresupuestoPage() {
           <div>Coste total: <strong>{Number(presupuesto.coste_total).toFixed(2)} €</strong></div>
           <div>Margen de beneficio ({Number(presupuesto.margen_beneficio_pct).toFixed(2)}%): <strong>{Number(presupuesto.margen_importe).toFixed(2)} €</strong></div>
           <div>Precio de venta (sin IVA): <strong>{Number(presupuesto.precio_venta).toFixed(2)} €</strong></div>
-          <div>IVA ({Number(presupuesto.iva_pct).toFixed(2)}%): <strong>{Number(presupuesto.iva_importe).toFixed(2)} €</strong></div>
+          {Number(presupuesto.iva_pct) > 0 && (
+            <div>IVA ({Number(presupuesto.iva_pct).toFixed(2)}%): <strong>{Number(presupuesto.iva_importe).toFixed(2)} €</strong></div>
+          )}
           <div className="text-base sm:col-span-2 border-t pt-1 mt-1">
-            TOTAL GENERAL (precio al cliente): <strong>{Number(presupuesto.precio_total_cliente).toFixed(2)} €</strong>
+            TOTAL GENERAL (precio al cliente){Number(presupuesto.iva_pct) === 0 ? " (IVA no incluido)" : ""}:{" "}
+            <strong>{Number(presupuesto.precio_total_cliente).toFixed(2)} €</strong>
           </div>
         </section>
         <p className="text-xs text-slate-400">

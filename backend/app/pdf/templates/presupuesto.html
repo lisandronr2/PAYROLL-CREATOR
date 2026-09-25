@@ -186,8 +186,12 @@
       <tr><td><strong>Coste total</strong></td><td class="num"><strong>{{ "%.2f"|format(presupuesto.coste_total) }} €</strong></td></tr>
       <tr><td>Margen de beneficio ({{ "%.2f"|format(presupuesto.margen_beneficio_pct) }}%)</td><td class="num">{{ "%.2f"|format(presupuesto.margen_importe) }} €</td></tr>
       <tr><td><strong>Precio de venta (sin IVA)</strong></td><td class="num"><strong>{{ "%.2f"|format(presupuesto.precio_venta) }} €</strong></td></tr>
+      {% if presupuesto.iva_pct %}
       <tr><td>IVA ({{ "%.2f"|format(presupuesto.iva_pct) }}%)</td><td class="num">{{ "%.2f"|format(presupuesto.iva_importe) }} €</td></tr>
       <tr class="total-final"><td>PRECIO TOTAL AL CLIENTE</td><td class="num">{{ "%.2f"|format(presupuesto.precio_total_cliente) }} €</td></tr>
+      {% else %}
+      <tr class="total-final"><td>PRECIO TOTAL AL CLIENTE (IVA no incluido)</td><td class="num">{{ "%.2f"|format(presupuesto.precio_total_cliente) }} €</td></tr>
+      {% endif %}
     </table>
   </div>
   {% else %}

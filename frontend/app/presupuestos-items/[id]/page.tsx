@@ -135,9 +135,12 @@ export default function DetallePresupuestoItemsPage() {
 
         <section className="border-t pt-3 grid gap-1 text-sm">
           <div>Subtotal: <strong>{Number(presupuesto.subtotal).toFixed(2)} €</strong></div>
-          <div>IVA ({Number(presupuesto.iva_pct).toFixed(2)}%): <strong>{Number(presupuesto.iva_importe).toFixed(2)} €</strong></div>
+          {Number(presupuesto.iva_pct) > 0 && (
+            <div>IVA ({Number(presupuesto.iva_pct).toFixed(2)}%): <strong>{Number(presupuesto.iva_importe).toFixed(2)} €</strong></div>
+          )}
           <div className="text-base border-t pt-1 mt-1">
-            TOTAL: <strong>{Number(presupuesto.precio_total_cliente).toFixed(2)} €</strong>
+            TOTAL{Number(presupuesto.iva_pct) === 0 ? " (IVA no incluido)" : ""}:{" "}
+            <strong>{Number(presupuesto.precio_total_cliente).toFixed(2)} €</strong>
           </div>
         </section>
 
