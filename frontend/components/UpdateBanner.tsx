@@ -8,15 +8,17 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 const INTERVALO_COMPROBACION_MS = 5 * 60 * 1000;
 
 /**
- * Compara el build con el que se compiló este frontend contra el build que
- * está sirviendo el backend en este momento (el health check ya lo expone).
- * Backend y frontend se despliegan juntos con el mismo número de build en
- * este proyecto, así que un backend con un build distinto es la señal más
- * fiable de que hay una versión nueva — no depende de que el propio
- * service worker cambie de bytes, que con despliegues normales no ocurre.
+ * Botón fijo (no flotante entre el contenido, sino anclado arriba a la
+ * derecha) siempre visible para poder forzar una actualización manualmente
+ * cuando haga falta. Además, compara el build con el que se compiló este
+ * frontend contra el que está sirviendo el backend ahora mismo (el health
+ * check ya lo expone) para resaltar el botón cuando sabemos que hay una
+ * versión más nueva — backend y frontend se despliegan juntos con el mismo
+ * número de build en este proyecto.
  */
 export default function UpdateBanner() {
   const [actualizacionDisponible, setActualizacionDisponible] = useState(false);
+  const [actualizando, setActualizando] = useState(false);
 
   useEffect(() => {
     let cancelado = false;
@@ -48,18 +50,36 @@ export default function UpdateBanner() {
     };
   }, []);
 
-  if (!actualizacionDisponible) return null;
+  async function actualizarAhora() {
+    setActualizando(true);
+    try {
+      // Fuerza a que el service worker compruebe si hay una versión nueva de
+      // sí mismo y vacía la caché de datos/páginas, para no quedarse con
+      // nada guardado de antes al recargar.
+      if ("serviceWorker" in navigator) {
+        const registros = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registros.map((r) => r.update().catch(() => {})));
+      }
+      if ("caches" in window) {
+        const claves = await caches.keys();
+        await Promise.all(claves.map((clave) => caches.delete(clave)));
+      }
+    } finally {
+      window.location.reload();
+    }
+  }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 bg-slate-900 text-white rounded-lg shadow-lg px-4 py-3 flex items-center gap-3 text-sm max-w-xs">
-      <span>Hay una nueva versión de la aplicación disponible.</span>
-      <button
-        onClick={() => window.location.reload()}
-        className="bg-white text-slate-900 rounded px-3 py-1.5 font-medium flex items-center gap-1.5 shrink-0 whitespace-nowrap"
-      >
-        <RefreshCw size={14} />
-        Actualizar
-      </button>
-    </div>
+    <button
+      onClick={actualizarAhora}
+      disabled={actualizando}
+      title={actualizacionDisponible ? "Hay una versión nueva disponible" : "Forzar actualización de la app"}
+      className={`fixed top-3 right-3 z-50 rounded-full shadow-lg px-3 py-2 text-xs font-medium flex items-center gap-1.5 disabled:opacity-60 ${
+        actualizacionDisponible ? "bg-amber-500 text-white" : "bg-slate-900 text-white"
+      }`}
+    >
+      <RefreshCw size={14} className={actualizando ? "animate-spin" : ""} />
+      {actualizando ? "Actualizando..." : actualizacionDisponible ? "Nueva versión" : "Actualizar"}
+    </button>
   );
 }
