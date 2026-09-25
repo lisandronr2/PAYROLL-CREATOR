@@ -8,13 +8,12 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 const INTERVALO_COMPROBACION_MS = 5 * 60 * 1000;
 
 /**
- * Botón fijo (no flotante entre el contenido, sino anclado arriba a la
- * derecha) siempre visible para poder forzar una actualización manualmente
- * cuando haga falta. Además, compara el build con el que se compiló este
- * frontend contra el que está sirviendo el backend ahora mismo (el health
- * check ya lo expone) para resaltar el botón cuando sabemos que hay una
- * versión más nueva — backend y frontend se despliegan juntos con el mismo
- * número de build en este proyecto.
+ * Icono en el menú (junto al de cambio de tema) para forzar una
+ * actualización manualmente cuando haga falta. Además, compara el build
+ * con el que se compiló este frontend contra el que está sirviendo el
+ * backend ahora mismo (el health check ya lo expone) para resaltarlo
+ * cuando sabemos que hay una versión más nueva — backend y frontend se
+ * despliegan juntos con el mismo número de build en este proyecto.
  */
 export default function UpdateBanner() {
   const [actualizacionDisponible, setActualizacionDisponible] = useState(false);
@@ -73,13 +72,15 @@ export default function UpdateBanner() {
     <button
       onClick={actualizarAhora}
       disabled={actualizando}
-      title={actualizacionDisponible ? "Hay una versión nueva disponible" : "Forzar actualización de la app"}
-      className={`fixed top-3 right-3 z-50 rounded-full shadow-lg px-3 py-2 text-xs font-medium flex items-center gap-1.5 disabled:opacity-60 ${
-        actualizacionDisponible ? "bg-amber-500 text-white" : "bg-slate-900 text-white"
+      title={actualizacionDisponible ? "Hay una versión nueva disponible — actualizar" : "Forzar actualización de la app"}
+      className={`p-2 rounded hover:bg-slate-100 shrink-0 disabled:opacity-60 relative ${
+        actualizacionDisponible ? "text-amber-600" : "text-slate-500"
       }`}
     >
-      <RefreshCw size={14} className={actualizando ? "animate-spin" : ""} />
-      {actualizando ? "Actualizando..." : actualizacionDisponible ? "Nueva versión" : "Actualizar"}
+      <RefreshCw size={16} className={actualizando ? "animate-spin" : ""} />
+      {actualizacionDisponible && !actualizando && (
+        <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-amber-500 rounded-full" />
+      )}
     </button>
   );
 }

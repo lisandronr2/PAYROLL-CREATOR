@@ -5,7 +5,6 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import AppShell from "@/components/AppShell";
 import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import OfflineBanner from "@/components/OfflineBanner";
-import UpdateBanner from "@/components/UpdateBanner";
 
 export const metadata: Metadata = {
   title: "Payroll Creator",
@@ -43,7 +42,6 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
         <ServiceWorkerRegister />
-        <UpdateBanner />
         <ThemeProvider>
           <AuthProvider>
             <OfflineBanner />

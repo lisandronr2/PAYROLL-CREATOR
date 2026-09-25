@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
+import UpdateBanner from "@/components/UpdateBanner";
 import { FULL_VERSION } from "@/lib/version";
 
 interface NavItem {
@@ -283,6 +284,7 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
           )}
           <div className={`flex items-center gap-2 ${effectiveCollapsed ? "flex-col" : ""}`}>
             <ThemeSwitcher direction="up" />
+            <UpdateBanner />
             <button
               onClick={logout}
               className="p-2 rounded hover:bg-slate-100 text-slate-500 shrink-0"
