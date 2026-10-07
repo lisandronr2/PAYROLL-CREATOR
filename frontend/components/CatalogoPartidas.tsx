@@ -14,6 +14,8 @@ const nuevaVacia = {
   observaciones: "",
 };
 
+const OPCION_GRUPO_NUEVO = "__nuevo__";
+
 function costeDirecto(mo: string, mat: string, medios: string) {
   return (Number(mo) || 0) + (Number(mat) || 0) + (Number(medios) || 0);
 }
@@ -25,6 +27,7 @@ function precioVenta(coste: number, margen: string) {
 export default function CatalogoPartidas() {
   const [partidas, setPartidas] = useState<PartidaCatalogo[]>([]);
   const [grupo, setGrupo] = useState("");
+  const [nombreGrupoNuevo, setNombreGrupoNuevo] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const [nueva, setNueva] = useState({ ...nuevaVacia });
@@ -54,20 +57,28 @@ export default function CatalogoPartidas() {
     [partidas, grupo]
   );
 
+  const creandoGrupo = grupo === OPCION_GRUPO_NUEVO;
+  // Si el nombre escrito coincide con un grupo que ya existe (sin distinguir
+  // mayúsculas), se usa ese en vez de crear un duplicado tipo "cctv" y "CCTV".
+  const nombreNuevoLimpio = nombreGrupoNuevo.trim();
+  const grupoExistenteIgual = grupos.find((g) => g.toLowerCase() === nombreNuevoLimpio.toLowerCase());
+  const grupoDestino = creandoGrupo ? grupoExistenteIgual ?? nombreNuevoLimpio : grupo;
+
   function cambiarGrupo(valor: string) {
     setGrupo(valor);
     setEditandoId(null);
     setError(null);
+    if (valor !== OPCION_GRUPO_NUEVO) setNombreGrupoNuevo("");
   }
 
   async function crearPartida(e: React.FormEvent) {
     e.preventDefault();
-    if (!grupo) return;
+    if (!grupoDestino) return;
     setError(null);
     setCreando(true);
     try {
       await api.partidasCatalogo.crear({
-        familia: grupo,
+        familia: grupoDestino,
         nombre: nueva.nombre,
         unidad: nueva.unidad,
         precio_coste_mo: soloPrecio ? nueva.precio_venta_directo : nueva.precio_coste_mo,
@@ -77,6 +88,8 @@ export default function CatalogoPartidas() {
         observaciones: nueva.observaciones || null,
       });
       setNueva({ ...nuevaVacia });
+      setGrupo(grupoDestino);
+      setNombreGrupoNuevo("");
       cargar();
     } catch (err) {
       setError(String(err));
@@ -157,13 +170,35 @@ export default function CatalogoPartidas() {
               {g} ({partidas.filter((p) => p.familia === g).length})
             </option>
           ))}
+          <option value={OPCION_GRUPO_NUEVO}>+ Nuevo grupo...</option>
         </select>
       </label>
 
       {grupo && (
         <>
           <form onSubmit={crearPartida} className="bg-white border rounded-lg p-4 space-y-3">
-            <h2 className="font-medium text-sm">Añadir partida a «{grupo}»</h2>
+            {creandoGrupo ? (
+              <>
+                <h2 className="font-medium text-sm">Nuevo grupo con su primera partida</h2>
+                <label className="flex flex-col gap-1 text-xs text-slate-500 max-w-sm">
+                  Nombre del grupo nuevo
+                  <input
+                    required
+                    placeholder="Ej. Control de accesos"
+                    className="border rounded px-2 py-1.5 text-sm text-slate-900"
+                    value={nombreGrupoNuevo}
+                    onChange={(e) => setNombreGrupoNuevo(e.target.value)}
+                  />
+                </label>
+                {grupoExistenteIgual && (
+                  <p className="text-xs text-amber-700">
+                    Ya existe el grupo «{grupoExistenteIgual}»: la partida se añadirá a ese grupo.
+                  </p>
+                )}
+              </>
+            ) : (
+              <h2 className="font-medium text-sm">Añadir partida a «{grupo}»</h2>
+            )}
             <div className="grid sm:grid-cols-3 gap-2 text-sm">
               <input
                 required
@@ -246,10 +281,11 @@ export default function CatalogoPartidas() {
                 : `Coste directo: ${costeNueva.toFixed(2)} € · Precio de venta: ${ventaNueva.toFixed(2)} €`}
             </p>
             <button disabled={creando} className="bg-slate-900 text-white rounded py-1.5 px-4 text-sm disabled:opacity-50">
-              {creando ? "Añadiendo..." : "Añadir partida"}
+              {creando ? "Añadiendo..." : creandoGrupo ? "Crear grupo y añadir partida" : "Añadir partida"}
             </button>
           </form>
 
+          {!creandoGrupo && (
           <div className="bg-white border rounded-lg overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-100">
@@ -317,6 +353,7 @@ export default function CatalogoPartidas() {
               </tbody>
             </table>
           </div>
+          )}
         </>
       )}
     </div>
