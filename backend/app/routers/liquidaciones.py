@@ -133,7 +133,14 @@ def _calcular(payload: CalcularLiquidacionRequest, db: Session) -> _Calculo:
     fecha_ingreso = payload.fecha_ingreso or contrato.fecha_antiguedad or contrato.fecha_inicio
 
     try:
-        datos_convenio = obtener_datos_convenio_contrato(db, contrato, payload.fecha_baja)
+        datos_convenio = obtener_datos_convenio_contrato(
+            db,
+            contrato,
+            payload.fecha_baja,
+            # Igual que en la nómina: el quinquenio cumplido en el mes de la baja
+            # se empieza a pagar el mes siguiente, así que no entra en el finiquito.
+            en_fecha_antiguedad=payload.fecha_baja.replace(day=1),
+        )
         parametros = obtener_parametros_cotizacion(
             db, payload.fecha_baja, datos_convenio.grupo_cotizacion, contrato.tipo_contrato
         )

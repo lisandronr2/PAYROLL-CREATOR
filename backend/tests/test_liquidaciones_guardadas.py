@@ -193,3 +193,24 @@ def test_el_pdf_de_la_liquidacion_lleva_el_logo_de_la_empresa(db, contrato, tmp_
     ruta = router.pdf_liquidacion(guardada.id, "trabajador", db).path
 
     assert sum(len(pagina.images) for pagina in PdfReader(ruta).pages) >= 1
+
+
+def test_el_quinquenio_cumplido_en_el_mes_de_la_baja_no_entra_hasta_el_mes_siguiente(db, contrato, monkeypatch):
+    """Igual que en la nómina: 5 años cumplidos el 15/10 se pagan desde noviembre."""
+    contrato.fecha_antiguedad = date(2021, 10, 15)
+    db.commit()
+    vistos = []
+    original = router.obtener_datos_convenio_contrato
+
+    def espia(*args, **kwargs):
+        datos = original(*args, **kwargs)
+        vistos.append(datos.numero_quinquenios_o_trienios)
+        return datos
+
+    monkeypatch.setattr(router, "obtener_datos_convenio_contrato", espia)
+
+    router.calcular(peticion(contrato, fecha_baja=date(2026, 10, 31)), db)  # mismo mes del cumpleaños
+    router.calcular(peticion(contrato, fecha_baja=date(2026, 11, 30)), db)  # mes siguiente
+    router.calcular(peticion(contrato, fecha_baja=date(2026, 10, 14)), db)  # antes del cumpleaños
+
+    assert vistos == [0, 1, 0]

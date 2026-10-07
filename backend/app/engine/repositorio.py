@@ -77,7 +77,12 @@ def _numero_quinquenios_o_trienios(fecha_antiguedad: date, en_fecha: date, cada_
     return max(0, anios_completos // cada_anios)
 
 
-def obtener_datos_convenio_contrato(db: Session, contrato: Contrato, en_fecha: date) -> DatosConvenioContrato:
+def obtener_datos_convenio_contrato(
+    db: Session, contrato: Contrato, en_fecha: date, en_fecha_antiguedad: date | None = None
+) -> DatosConvenioContrato:
+    """`en_fecha_antiguedad`: fecha con la que se cuentan los quinquenios/trienios
+    (por defecto `en_fecha`). Las nóminas usan el día 1 del mes, de modo que un
+    quinquenio cumplido durante el mes se paga a partir del mes siguiente."""
     tabla = (
         db.query(ConvenioTablaSalarial)
         .filter(
@@ -97,7 +102,7 @@ def obtener_datos_convenio_contrato(db: Session, contrato: Contrato, en_fecha: d
     convenio = contrato.convenio
     categoria = contrato.categoria
     fecha_antiguedad = contrato.fecha_antiguedad or contrato.fecha_inicio
-    numero_tramos_antiguedad = _numero_quinquenios_o_trienios(fecha_antiguedad, en_fecha)
+    numero_tramos_antiguedad = _numero_quinquenios_o_trienios(fecha_antiguedad, en_fecha_antiguedad or en_fecha)
     if convenio.antiguedad_max_tramos is not None:
         numero_tramos_antiguedad = min(numero_tramos_antiguedad, convenio.antiguedad_max_tramos)
 
