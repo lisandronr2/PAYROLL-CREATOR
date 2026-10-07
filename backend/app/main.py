@@ -16,10 +16,17 @@ from app.routers import (
     presupuestos,
     partidas_catalogo,
     presupuestos_items,
+    liquidaciones,
 )
 from app.seed.parametros_legales import seed_parametros_legales, corregir_parametros_legales
 from app.seed.tabla_irpf import seed_tabla_irpf, corregir_tabla_irpf
-from app.seed.convenios import seed_convenios, seed_convenio_dietas, seed_subniveles_metal
+from app.seed.convenios import (
+    seed_convenios,
+    seed_convenio_dietas,
+    seed_subniveles_metal,
+    cargar_reglas_liquidacion_metal,
+    corregir_quinquenios_metal,
+)
 from app.seed.parametros_negocio import seed_parametros_negocio
 from app.seed.usuarios import seed_usuario_admin
 from app.seed.partidas_catalogo import seed_partidas_catalogo
@@ -50,6 +57,8 @@ def on_startup() -> None:
         seed_convenios(db)
         seed_convenio_dietas(db)
         seed_subniveles_metal(db)
+        cargar_reglas_liquidacion_metal(db)
+        corregir_quinquenios_metal(db)
         seed_parametros_negocio(db)
         seed_usuario_admin(db)
         seed_partidas_catalogo(db)
@@ -68,6 +77,7 @@ app.include_router(referencia.router)
 app.include_router(presupuestos.router)
 app.include_router(partidas_catalogo.router)
 app.include_router(presupuestos_items.router)
+app.include_router(liquidaciones.router)
 
 
 @app.get("/health")

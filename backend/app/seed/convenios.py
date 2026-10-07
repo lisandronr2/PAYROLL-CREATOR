@@ -42,14 +42,18 @@ def seed_convenios(db: Session) -> None:
     db.add(metal)
     db.flush()
 
+    # El último valor de cada fila es el quinquenio 2026 (art. 41 del convenio).
+    # Es una ESTIMACIÓN: valor del quinquenio de la tabla 2024 del convenio
+    # incrementado en el mismo % que el salario (+5,06 % hasta 2026). Confirmar
+    # con la tabla oficial 2026.
     grupos_metal = [
-        ("1", "Licenciada/o - Grado", 1, "35378.96", "2527.07", "1130.84"),
-        ("2", "Técnico/a", 2, "29689.98", "2120.71", "1002.16"),
-        ("3", "Técnica/o auxiliar", 3, "26768.79", "1912.06", "913.80"),
-        ("4", "Empleado/a", 4, "23930.65", "1709.33", "841.22"),
-        ("5", "Operaria/o", 5, "22263.68", "1590.26", "26.46"),
-        ("6", "Empleado/a auxiliar", 6, "22030.78", "1573.63", "781.71"),
-        ("7", "Operaria/o auxiliar", 7, "20687.47", "1477.68", "25.28"),
+        ("1", "Licenciada/o - Grado", 1, "35378.96", "2527.07", "42.72"),
+        ("2", "Técnico/a", 2, "29689.98", "2120.71", "38.88"),
+        ("3", "Técnica/o auxiliar", 3, "26768.79", "1912.06", "35.78"),
+        ("4", "Empleado/a", 4, "23930.65", "1709.33", "33.38"),
+        ("5", "Operaria/o", 5, "22263.68", "1590.26", "31.91"),
+        ("6", "Empleado/a auxiliar", 6, "22030.78", "1573.63", "31.19"),
+        ("7", "Operaria/o auxiliar", 7, "20687.47", "1477.68", "30.82"),
     ]
     for grupo, nombre, grupo_cot, anual, mensual, quinquenio in grupos_metal:
         categoria = CategoriaProfesional(
@@ -311,3 +315,98 @@ def seed_subniveles_metal(db: Session) -> None:
             )
 
     db.commit()
+
+
+def cargar_reglas_liquidacion_metal(db: Session) -> None:
+    """
+    Reglas del Convenio Metal Madrid que usa la liquidación/finiquito, según
+    su texto 2024-2026 (BOCM 18/01/2025):
+      - Art. 35: vacaciones de 22 días laborables, nunca inferiores a 30
+        días naturales.
+      - Art. 26: cese voluntario con preaviso por escrito de un mes para el
+        personal técnico y titulado, y 15 días naturales para el resto.
+    Solo rellena los campos que estén vacíos, para no pisar cambios hechos a
+    mano desde la aplicación.
+    """
+    convenio = (
+        db.query(Convenio)
+        .filter(Convenio.nombre == "Industria, Servicios e Instalaciones del Metal de Madrid")
+        .first()
+    )
+    if convenio is None:
+        return
+
+    valores = {
+        "vacaciones_dias_laborables": 22,
+        "vacaciones_dias_naturales": 30,
+        "preaviso_cese_dias_tecnicos": 30,
+        "preaviso_cese_dias_resto": 15,
+    }
+    cambiado = False
+    for campo, valor in valores.items():
+        if getattr(convenio, campo) is None:
+            setattr(convenio, campo, valor)
+            cambiado = True
+    if cambiado:
+        db.commit()
+
+
+# Quinquenio 2026 estimado por grupo profesional (ver seed_convenios) y el
+# valor ERRÓNEO que se sembró antes por error: era la columna "bases de grupo
+# para cálculo de complementos" de la tabla del convenio, no el quinquenio.
+QUINQUENIO_METAL_2026 = {
+    "1": Decimal("42.72"),
+    "2": Decimal("38.88"),
+    "3": Decimal("35.78"),
+    "4": Decimal("33.38"),
+    "5": Decimal("31.91"),
+    "6": Decimal("31.19"),
+    "7": Decimal("30.82"),
+}
+QUINQUENIO_METAL_2026_ERRONEO = {
+    "1": Decimal("1130.84"),
+    "2": Decimal("1002.16"),
+    "3": Decimal("913.80"),
+    "4": Decimal("841.22"),
+    "5": Decimal("26.46"),
+    "6": Decimal("781.71"),
+    "7": Decimal("25.28"),
+}
+
+
+def corregir_quinquenios_metal(db: Session) -> None:
+    """
+    Corrige el valor del quinquenio 2026 del Convenio Metal Madrid en bases de
+    datos ya creadas (en producción se sembró la columna equivocada de la
+    tabla del convenio: ~841 € por quinquenio en vez de ~33 €).
+
+    Solo sustituye los valores que siguen siendo exactamente el erróneo
+    sembrado, así que es idempotente y no pisa un valor corregido a mano.
+    Cubre también los subniveles (p. ej. "5.1"), que copian el valor de su
+    grupo. Las nóminas ya guardadas no se recalculan.
+    """
+    convenio = (
+        db.query(Convenio)
+        .filter(Convenio.nombre == "Industria, Servicios e Instalaciones del Metal de Madrid")
+        .first()
+    )
+    if convenio is None:
+        return
+
+    cambiado = False
+    for categoria in db.query(CategoriaProfesional).filter(CategoriaProfesional.convenio_id == convenio.id):
+        grupo = str(categoria.grupo).split(".")[0]
+        if grupo not in QUINQUENIO_METAL_2026:
+            continue
+        tablas = db.query(ConvenioTablaSalarial).filter(
+            ConvenioTablaSalarial.categoria_id == categoria.id,
+            ConvenioTablaSalarial.anio == 2026,
+        )
+        for tabla in tablas:
+            if tabla.valor_quinquenio_o_trienio is None:
+                continue
+            if Decimal(tabla.valor_quinquenio_o_trienio) == QUINQUENIO_METAL_2026_ERRONEO[grupo]:
+                tabla.valor_quinquenio_o_trienio = QUINQUENIO_METAL_2026[grupo]
+                cambiado = True
+    if cambiado:
+        db.commit()

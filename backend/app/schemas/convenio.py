@@ -14,6 +14,10 @@ class ConvenioCreate(BaseModel):
     numero_pagas: int = 14
     jornada_anual_horas: Decimal = Decimal("1800")
     notas: Optional[str] = None
+    vacaciones_dias_naturales: Optional[int] = None
+    vacaciones_dias_laborables: Optional[int] = None
+    preaviso_cese_dias_tecnicos: Optional[int] = None
+    preaviso_cese_dias_resto: Optional[int] = None
 
 
 class ConvenioUpdate(BaseModel):
@@ -25,6 +29,10 @@ class ConvenioUpdate(BaseModel):
     numero_pagas: Optional[int] = None
     jornada_anual_horas: Optional[Decimal] = None
     notas: Optional[str] = None
+    vacaciones_dias_naturales: Optional[int] = None
+    vacaciones_dias_laborables: Optional[int] = None
+    preaviso_cese_dias_tecnicos: Optional[int] = None
+    preaviso_cese_dias_resto: Optional[int] = None
 
 
 class CategoriaProfesionalCreate(BaseModel):
@@ -57,6 +65,10 @@ class ConvenioOut(BaseModel):
     numero_pagas: int
     jornada_anual_horas: Decimal
     notas: Optional[str] = None
+    vacaciones_dias_naturales: Optional[int] = None
+    vacaciones_dias_laborables: Optional[int] = None
+    preaviso_cese_dias_tecnicos: Optional[int] = None
+    preaviso_cese_dias_resto: Optional[int] = None
 
 
 class CategoriaProfesionalOut(BaseModel):

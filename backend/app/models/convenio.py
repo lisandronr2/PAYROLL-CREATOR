@@ -17,6 +17,14 @@ class Convenio(Base):
     jornada_anual_horas = Column(Numeric(7, 2), default=1800)  # jornada máxima anual pactada
     notas = Column(Text)  # avisos de vigencia / verificación
 
+    # Reglas del convenio que usa la liquidación/finiquito. Nulas = no
+    # informadas: se aplica el mínimo legal (30 días naturales de vacaciones,
+    # art. 38 ET) y 15 días de preaviso de cese voluntario (uso habitual).
+    vacaciones_dias_naturales = Column(Integer, nullable=True)
+    vacaciones_dias_laborables = Column(Integer, nullable=True)
+    preaviso_cese_dias_tecnicos = Column(Integer, nullable=True)  # personal técnico y titulado
+    preaviso_cese_dias_resto = Column(Integer, nullable=True)
+
 
 class CategoriaProfesional(Base):
     __tablename__ = "categorias_profesionales"

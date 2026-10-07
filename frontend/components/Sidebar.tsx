@@ -26,6 +26,7 @@ import {
   Clock,
   Users2,
   PencilRuler,
+  Scale,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
@@ -67,6 +68,7 @@ const GROUPS: NavGroup[] = [
       { href: "/nominas/historial", label: "Historial", icon: History },
       { href: "/nominas/coste-categoria", label: "Coste por categoría", icon: Clock },
       { href: "/nominas/coste-plantilla", label: "Coste de plantilla", icon: Users2 },
+      { href: "/nominas/liquidacion", label: "Liquidación / finiquito", icon: Scale },
       { href: "/parametros", label: "Parámetros aplicados", icon: Percent },
     ],
   },

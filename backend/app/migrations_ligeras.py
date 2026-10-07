@@ -40,6 +40,10 @@ COLUMNAS_NUEVAS = [
     ("presupuesto_lineas_personal", "precio_hora", "NUMERIC(8, 2) NOT NULL DEFAULT 0"),
     ("presupuestos", "coste_directo_hotel", "NUMERIC(12, 2) NOT NULL DEFAULT 0"),
     ("presupuestos", "coste_directo_combustible", "NUMERIC(12, 2) NOT NULL DEFAULT 0"),
+    ("convenios", "vacaciones_dias_naturales", "INTEGER"),
+    ("convenios", "vacaciones_dias_laborables", "INTEGER"),
+    ("convenios", "preaviso_cese_dias_tecnicos", "INTEGER"),
+    ("convenios", "preaviso_cese_dias_resto", "INTEGER"),
 ]
 
 

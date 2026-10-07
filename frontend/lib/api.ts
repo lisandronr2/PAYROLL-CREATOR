@@ -203,6 +203,62 @@ export interface CosteCategoria {
   coste_empresa_por_hora: string;
 }
 
+export interface LineaLiquidacion {
+  bloque: "devengo" | "indemnizacion" | "descuento" | "deduccion";
+  concepto: string;
+  importe: string;
+  detalle?: string | null;
+  referencia_legal?: string | null;
+  cotiza: boolean;
+  tributa: boolean;
+}
+
+export interface Liquidacion {
+  trabajador_nombre: string;
+  trabajador_nif: string;
+  convenio_nombre: string;
+  categoria: string;
+  motivo: string;
+  motivo_texto: string;
+  fecha_ingreso: string;
+  fecha_baja: string;
+  antiguedad_texto: string;
+  dias_preaviso_exigidos: number;
+  dias_preaviso_trabajados: number;
+  vacaciones_dias_naturales: number;
+  vacaciones_dias_laborables?: number | null;
+  salario_diario_indemnizacion: string;
+  salario_diario_preaviso: string;
+  lineas: LineaLiquidacion[];
+  total_ingresos: string;
+  indemnizacion_legal: string;
+  indemnizacion_exenta: string;
+  base_cotizacion: string;
+  base_irpf: string;
+  cotizacion_trabajador: string;
+  tipo_irpf_pct: string;
+  retencion_irpf: string;
+  total_descuentos: string;
+  total_deducciones: string;
+  liquido_a_percibir: string;
+  cuota_empresa_ss: string;
+  coste_empresa_total: string;
+  avisos: string[];
+}
+
+export interface SugerenciasLiquidacion {
+  fecha_ingreso: string;
+  tipo_contrato: string;
+  categoria: string;
+  convenio_nombre: string;
+  dias_preaviso_exigidos: number;
+  texto_preaviso: string;
+  vacaciones_dias_naturales: number;
+  vacaciones_dias_laborables?: number | null;
+  unidad_vacaciones_defecto: "laborables" | "naturales";
+  texto_vacaciones: string;
+}
+
 export interface CostePlantilla {
   anio: number;
   mes: number;
@@ -516,6 +572,14 @@ export const api = {
       request<Presupuesto>(`/presupuestos/${id}`, { method: "PUT", body: JSON.stringify(data) }),
     eliminar: (id: number) => request<void>(`/presupuestos/${id}`, { method: "DELETE" }),
     verPdf: verPdfPresupuesto,
+  },
+  liquidaciones: {
+    sugerencias: (contratoId: number, motivo: string, fechaBaja?: string) =>
+      request<SugerenciasLiquidacion>(
+        `/liquidaciones/sugerencias?contrato_id=${contratoId}&motivo=${motivo}${fechaBaja ? `&fecha_baja=${fechaBaja}` : ""}`
+      ),
+    calcular: (data: Record<string, unknown>) =>
+      request<Liquidacion>("/liquidaciones/calcular", { method: "POST", body: JSON.stringify(data) }),
   },
   partidasCatalogo: {
     listar: (soloActivas = true) =>
