@@ -1,9 +1,9 @@
 {% extends "presupuesto_profesional_base.html" %}
 {% block secciones %}
   {% for s in datos.secciones %}
-  <div class="seccion">{{ s.titulo }}</div>
-  <table class="detalle">
+  <table class="detalle" repeat="2">
     {% if s.clave == "mano_obra" %}
+    <tr class="tit"><td colspan="5">{{ s.titulo }}</td></tr>
     <tr class="enc">
       <td width="46%">CATEGORÍA PROFESIONAL</td>
       <td class="num" width="13%">PERSONAS</td>
@@ -26,6 +26,7 @@
     </tr>
 
     {% elif s.clave == "dietas" %}
+    <tr class="tit"><td colspan="2">{{ s.titulo }}</td></tr>
     <tr class="enc">
       <td width="82%">CONCEPTO</td>
       <td class="num" width="18%">IMPORTE</td>
@@ -42,6 +43,7 @@
     </tr>
 
     {% elif s.clave == "hotel_combustible" %}
+    <tr class="tit"><td colspan="2">{{ s.titulo }}</td></tr>
     <tr class="enc">
       <td width="82%">CONCEPTO</td>
       <td class="num" width="18%">IMPORTE</td>
@@ -58,6 +60,7 @@
     </tr>
 
     {% else %}
+    <tr class="tit"><td colspan="3">{{ s.titulo }}</td></tr>
     <tr class="enc">
       <td width="66%">CONCEPTO</td>
       <td class="num" width="15%">CANTIDAD</td>

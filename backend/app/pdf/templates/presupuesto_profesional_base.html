@@ -30,9 +30,10 @@
   .caja-valor { font-size: 10.5pt; font-weight: bold; color: #111827; margin-top: 2pt; }
   .caja-sub { font-size: 8.5pt; color: #4b5563; margin-top: 1pt; }
 
-  .seccion { font-size: 10.5pt; font-weight: bold; color: #1f3a5f; border-bottom: 1pt solid #1f3a5f; padding-bottom: 2pt; margin: 10pt 0 4pt 0; -pdf-keep-with-next: true; }
+  .seccion { font-size: 10.5pt; font-weight: bold; color: #1f3a5f; border-bottom: 1pt solid #1f3a5f; padding-bottom: 2pt; margin: 10pt 0 4pt 0; }
 
   table.detalle { width: 100%; }
+  table.detalle tr.tit td { font-size: 10.5pt; font-weight: bold; color: #1f3a5f; border-bottom: 1pt solid #1f3a5f; padding: 12pt 0 3pt 0; }
   table.detalle td { padding: 3.6pt 6pt; font-size: 8.5pt; vertical-align: top; border-bottom: 0.5pt solid #e5e7eb; }
   table.detalle tr.enc td { background-color: #1f3a5f; color: #ffffff; font-size: 7pt; font-weight: bold; border: 0.5pt solid #1f3a5f; }
   table.detalle tr.par td { background-color: #f8fafc; }
@@ -147,7 +148,8 @@
     </tr>
   </table>
 
-  <div class="seccion">Conforme del cliente</div>
+  <table class="indivisible"><tr><td style="padding:0;">
+  <div class="seccion" style="margin-top:12pt;">Conforme del cliente</div>
   <table class="conforme">
     <tr>
       <td class="firma" width="38%">Fecha</td>
@@ -155,6 +157,7 @@
       <td class="firma" width="59%">Firma y sello del cliente<br><span class="conforme-nota">Su firma supone la conformidad con este presupuesto en las condiciones indicadas.</span></td>
     </tr>
   </table>
+  </td></tr></table>
 
 </body>
 </html>

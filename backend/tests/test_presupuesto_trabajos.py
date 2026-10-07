@@ -477,3 +477,23 @@ def test_los_presupuestos_antiguos_sin_numero_conservan_su_id(db):
     db.commit()
     rellenar_numeros_pendientes(db, type(p))
     assert db.get(type(p), p.id).numero == p.id
+
+
+# ---------- Paginación del PDF profesional ----------
+def test_una_tabla_larga_empieza_en_la_primera_pagina_y_continua_con_su_cabecera(db, tmp_path, monkeypatch):
+    monkeypatch.setattr(generador_presupuesto, "OUTPUT_DIR", str(tmp_path))
+    trabajos = [
+        PresupuestoLineaTrabajoCreate(concepto=f"Trabajo {i:02d}", cantidad=D("1"), precio_unitario=D("100"))
+        for i in range(1, 31)
+    ]
+    p = router.crear_presupuesto(peticion(db, trabajos=trabajos), db)
+
+    paginas = PdfReader(router.descargar_pdf_presupuesto(p.id, "cliente", "profesional", db).path).pages
+    textos = [pagina.extract_text() for pagina in paginas]
+
+    assert len(paginas) >= 2
+    assert "Trabajo 01" in textos[0]  # la tabla no salta entera a la página siguiente
+    assert "Trabajo 30" not in textos[0]
+    assert "Trabajos a realizar" in textos[1] and "CANTIDAD" in textos[1]  # título y cabecera se repiten
+    assert sum(t.count("Total trabajos a realizar") for t in textos) == 1
+    assert sum(t.count("Conforme del cliente") for t in textos) == 1

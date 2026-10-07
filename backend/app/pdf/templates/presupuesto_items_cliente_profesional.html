@@ -1,7 +1,7 @@
 {% extends "presupuesto_profesional_base.html" %}
 {% block secciones %}
-  <div class="seccion">Partidas</div>
-  <table class="detalle">
+  <table class="detalle" repeat="2">
+    <tr class="tit"><td colspan="{{ 6 if hay_descuentos else 5 }}">Partidas</td></tr>
     <tr class="enc">
       <td width="{{ 32 if hay_descuentos else 46 }}%">PARTIDA</td>
       <td class="num" width="10%">UNIDAD</td>
