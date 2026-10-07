@@ -19,6 +19,7 @@ class Presupuesto(Base):
     empresa_id = Column(Integer, ForeignKey("empresas.id"), nullable=False)
     convenio_id = Column(Integer, ForeignKey("convenios.id"), nullable=False)
 
+    numero = Column(Integer, nullable=True)  # nº correlativo dentro del año (editable)
     nombre = Column(String, nullable=False)  # referencia / nombre del proyecto
     cliente_nombre = Column(String, nullable=True)
     cliente_nif = Column(String, nullable=True)

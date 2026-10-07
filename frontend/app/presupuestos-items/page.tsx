@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { api, Empresa, ParametroNegocio, PartidaCatalogo, PresupuestoItems, PresupuestoItemsLinea } from "@/lib/api";
+import { api, numeroPresupuesto, Empresa, ParametroNegocio, PartidaCatalogo, PresupuestoItems, PresupuestoItemsLinea } from "@/lib/api";
 
 const lineaVacia: PresupuestoItemsLinea = {
   partida_id: 0,
@@ -30,6 +30,8 @@ function PresupuestosItemsForm() {
   const [clienteNombre, setClienteNombre] = useState("");
   const [clienteNif, setClienteNif] = useState("");
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10));
+  const [numero, setNumero] = useState("");
+  const numeroManual = useRef(false);
   const [ivaPct, setIvaPct] = useState("");
   const [sinIva, setSinIva] = useState(false);
   const [notas, setNotas] = useState("");
@@ -53,6 +55,13 @@ function PresupuestosItemsForm() {
       .catch((e) => setError(String(e)));
   }
 
+  // Propone el menor nº libre del año (recupera el de presupuestos borrados) salvo que el usuario lo haya tocado.
+  const anioFecha = Number(fecha.slice(0, 4));
+  useEffect(() => {
+    if (presupuestoEditarId || numeroManual.current || !anioFecha) return;
+    api.presupuestosItems.siguienteNumero(anioFecha).then((r) => setNumero(String(r.numero))).catch(() => {});
+  }, [anioFecha, presupuestos.length, presupuestoEditarId]);
+
   useEffect(() => {
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -68,6 +77,8 @@ function PresupuestosItemsForm() {
         setClienteNombre(p.cliente_nombre ?? "");
         setClienteNif(p.cliente_nif ?? "");
         setFecha(p.fecha);
+        setNumero(p.numero != null ? String(p.numero) : "");
+        numeroManual.current = true;
         setIvaPct(p.iva_pct);
         setSinIva(Number(p.iva_pct) === 0);
         setNotas(p.notas ?? "");
@@ -111,6 +122,8 @@ function PresupuestosItemsForm() {
   const ivaImporte = (subtotal * ivaPctEfectivo) / 100;
 
   function limpiarFormulario() {
+    numeroManual.current = false;
+    setNumero("");
     setNombre("");
     setClienteNombre("");
     setClienteNif("");
@@ -129,6 +142,7 @@ function PresupuestosItemsForm() {
         nombre,
         cliente_nombre: clienteNombre || null,
         cliente_nif: clienteNif || null,
+        numero: numero ? Number(numero) : null,
         fecha,
         iva_pct: sinIva ? "0" : ivaPct,
         notas: notas || null,
@@ -181,6 +195,18 @@ function PresupuestosItemsForm() {
             className="border rounded px-3 py-2"
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
+          />
+          <input
+            type="number"
+            min={1}
+            title="Nº de presupuesto (se propone el siguiente libre; puedes cambiarlo)"
+            placeholder="Nº presupuesto"
+            className="border rounded px-3 py-2"
+            value={numero}
+            onChange={(e) => {
+              numeroManual.current = true;
+              setNumero(e.target.value);
+            }}
           />
           <input
             type="date"
@@ -350,6 +376,7 @@ function PresupuestosItemsForm() {
       <table className="w-full bg-white border rounded-lg overflow-hidden text-sm">
         <thead className="bg-slate-100">
           <tr>
+            <th className="text-left p-2">Nº</th>
             <th className="text-left p-2">Proyecto</th>
             <th className="text-left p-2">Cliente</th>
             <th className="text-left p-2">Empresa</th>
@@ -361,6 +388,7 @@ function PresupuestosItemsForm() {
         <tbody>
           {presupuestos.map((p) => (
             <tr key={p.id} className="border-t">
+              <td className="p-2 whitespace-nowrap">{numeroPresupuesto(p, "I")}</td>
               <td className="p-2">{p.nombre}</td>
               <td className="p-2">{p.cliente_nombre || "-"}</td>
               <td className="p-2">{nombreEmpresa(p.empresa_id)}</td>

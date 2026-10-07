@@ -29,6 +29,7 @@ class PresupuestoLineaTrabajoCreate(BaseModel):
 
 class PresupuestoCreate(BaseModel):
     empresa_id: int
+    numero: Optional[int] = None  # si no se indica, el menor libre del año
     convenio_id: int
     nombre: str
     cliente_nombre: Optional[str] = None
@@ -84,6 +85,7 @@ class PresupuestoLineaTrabajoOut(BaseModel):
 class PresupuestoOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
+    numero: Optional[int] = None
     empresa_id: int
     convenio_id: int
     nombre: str

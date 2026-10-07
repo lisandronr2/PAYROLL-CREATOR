@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Printer } from "lucide-react";
-import { api, Empresa, PresupuestoItems } from "@/lib/api";
+import { api, numeroPresupuesto, Empresa, PresupuestoItems } from "@/lib/api";
 
 export default function DetallePresupuestoItemsPage() {
   const params = useParams();
@@ -88,7 +88,10 @@ export default function DetallePresupuestoItemsPage() {
 
       <div className="bg-white border rounded-lg p-4 space-y-4">
         <div>
-          <h1 className="text-xl font-semibold">{presupuesto.nombre}</h1>
+          <h1 className="text-xl font-semibold">
+            <span className="text-slate-500 font-normal">Nº {numeroPresupuesto(presupuesto, "I")} · </span>
+            {presupuesto.nombre}
+          </h1>
           <p className="text-sm text-slate-500">
             {empresa?.razon_social} · Fecha: {presupuesto.fecha}
           </p>

@@ -1,10 +1,11 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   api,
+  numeroPresupuesto,
   CategoriaProfesional,
   Convenio,
   Empresa,
@@ -58,6 +59,8 @@ function PresupuestosForm() {
   const [clienteNombre, setClienteNombre] = useState("");
   const [clienteNif, setClienteNif] = useState("");
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10));
+  const [numero, setNumero] = useState("");
+  const numeroManual = useRef(false);
   const [margenPct, setMargenPct] = useState("");
   const [gastosPct, setGastosPct] = useState("");
   const [ivaPct, setIvaPct] = useState("");
@@ -94,6 +97,13 @@ function PresupuestosForm() {
       .catch((e) => setError(String(e)));
   }
 
+  // Propone el menor nº libre del año (recupera el de presupuestos borrados) salvo que el usuario lo haya tocado.
+  const anioFecha = Number(fecha.slice(0, 4));
+  useEffect(() => {
+    if (presupuestoEditarId || numeroManual.current || !anioFecha) return;
+    api.presupuestos.siguienteNumero(anioFecha).then((r) => setNumero(String(r.numero))).catch(() => {});
+  }, [anioFecha, presupuestos.length, presupuestoEditarId]);
+
   useEffect(() => {
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -119,6 +129,8 @@ function PresupuestosForm() {
         setClienteNombre(p.cliente_nombre ?? "");
         setClienteNif(p.cliente_nif ?? "");
         setFecha(p.fecha);
+        setNumero(p.numero != null ? String(p.numero) : "");
+        numeroManual.current = true;
         setMargenPct(p.margen_beneficio_pct);
         setGastosPct(p.gastos_generales_pct);
         setIvaPct(p.iva_pct);
@@ -175,6 +187,8 @@ function PresupuestosForm() {
   }
 
   function limpiarFormulario() {
+    numeroManual.current = false;
+    setNumero("");
     setNombre("");
     setClienteNombre("");
     setClienteNif("");
@@ -198,6 +212,7 @@ function PresupuestosForm() {
         nombre,
         cliente_nombre: clienteNombre || null,
         cliente_nif: clienteNif || null,
+        numero: numero ? Number(numero) : null,
         fecha,
         margen_beneficio_pct: margenPct,
         gastos_generales_pct: gastosPct,
@@ -273,6 +288,18 @@ function PresupuestosForm() {
             className="border rounded px-3 py-2"
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
+          />
+          <input
+            type="number"
+            min={1}
+            title="Nº de presupuesto (se propone el siguiente libre; puedes cambiarlo)"
+            placeholder="Nº presupuesto"
+            className="border rounded px-3 py-2"
+            value={numero}
+            onChange={(e) => {
+              numeroManual.current = true;
+              setNumero(e.target.value);
+            }}
           />
           <input
             type="date"
@@ -617,6 +644,7 @@ function PresupuestosForm() {
       <table className="w-full bg-white border rounded-lg overflow-hidden text-sm">
         <thead className="bg-slate-100">
           <tr>
+            <th className="text-left p-2">Nº</th>
             <th className="text-left p-2">Proyecto</th>
             <th className="text-left p-2">Cliente</th>
             <th className="text-left p-2">Empresa</th>
@@ -628,6 +656,7 @@ function PresupuestosForm() {
         <tbody>
           {presupuestos.map((p) => (
             <tr key={p.id} className="border-t">
+              <td className="p-2 whitespace-nowrap">{numeroPresupuesto(p)}</td>
               <td className="p-2">{p.nombre}</td>
               <td className="p-2">{p.cliente_nombre || "-"}</td>
               <td className="p-2">{nombreEmpresa(p.empresa_id)}</td>

@@ -13,6 +13,7 @@ class PresupuestoItemsLineaCreate(BaseModel):
 
 class PresupuestoItemsCreate(BaseModel):
     empresa_id: int
+    numero: Optional[int] = None  # si no se indica, el menor libre del año
     nombre: str
     cliente_nombre: Optional[str] = None
     cliente_nif: Optional[str] = None
@@ -41,6 +42,7 @@ class PresupuestoItemsLineaOut(BaseModel):
 class PresupuestoItemsOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
+    numero: Optional[int] = None
     empresa_id: int
     nombre: str
     cliente_nombre: Optional[str] = None

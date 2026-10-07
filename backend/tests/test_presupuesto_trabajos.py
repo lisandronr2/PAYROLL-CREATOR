@@ -418,3 +418,62 @@ def test_sin_personal_ni_materiales_el_pdf_no_muestra_esas_secciones(db, tmp_pat
     assert "Montaje" in texto
     for vacio in ("Mano de obra", "mano de obra", "Personal", "Dietas", "Hotel", "Materiales"):
         assert vacio not in texto, vacio
+
+
+# ---------- Numeración de presupuestos ----------
+def test_numeracion_correlativa_recupera_el_numero_del_borrado_y_permite_cambiarlo(db):
+    a = router.crear_presupuesto(peticion(db), db)
+    b = router.crear_presupuesto(peticion(db), db)
+    c = router.crear_presupuesto(peticion(db), db)
+    assert (a.numero, b.numero, c.numero) == (1, 2, 3)
+    assert router.proximo_numero(2026, db) == {"anio": 2026, "numero": 4}
+
+    router.eliminar_presupuesto(b.id, db)
+    assert router.proximo_numero(2026, db)["numero"] == 2  # se recupera el hueco
+    d = router.crear_presupuesto(peticion(db), db)
+    assert d.numero == 2
+
+    e = router.crear_presupuesto(peticion(db, numero=50), db)
+    assert e.numero == 50
+    assert router.proximo_numero(2026, db)["numero"] == 4
+
+
+def test_no_se_puede_repetir_un_numero_en_el_mismo_anio_pero_si_en_otro(db):
+    router.crear_presupuesto(peticion(db, numero=7), db)
+    with pytest.raises(HTTPException) as error:
+        router.crear_presupuesto(peticion(db, numero=7), db)
+    assert error.value.status_code == 409
+    with pytest.raises(HTTPException) as error:
+        router.crear_presupuesto(peticion(db, numero=0), db)
+    assert error.value.status_code == 422
+    otro_anio = router.crear_presupuesto(peticion(db, numero=7, fecha=date(2027, 1, 5)), db)
+    assert otro_anio.numero == 7
+
+
+def test_editar_conserva_el_numero_y_permite_cambiarlo(db):
+    a = router.crear_presupuesto(peticion(db), db)
+    b = router.crear_presupuesto(peticion(db), db)
+
+    conservado = router.actualizar_presupuesto(a.id, peticion(db, nombre="Otro nombre"), db)
+    assert conservado.numero == 1
+    cambiado = router.actualizar_presupuesto(a.id, peticion(db, numero=9), db)
+    assert cambiado.numero == 9
+    with pytest.raises(HTTPException) as error:
+        router.actualizar_presupuesto(a.id, peticion(db, numero=b.numero), db)
+    assert error.value.status_code == 409
+
+
+def test_el_pdf_usa_el_numero_guardado(db, tmp_path, monkeypatch):
+    monkeypatch.setattr(generador_presupuesto, "OUTPUT_DIR", str(tmp_path))
+    p = router.crear_presupuesto(peticion(db, numero=12), db)
+    assert "2026-0012" in texto_pdf(router.descargar_pdf_presupuesto(p.id, "cliente", "profesional", db).path)
+
+
+def test_los_presupuestos_antiguos_sin_numero_conservan_su_id(db):
+    from app.numeracion import rellenar_numeros_pendientes
+
+    p = router.crear_presupuesto(peticion(db), db)
+    p.numero = None
+    db.commit()
+    rellenar_numeros_pendientes(db, type(p))
+    assert db.get(type(p), p.id).numero == p.id

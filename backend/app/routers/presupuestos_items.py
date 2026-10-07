@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import get_current_usuario
 from app.database import get_db
+from app.numeracion import asignar_numero, siguiente_numero
 from app.engine.presupuesto_items import calcular_importe_linea, calcular_totales_items
 from app.models.parametro_negocio import ParametroNegocio
 from app.models.partida_catalogo import PartidaCatalogo
@@ -76,10 +77,17 @@ def _calcular_y_poblar(presupuesto: PresupuestoItems, payload: PresupuestoItemsC
 @router.post("", response_model=PresupuestoItemsOut, status_code=201)
 def crear_presupuesto_items(payload: PresupuestoItemsCreate, db: Session = Depends(get_db)):
     presupuesto = PresupuestoItems()
+    asignar_numero(db, PresupuestoItems, presupuesto, payload.numero, payload.fecha)
     _calcular_y_poblar(presupuesto, payload, db)
     db.commit()
     db.refresh(presupuesto)
     return presupuesto
+
+
+@router.get("/siguiente-numero")
+def proximo_numero(anio: int, db: Session = Depends(get_db)):
+    """Menor número libre del año (recupera los de presupuestos borrados)."""
+    return {"anio": anio, "numero": siguiente_numero(db, PresupuestoItems, anio)}
 
 
 @router.get("", response_model=list[PresupuestoItemsOut])
@@ -100,6 +108,7 @@ def actualizar_presupuesto_items(presupuesto_id: int, payload: PresupuestoItemsC
     presupuesto = db.get(PresupuestoItems, presupuesto_id)
     if not presupuesto:
         raise HTTPException(status_code=404, detail="Presupuesto no encontrado")
+    asignar_numero(db, PresupuestoItems, presupuesto, payload.numero, payload.fecha)
     _calcular_y_poblar(presupuesto, payload, db)
     db.commit()
     db.refresh(presupuesto)

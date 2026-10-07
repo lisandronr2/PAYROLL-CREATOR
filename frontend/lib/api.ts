@@ -338,6 +338,7 @@ export interface PresupuestoLineaOtroCoste {
 
 export interface Presupuesto {
   id: number;
+  numero?: number | null;
   empresa_id: number;
   convenio_id: number;
   nombre: string;
@@ -397,6 +398,7 @@ export interface PresupuestoItemsLinea {
 
 export interface PresupuestoItems {
   id: number;
+  numero?: number | null;
   empresa_id: number;
   nombre: string;
   cliente_nombre?: string | null;
@@ -617,6 +619,8 @@ export const api = {
     },
   },
   presupuestos: {
+    siguienteNumero: (anio: number) =>
+      request<{ anio: number; numero: number }>(`/presupuestos/siguiente-numero?anio=${anio}`),
     listar: () => request<Presupuesto[]>("/presupuestos"),
     obtener: (id: number) => request<Presupuesto>(`/presupuestos/${id}`),
     crear: (data: Record<string, unknown>) =>
@@ -652,6 +656,8 @@ export const api = {
       request<PartidaCatalogo>(`/partidas-catalogo/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   },
   presupuestosItems: {
+    siguienteNumero: (anio: number) =>
+      request<{ anio: number; numero: number }>(`/presupuestos-items/siguiente-numero?anio=${anio}`),
     listar: () => request<PresupuestoItems[]>("/presupuestos-items"),
     obtener: (id: number) => request<PresupuestoItems>(`/presupuestos-items/${id}`),
     crear: (data: Record<string, unknown>) =>
@@ -709,3 +715,8 @@ export const api = {
     },
   },
 };
+
+/** "2026-0007" (los de presupuesto por items llevan una I: "2026-I0007"). */
+export function numeroPresupuesto(p: { id: number; numero?: number | null; fecha: string }, prefijo = ""): string {
+  return `${p.fecha.slice(0, 4)}-${prefijo}${String(p.numero ?? p.id).padStart(4, "0")}`;
+}

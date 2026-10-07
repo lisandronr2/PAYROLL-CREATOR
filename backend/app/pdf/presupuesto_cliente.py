@@ -13,6 +13,7 @@ from datetime import date, timedelta
 from decimal import Decimal, ROUND_HALF_UP
 
 from app.models.presupuesto import Presupuesto
+from app.numeracion import numero_visible
 
 HORAS_JORNADA_NORMAL = Decimal("8")
 DIAS_VALIDEZ = 15
@@ -187,7 +188,7 @@ def _fecha(fecha: date) -> str:
 def preparar_datos_cliente(presupuesto: Presupuesto) -> DatosCliente:
     secciones = preparar_secciones(presupuesto)
     return DatosCliente(
-        numero=f"{presupuesto.fecha.year}-{presupuesto.id:04d}",
+        numero=numero_visible(presupuesto),
         fecha=_fecha(presupuesto.fecha),
         valido_hasta=_fecha(presupuesto.fecha + timedelta(days=DIAS_VALIDEZ)),
         secciones=secciones,

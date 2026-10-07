@@ -6,6 +6,7 @@ from jinja2 import Environment, FileSystemLoader
 from xhtml2pdf import pisa
 
 from app.models.presupuesto_items import PresupuestoItems
+from app.numeracion import numero_visible
 from app.pdf.logos import logo_de_empresa
 from app.pdf.presupuesto_cliente import DIAS_VALIDEZ, cant, eur, totales_de
 from app.version import FULL_VERSION
@@ -70,7 +71,7 @@ def generar_pdf_presupuesto_items(presupuesto: PresupuestoItems, tipo: str = "cl
 def _generar_pdf_cliente_profesional(presupuesto: PresupuestoItems) -> str:
     fecha = presupuesto.fecha
     datos = SimpleNamespace(
-        numero=f"{fecha.year}-I{presupuesto.id:04d}",
+        numero=numero_visible(presupuesto, "I"),
         fecha=fecha.strftime("%d/%m/%Y"),
         valido_hasta=(fecha + timedelta(days=DIAS_VALIDEZ)).strftime("%d/%m/%Y"),
         dias_validez=DIAS_VALIDEZ,
