@@ -25,6 +25,7 @@ import {
   ListChecks,
   Clock,
   Users2,
+  PencilRuler,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
@@ -35,6 +36,7 @@ interface NavItem {
   href: string;
   label: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
+  soloAdmin?: boolean;
 }
 
 interface NavGroup {
@@ -75,6 +77,7 @@ const GROUPS: NavGroup[] = [
     items: [
       { href: "/presupuestos", label: "Presupuestos de proyecto", icon: Receipt },
       { href: "/presupuestos-items", label: "Presupuesto por items", icon: ListChecks },
+      { href: "/presupuestos-partidas", label: "Partidas por grupo", icon: PencilRuler, soloAdmin: true },
     ],
   },
 ];
@@ -86,7 +89,6 @@ const ADMIN_GROUP: NavGroup = {
   items: [
     { href: "/admin/parametros", label: "Parámetros legales", icon: SlidersHorizontal },
     { href: "/admin/parametros-negocio", label: "Parámetros de negocio", icon: Receipt },
-    { href: "/admin/partidas-catalogo", label: "Catálogo de partidas", icon: ListChecks },
     { href: "/admin/tabla-irpf", label: "Tabla IRPF", icon: Percent },
     { href: "/admin/convenios", label: "Convenios (editar)", icon: BookOpenCheck },
     { href: "/admin/usuarios", label: "Usuarios", icon: UserCog },
@@ -245,7 +247,11 @@ export default function Sidebar({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const grupos = usuario?.rol === "admin" ? [...GROUPS, ADMIN_GROUP] : GROUPS;
+  const esAdmin = usuario?.rol === "admin";
+  const grupos = (esAdmin ? [...GROUPS, ADMIN_GROUP] : GROUPS).map((g) => ({
+    ...g,
+    items: g.items.filter((i) => !i.soloAdmin || esAdmin),
+  }));
 
   function renderSidebarInner(effectiveCollapsed: boolean) {
     return (
