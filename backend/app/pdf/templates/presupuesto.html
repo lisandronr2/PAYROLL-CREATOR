@@ -67,6 +67,7 @@
     </tr>
   </table>
 
+  {% if lineas_personal %}
   <div class="seccion-titulo">Personal</div>
   <table class="detalle">
     <tr>
@@ -94,6 +95,7 @@
       <td class="num">{{ "%.2f"|format(presupuesto.coste_directo_mano_obra if tipo == "interno" else precio_venta_mano_obra) }}</td>
     </tr>
   </table>
+  {% endif %}
 
   {% set hay_dietas = lineas_personal|selectattr("numero_medias_dietas")|list
        or lineas_personal|selectattr("numero_dietas_completas_cortas")|list
@@ -208,7 +210,7 @@
   {% if tipo == "interno" %}
   <div class="resumen">
     <table>
-      <tr><td>Total mano de obra</td><td class="num">{{ "%.2f"|format(presupuesto.coste_directo_mano_obra) }} €</td></tr>
+      {% if lineas_personal %}<tr><td>Total mano de obra</td><td class="num">{{ "%.2f"|format(presupuesto.coste_directo_mano_obra) }} €</td></tr>{% endif %}
       {% if hay_dietas %}<tr><td>Total dietas y desplazamiento</td><td class="num">{{ "%.2f"|format(presupuesto.coste_directo_dietas) }} €</td></tr>{% endif %}
       {% if presupuesto.coste_directo_hotel %}<tr><td>Hotel</td><td class="num">{{ "%.2f"|format(presupuesto.coste_directo_hotel) }} €</td></tr>{% endif %}
       {% if presupuesto.coste_directo_combustible %}<tr><td>Combustible</td><td class="num">{{ "%.2f"|format(presupuesto.coste_directo_combustible) }} €</td></tr>{% endif %}
@@ -230,7 +232,7 @@
   {% else %}
   <div class="resumen">
     <table>
-      <tr><td>Mano de obra</td><td class="num">{{ "%.2f"|format(precio_venta_mano_obra) }} €</td></tr>
+      {% if lineas_personal %}<tr><td>Mano de obra</td><td class="num">{{ "%.2f"|format(precio_venta_mano_obra) }} €</td></tr>{% endif %}
       {% if hay_dietas %}<tr><td>Dietas y desplazamiento</td><td class="num">{{ "%.2f"|format(precio_venta_dietas) }} €</td></tr>{% endif %}
       {% if presupuesto.coste_directo_hotel %}<tr><td>Hotel</td><td class="num">{{ "%.2f"|format(precio_venta_hotel) }} €</td></tr>{% endif %}
       {% if presupuesto.coste_directo_combustible %}<tr><td>Combustible</td><td class="num">{{ "%.2f"|format(precio_venta_combustible) }} €</td></tr>{% endif %}

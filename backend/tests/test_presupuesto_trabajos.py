@@ -396,3 +396,25 @@ def test_pdf_profesional_del_presupuesto_por_items(db, tmp_path, monkeypatch, iv
     assert ("IVA no incluido" in texto) == (iva == "0")
     # el interno sigue siendo el de siempre
     assert "USO INTERNO" in texto_pdf(gen.generar_pdf_presupuesto_items(pi, "interno"))
+
+
+# ---------- Lo vacío no figura en el PDF ----------
+def peticion_solo_trabajos(db):
+    return peticion(
+        db,
+        lineas_personal=[],
+        otros=False,
+        trabajos=[PresupuestoLineaTrabajoCreate(concepto="Montaje", cantidad=D("2"), precio_unitario=D("300"))],
+    )
+
+
+@pytest.mark.parametrize("formato,tipo", [("profesional", "cliente"), ("clasico", "cliente"), ("clasico", "interno")])
+def test_sin_personal_ni_materiales_el_pdf_no_muestra_esas_secciones(db, tmp_path, monkeypatch, formato, tipo):
+    monkeypatch.setattr(generador_presupuesto, "OUTPUT_DIR", str(tmp_path))
+    p = router.crear_presupuesto(peticion_solo_trabajos(db), db)
+
+    texto = texto_pdf(router.descargar_pdf_presupuesto(p.id, tipo, formato, db).path)
+
+    assert "Montaje" in texto
+    for vacio in ("Mano de obra", "mano de obra", "Personal", "Dietas", "Hotel", "Materiales"):
+        assert vacio not in texto, vacio

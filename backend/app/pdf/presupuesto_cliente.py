@@ -138,6 +138,9 @@ def preparar_secciones(presupuesto: Presupuesto) -> list[SeccionVista]:
         materiales.lineas.append(LineaVista(concepto=l.concepto, cantidad=cant(l.cantidad), coste=Decimal(l.importe)))
     secciones.append(materiales)
 
+    # Lo que no tiene valor (sección sin líneas o líneas a 0 €) no figura en el PDF.
+    for s in secciones:
+        s.lineas = [l for l in s.lineas if l.coste > 0]
     secciones = [s for s in secciones if s.lineas]
 
     # Reparto del precio de venta: primero entre secciones, luego entre sus líneas.
