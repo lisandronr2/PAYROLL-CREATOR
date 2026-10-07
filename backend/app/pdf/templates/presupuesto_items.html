@@ -35,6 +35,7 @@
 </head>
 <body>
 
+{% set cabecera %}
   {% if tipo == "interno" %}
   <div class="etiqueta-interno">USO INTERNO — NO ENVIAR AL CLIENTE</div>
   <h1>Presupuesto por items — {{ presupuesto.nombre }}</h1>
@@ -46,6 +47,13 @@
     <div class="linea-fecha">Fecha: {{ fecha }}</div>
   </div>
   {% endif %}
+  {% endset %}
+  {% if logo %}
+  <table style="width:100%; border-collapse:collapse; margin-bottom:6px;"><tr>
+    <td style="width:64px; vertical-align:top; padding:0;"><img src="{{ logo }}" width="56" height="69"></td>
+    <td style="vertical-align:top; padding:0;">{{ cabecera }}</td>
+  </tr></table>
+  {% else %}{{ cabecera }}{% endif %}
 
   <table class="ficha">
     <colgroup><col style="width:50%"><col style="width:50%"></colgroup>

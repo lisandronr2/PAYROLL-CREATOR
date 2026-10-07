@@ -42,6 +42,7 @@ class Presupuesto(Base):
     coste_directo_dietas = Column(Numeric(12, 2), nullable=False, default=0)
     coste_directo_hotel = Column(Numeric(12, 2), nullable=False, default=0)
     coste_directo_combustible = Column(Numeric(12, 2), nullable=False, default=0)
+    coste_directo_trabajos = Column(Numeric(12, 2), nullable=False, default=0)  # trabajos a realizar (líneas a medida)
     coste_directo_otros = Column(Numeric(12, 2), nullable=False, default=0)  # materiales/otros costes sueltos
     coste_directo_total = Column(Numeric(12, 2), nullable=False, default=0)
     gastos_generales_importe = Column(Numeric(12, 2), nullable=False, default=0)
@@ -60,6 +61,9 @@ class Presupuesto(Base):
     )
     lineas_otros = relationship(
         "PresupuestoLineaOtroCoste", back_populates="presupuesto", cascade="all, delete-orphan"
+    )
+    lineas_trabajos = relationship(
+        "PresupuestoLineaTrabajo", back_populates="presupuesto", cascade="all, delete-orphan"
     )
 
 
@@ -114,3 +118,20 @@ class PresupuestoLineaOtroCoste(Base):
     importe = Column(Numeric(12, 2), nullable=False)  # cantidad * precio_unitario
 
     presupuesto = relationship("Presupuesto", back_populates="lineas_otros")
+
+
+class PresupuestoLineaTrabajo(Base):
+    """Trabajo a realizar: línea a medida con concepto, cantidad y precio
+    unitario (igual que las líneas de materiales y otros costes). Cuenta como
+    coste directo, así que le aplican los gastos generales y el margen del
+    presupuesto igual que a los materiales."""
+    __tablename__ = "presupuesto_lineas_trabajos"
+
+    id = Column(Integer, primary_key=True, index=True)
+    presupuesto_id = Column(Integer, ForeignKey("presupuestos.id"), nullable=False)
+    concepto = Column(String, nullable=False)
+    cantidad = Column(Numeric(10, 2), nullable=False, default=1)
+    precio_unitario = Column(Numeric(12, 2), nullable=False)
+    importe = Column(Numeric(12, 2), nullable=False)  # cantidad * precio_unitario
+
+    presupuesto = relationship("Presupuesto", back_populates="lineas_trabajos")

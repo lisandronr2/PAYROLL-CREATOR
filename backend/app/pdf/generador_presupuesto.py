@@ -5,12 +5,18 @@ from jinja2 import Environment, FileSystemLoader
 from xhtml2pdf import pisa
 
 from app.models.presupuesto import Presupuesto
+from app.pdf.logos import logo_de_empresa
+from app.pdf.presupuesto_cliente import cant, eur, preparar_datos_cliente, totales_de
 from app.version import FULL_VERSION
 
 TEMPLATES_DIR = os.path.join(os.path.dirname(__file__), "templates")
 OUTPUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "generated_pdfs")
 
 _env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
+_env.filters["eur"] = eur
+_env.filters["cant"] = cant
+
+FORMATOS = ("clasico", "profesional")
 
 
 def _fecha_es(fecha) -> str:
@@ -19,15 +25,21 @@ def _fecha_es(fecha) -> str:
     return fecha.strftime("%d-%m-%Y")
 
 
-def generar_pdf_presupuesto(presupuesto: Presupuesto, tipo: str = "cliente") -> str:
+def generar_pdf_presupuesto(presupuesto: Presupuesto, tipo: str = "cliente", formato: str = "profesional") -> str:
     """
     tipo="cliente": partidas con el precio de venta ya incluido (margen y
     gastos generales repartidos proporcionalmente), sin revelar el coste
     real ni el margen — lo que se envía normalmente a un cliente.
     tipo="interno": desglose completo (coste directo, gastos generales,
     margen, IVA) para uso propio de la empresa.
+    formato="profesional" (por defecto, solo para tipo="cliente"): maquetación
+    cuidada para presentar al cliente final; ver app/pdf/presupuesto_cliente.py.
+    formato="clasico": maquetación antigua.
     """
     os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+    if tipo == "cliente" and formato == "profesional":
+        return _generar_pdf_cliente_profesional(presupuesto)
 
     # Factor único para repartir gastos generales + margen proporcionalmente
     # sobre cada partida en la versión "cliente", sin revelar el coste real
@@ -58,6 +70,19 @@ def generar_pdf_presupuesto(presupuesto: Presupuesto, tipo: str = "cliente") -> 
             }
         )
 
+    lineas_trabajos_vista = []
+    for trabajo in presupuesto.lineas_trabajos:
+        importe_coste = Decimal(trabajo.importe)
+        lineas_trabajos_vista.append(
+            {
+                "concepto": trabajo.concepto,
+                "cantidad": trabajo.cantidad,
+                "precio_unitario": trabajo.precio_unitario,
+                "importe": importe_coste,
+                "precio_venta_linea": (importe_coste * factor_venta).quantize(Decimal("0.01")),
+            }
+        )
+
     lineas_otros_vista = []
     for otro in presupuesto.lineas_otros:
         importe_coste = Decimal(otro.importe)
@@ -78,6 +103,7 @@ def generar_pdf_presupuesto(presupuesto: Presupuesto, tipo: str = "cliente") -> 
     precio_venta_combustible = (Decimal(presupuesto.coste_directo_combustible) * factor_venta).quantize(
         Decimal("0.01")
     )
+    precio_venta_trabajos = (Decimal(presupuesto.coste_directo_trabajos) * factor_venta).quantize(Decimal("0.01"))
     precio_venta_materiales = (Decimal(presupuesto.coste_directo_otros) * factor_venta).quantize(Decimal("0.01"))
 
     template = _env.get_template("presupuesto.html")
@@ -85,14 +111,17 @@ def generar_pdf_presupuesto(presupuesto: Presupuesto, tipo: str = "cliente") -> 
         presupuesto=presupuesto,
         empresa=presupuesto.empresa,
         convenio=presupuesto.convenio,
+        logo=logo_de_empresa(presupuesto.empresa),
         tipo=tipo,
         fecha=_fecha_es(presupuesto.fecha),
         lineas_personal=lineas_personal_vista,
+        lineas_trabajos=lineas_trabajos_vista,
         lineas_otros=lineas_otros_vista,
         precio_venta_mano_obra=precio_venta_mano_obra,
         precio_venta_dietas=precio_venta_dietas,
         precio_venta_hotel=precio_venta_hotel,
         precio_venta_combustible=precio_venta_combustible,
+        precio_venta_trabajos=precio_venta_trabajos,
         precio_venta_materiales=precio_venta_materiales,
         app_version=FULL_VERSION,
     )
@@ -104,4 +133,21 @@ def generar_pdf_presupuesto(presupuesto: Presupuesto, tipo: str = "cliente") -> 
     if resultado.err:
         raise RuntimeError(f"Error generando el PDF del presupuesto {presupuesto.id}")
 
+    return ruta_salida
+
+
+def _generar_pdf_cliente_profesional(presupuesto: Presupuesto) -> str:
+    template = _env.get_template("presupuesto_cliente_profesional.html")
+    html_str = template.render(
+        presupuesto=presupuesto,
+        empresa=presupuesto.empresa,
+        datos=preparar_datos_cliente(presupuesto),
+        t=totales_de(presupuesto, presupuesto.precio_venta),
+        logo=logo_de_empresa(presupuesto.empresa),
+    )
+    ruta_salida = os.path.join(OUTPUT_DIR, f"presupuesto_{presupuesto.id}_cliente_profesional.pdf")
+    with open(ruta_salida, "wb") as archivo_salida:
+        resultado = pisa.CreatePDF(html_str, dest=archivo_salida)
+    if resultado.err:
+        raise RuntimeError(f"Error generando el PDF profesional del presupuesto {presupuesto.id}")
     return ruta_salida

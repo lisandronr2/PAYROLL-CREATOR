@@ -9,9 +9,15 @@ from app.models.calendario import CalendarioLaboral
 from app.models.historial import HistorialModificacion
 from app.models.usuario import Usuario
 from app.models.parametro_negocio import ParametroNegocio
-from app.models.presupuesto import Presupuesto, PresupuestoLineaPersonal, PresupuestoLineaOtroCoste
+from app.models.presupuesto import (
+    Presupuesto,
+    PresupuestoLineaPersonal,
+    PresupuestoLineaOtroCoste,
+    PresupuestoLineaTrabajo,
+)
 from app.models.partida_catalogo import PartidaCatalogo
 from app.models.presupuesto_items import PresupuestoItems, PresupuestoItemsLinea
+from app.models.liquidacion import Liquidacion, LiquidacionLinea
 
 __all__ = [
     "Usuario",
@@ -32,7 +38,10 @@ __all__ = [
     "Presupuesto",
     "PresupuestoLineaPersonal",
     "PresupuestoLineaOtroCoste",
+    "PresupuestoLineaTrabajo",
     "PartidaCatalogo",
     "PresupuestoItems",
     "PresupuestoItemsLinea",
+    "Liquidacion",
+    "LiquidacionLinea",
 ]

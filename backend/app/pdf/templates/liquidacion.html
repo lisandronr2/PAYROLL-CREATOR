@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 1.2cm; }
+  body { font-family: Helvetica, Arial, sans-serif; font-size: 8pt; color: #1a1a1a; line-height: 1.2; }
+  h1 { font-size: 15pt; margin: 0 0 4px 0; text-align: center; letter-spacing: 1px; }
+  .subtitulo { font-size: 8pt; color: #666; margin-bottom: 8px; text-align: center; }
+  .etiqueta-interno { display: inline-block; background: #b91c1c; color: #fff; font-size: 7pt; padding: 2px 8px; border-radius: 3px; margin-bottom: 6px; }
+
+  table.ficha { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  table.ficha th { background: #eee; border: 0.5px solid #999; text-align: left; font-size: 6.8pt; font-weight: normal; color: #555; padding: 2px 5px; }
+  table.ficha td { border: 0.5px solid #999; padding: 3px 5px; font-size: 8.5pt; }
+
+  .seccion-titulo { font-weight: bold; margin: 8px 0 3px 0; font-size: 9.5pt; }
+  table.detalle { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  table.detalle th { text-align: left; background: #eee; padding: 3px 5px; font-size: 7.5pt; border-bottom: 1px solid #999; }
+  table.detalle td { padding: 3px 5px; border-bottom: 0.5px solid #ddd; font-size: 8pt; vertical-align: top; }
+  table.detalle td.num, table.detalle th.num { text-align: right; white-space: nowrap; }
+  table.detalle td.centro, table.detalle th.centro { text-align: center; white-space: nowrap; }
+  .nota { font-size: 6.8pt; color: #777; }
+  .total-row td { font-weight: bold; border-top: 1px solid #333; }
+
+  .resumen { margin-top: 8px; border: 1px solid #222; padding: 6px 10px; }
+  .resumen table { width: 100%; border-collapse: collapse; }
+  .resumen td { border: none; padding: 2px 5px; font-size: 8.5pt; }
+  .resumen td.num { text-align: right; white-space: nowrap; }
+  .resumen .liquido td { font-size: 12pt; font-weight: bold; border-top: 1.5px solid #222; padding-top: 6px; }
+
+  .firmas { margin-top: 28px; width: 100%; border-collapse: collapse; }
+  .firmas td { width: 50%; border-top: 0.5px solid #444; padding-top: 3px; text-align: center; font-size: 7.5pt; color: #555; }
+  .firmas td.hueco { border-top: none; width: 6%; }
+
+  .aviso { margin-top: 10px; font-size: 6.8pt; color: #666; border-top: 0.5px solid #ccc; padding-top: 4px; }
+  .aviso li { margin-bottom: 1px; }
+  .pie { margin-top: 10px; font-size: 6.4pt; color: #888; border-top: 0.5px solid #ccc; padding-top: 4px; }
+</style>
+</head>
+<body>
+
+{% set cabecera %}
+  {% if tipo == "interno" %}<div class="etiqueta-interno">USO INTERNO — NO ENTREGAR AL TRABAJADOR</div>{% endif %}
+  <h1>LIQUIDACIÓN / FINIQUITO</h1>
+  <div class="subtitulo">{{ liq.motivo_texto }} · Fecha del cálculo: {{ fecha_calculo }}</div>
+  {% endset %}
+  {% if logo %}
+  <table style="width:100%; border-collapse:collapse; margin-bottom:6px;"><tr>
+    <td style="width:64px; vertical-align:top; padding:0;"><img src="{{ logo }}" width="56" height="69"></td>
+    <td style="vertical-align:top; padding:0;">{{ cabecera }}</td>
+  </tr></table>
+  {% else %}{{ cabecera }}{% endif %}
+
+  <table class="ficha">
+    <colgroup><col style="width:50%"><col style="width:50%"></colgroup>
+    <tr>
+      <th>EMPRESA</th>
+      <th>TRABAJADOR/A</th>
+    </tr>
+    <tr>
+      <td><strong>{{ empresa.razon_social }} ({{ empresa.cif }})</strong>{% if empresa.direccion %}<br>{{ empresa.direccion }}{% endif %}</td>
+      <td><strong>{{ liq.trabajador_nombre }} ({{ liq.trabajador_nif }})</strong><br>{{ liq.categoria }}</td>
+    </tr>
+  </table>
+  <table class="ficha">
+    <colgroup><col style="width:25%"><col style="width:25%"><col style="width:50%"></colgroup>
+    <tr>
+      <th>FECHA DE INGRESO</th>
+      <th>FECHA DE BAJA</th>
+      <th>ANTIGÜEDAD</th>
+    </tr>
+    <tr>
+      <td>{{ fecha_ingreso }}</td>
+      <td>{{ fecha_baja }}</td>
+      <td>{{ liq.antiguedad_texto }}</td>
+    </tr>
+  </table>
+  {% if tipo == "interno" %}
+  <div class="nota">Convenio aplicado: {{ liq.convenio_nombre }}</div>
+  {% endif %}
+
+  <div class="seccion-titulo">Conceptos a percibir</div>
+  <table class="detalle">
+    <tr>
+      <th width="{{ '64%' if tipo == 'interno' else '78%' }}">Concepto</th>
+      {% if tipo == "interno" %}<th class="centro" width="7%">SS</th><th class="centro" width="7%">IRPF</th>{% endif %}
+      <th class="num" width="22%">Importe (€)</th>
+    </tr>
+    {% for l in lineas_percibir %}
+    <tr>
+      <td>
+        {{ l.concepto }}
+        {% if l.detalle %}<br><span class="nota">{{ l.detalle }}</span>{% endif %}
+        {% if tipo == "interno" and l.referencia_legal %}<br><span class="nota">{{ l.referencia_legal }}</span>{% endif %}
+      </td>
+      {% if tipo == "interno" %}
+      <td class="centro">{{ "Sí" if l.cotiza else "No" }}</td>
+      <td class="centro">{{ "Sí" if l.tributa else "No" }}</td>
+      {% endif %}
+      <td class="num">{{ "%.2f"|format(l.importe) }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="total-row">
+      <td colspan="{{ 3 if tipo == 'interno' else 1 }}">Total bruto</td>
+      <td class="num">{{ "%.2f"|format(liq.total_ingresos) }}</td>
+    </tr>
+  </table>
+
+  <div class="seccion-titulo">Deducciones</div>
+  <table class="detalle">
+    <tr>
+      <th width="78%">Concepto</th>
+      <th class="num" width="22%">Importe (€)</th>
+    </tr>
+    {% for l in lineas_deducir %}
+    <tr>
+      <td>
+        {{ l.concepto }}
+        {% if l.detalle %}<br><span class="nota">{{ l.detalle }}</span>{% endif %}
+        {% if tipo == "interno" and l.referencia_legal %}<br><span class="nota">{{ l.referencia_legal }}</span>{% endif %}
+      </td>
+      <td class="num">−{{ "%.2f"|format(l.importe) }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="total-row">
+      <td>Total deducciones</td>
+      <td class="num">−{{ "%.2f"|format(liq.total_deducciones) }}</td>
+    </tr>
+  </table>
+
+  <div class="resumen">
+    <table>
+      <tr><td>Total bruto</td><td class="num">{{ "%.2f"|format(liq.total_ingresos) }} €</td></tr>
+      <tr><td>Total deducciones</td><td class="num">−{{ "%.2f"|format(liq.total_deducciones) }} €</td></tr>
+      <tr class="liquido"><td>LÍQUIDO A PERCIBIR</td><td class="num">{{ "%.2f"|format(liq.liquido_a_percibir) }} €</td></tr>
+    </table>
+  </div>
+
+  {% if tipo == "interno" %}
+  <div class="resumen">
+    <table>
+      <tr><td>Cotización a la Seguridad Social a cargo de la empresa</td><td class="num">{{ "%.2f"|format(liq.cuota_empresa_ss) }} €</td></tr>
+      <tr><td><strong>Coste total para la empresa</strong></td><td class="num"><strong>{{ "%.2f"|format(liq.coste_empresa_total) }} €</strong></td></tr>
+    </table>
+  </div>
+  {% endif %}
+
+  {% if liq.notas %}
+  <div class="seccion-titulo">Notas</div>
+  <p style="font-size:8pt;">{{ liq.notas }}</p>
+  {% endif %}
+
+  {% if tipo == "trabajador" %}
+  <table class="firmas">
+    <tr>
+      <td>Firma de la empresa</td>
+      <td class="hueco"></td>
+      <td>Firma del trabajador/a · Fecha: ____ / ____ / ________</td>
+    </tr>
+  </table>
+  {% else %}
+  {% if avisos %}
+  <div class="aviso">
+    <strong>Avisos del cálculo</strong>
+    <ul>
+      {% for a in avisos %}<li>{{ a }}</li>{% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+  <div class="pie">
+    Documento generado por PAYROLL CREATOR. Cálculo orientativo basado en el convenio y en los parámetros legales
+    cargados: confírmalo con tu asesoría laboral antes de firmar el finiquito. · PAYROLL CREATOR v{{ app_version }}
+  </div>
+  {% endif %}
+</body>
+</html>

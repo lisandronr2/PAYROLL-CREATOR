@@ -1,8 +1,8 @@
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class CalcularLiquidacionRequest(BaseModel):
@@ -20,9 +20,11 @@ class CalcularLiquidacionRequest(BaseModel):
     otras_cantidades: Decimal = Decimal("0")
     indemnizacion_pactada: Decimal = Decimal("0")
     descuentos: Decimal = Decimal("0")
+    notas: Optional[str] = None
 
 
 class LineaLiquidacionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     bloque: str
     concepto: str
     importe: Decimal
@@ -33,6 +35,7 @@ class LineaLiquidacionOut(BaseModel):
 
 
 class LiquidacionOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     trabajador_nombre: str
     trabajador_nif: str
     convenio_nombre: str
@@ -63,6 +66,20 @@ class LiquidacionOut(BaseModel):
     cuota_empresa_ss: Decimal
     coste_empresa_total: Decimal
     avisos: list[str]
+
+
+class LiquidacionGuardadaOut(LiquidacionOut):
+    id: int
+    contrato_id: int
+    trabajador_id: int
+    vacaciones_disfrutadas: Decimal
+    unidad_vacaciones: str
+    vacaciones_pendientes_anteriores: Decimal
+    otras_cantidades: Decimal
+    indemnizacion_pactada: Decimal
+    descuentos: Decimal
+    notas: Optional[str] = None
+    creado_en: Optional[datetime] = None
 
 
 class SugerenciasLiquidacionOut(BaseModel):

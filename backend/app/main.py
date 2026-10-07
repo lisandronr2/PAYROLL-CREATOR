@@ -24,7 +24,7 @@ from app.seed.convenios import (
     seed_convenios,
     seed_convenio_dietas,
     seed_subniveles_metal,
-    cargar_reglas_liquidacion_metal,
+    cargar_reglas_convenio_metal,
     corregir_quinquenios_metal,
 )
 from app.seed.parametros_negocio import seed_parametros_negocio
@@ -57,7 +57,7 @@ def on_startup() -> None:
         seed_convenios(db)
         seed_convenio_dietas(db)
         seed_subniveles_metal(db)
-        cargar_reglas_liquidacion_metal(db)
+        cargar_reglas_convenio_metal(db)
         corregir_quinquenios_metal(db)
         seed_parametros_negocio(db)
         seed_usuario_admin(db)

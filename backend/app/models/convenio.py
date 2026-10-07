@@ -24,6 +24,9 @@ class Convenio(Base):
     vacaciones_dias_laborables = Column(Integer, nullable=True)
     preaviso_cese_dias_tecnicos = Column(Integer, nullable=True)  # personal técnico y titulado
     preaviso_cese_dias_resto = Column(Integer, nullable=True)
+    # Nº máximo de quinquenios/trienios de antigüedad (Metal Madrid, art. 41:
+    # cinco). Nulo = sin tope.
+    antiguedad_max_tramos = Column(Integer, nullable=True)
 
 
 class CategoriaProfesional(Base):

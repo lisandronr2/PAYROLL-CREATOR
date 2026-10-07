@@ -10,8 +10,13 @@ from app.database import get_db
 from app.engine.presupuesto import LineaPersonalInput, calcular_linea_personal, calcular_totales_presupuesto
 from app.models.convenio import CategoriaProfesional, ConvenioDieta
 from app.models.parametro_negocio import ParametroNegocio
-from app.models.presupuesto import Presupuesto, PresupuestoLineaOtroCoste, PresupuestoLineaPersonal
-from app.pdf.generador_presupuesto import generar_pdf_presupuesto
+from app.models.presupuesto import (
+    Presupuesto,
+    PresupuestoLineaOtroCoste,
+    PresupuestoLineaPersonal,
+    PresupuestoLineaTrabajo,
+)
+from app.pdf.generador_presupuesto import FORMATOS, generar_pdf_presupuesto
 from app.schemas.presupuesto import PresupuestoCreate, PresupuestoOut
 
 router = APIRouter(prefix="/presupuestos", tags=["presupuestos"], dependencies=[Depends(get_current_usuario)])
@@ -68,6 +73,13 @@ def _calcular_y_poblar(presupuesto: Presupuesto, payload: PresupuestoCreate, db:
         coste_directo_dietas += resultado_linea.coste_dietas_total
         lineas_personal_calculadas.append((linea_in, resultado_linea))
 
+    coste_directo_trabajos = Decimal("0")
+    lineas_trabajos_calculadas = []
+    for trabajo_in in payload.lineas_trabajos:
+        importe = _q(trabajo_in.cantidad * trabajo_in.precio_unitario)
+        coste_directo_trabajos += importe
+        lineas_trabajos_calculadas.append((trabajo_in, importe))
+
     coste_directo_materiales = Decimal("0")
     lineas_otros_calculadas = []
     for otro_in in payload.lineas_otros:
@@ -94,6 +106,7 @@ def _calcular_y_poblar(presupuesto: Presupuesto, payload: PresupuestoCreate, db:
         coste_directo_dietas,
         payload.gasto_hotel,
         payload.gasto_combustible,
+        coste_directo_trabajos,
         coste_directo_materiales,
         gastos_pct,
         margen_pct,
@@ -114,6 +127,7 @@ def _calcular_y_poblar(presupuesto: Presupuesto, payload: PresupuestoCreate, db:
     presupuesto.coste_directo_dietas = totales.coste_directo_dietas
     presupuesto.coste_directo_hotel = totales.coste_directo_hotel
     presupuesto.coste_directo_combustible = totales.coste_directo_combustible
+    presupuesto.coste_directo_trabajos = totales.coste_directo_trabajos
     # Campo heredado (ver comentario en el modelo): se mantiene relleno solo
     # por compatibilidad con la columna NOT NULL ya existente.
     presupuesto.coste_directo_personal = _q(totales.coste_directo_mano_obra + totales.coste_directo_dietas)
@@ -149,6 +163,18 @@ def _calcular_y_poblar(presupuesto: Presupuesto, payload: PresupuestoCreate, db:
                 coste_total_linea=resultado_linea.coste_total_linea,
                 coste_mano_obra_total=resultado_linea.coste_mano_obra_total,
                 coste_dietas_total=resultado_linea.coste_dietas_total,
+            )
+        )
+
+    presupuesto.lineas_trabajos.clear()
+    for trabajo_in, importe in lineas_trabajos_calculadas:
+        db.add(
+            PresupuestoLineaTrabajo(
+                presupuesto_id=presupuesto.id,
+                concepto=trabajo_in.concepto,
+                cantidad=trabajo_in.cantidad,
+                precio_unitario=trabajo_in.precio_unitario,
+                importe=importe,
             )
         )
 
@@ -208,13 +234,18 @@ def eliminar_presupuesto(presupuesto_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/{presupuesto_id}/pdf")
-def descargar_pdf_presupuesto(presupuesto_id: int, tipo: str = "cliente", db: Session = Depends(get_db)):
+def descargar_pdf_presupuesto(
+    presupuesto_id: int, tipo: str = "cliente", formato: str = "profesional", db: Session = Depends(get_db)
+):
     presupuesto = db.get(Presupuesto, presupuesto_id)
     if not presupuesto:
         raise HTTPException(status_code=404, detail="Presupuesto no encontrado")
     if tipo not in ("cliente", "interno"):
         raise HTTPException(status_code=422, detail="El parámetro 'tipo' debe ser 'cliente' o 'interno'")
 
-    ruta_pdf = generar_pdf_presupuesto(presupuesto, tipo=tipo)
-    nombre_archivo = f"presupuesto_{presupuesto.id}_{tipo}.pdf"
+    if formato not in FORMATOS:
+        raise HTTPException(status_code=422, detail="El parámetro 'formato' debe ser 'clasico' o 'profesional'")
+
+    ruta_pdf = generar_pdf_presupuesto(presupuesto, tipo=tipo, formato=formato)
+    nombre_archivo = f"presupuesto_{presupuesto.id}_{tipo}{'_clasico' if tipo == 'cliente' and formato == 'clasico' else ''}.pdf"
     return FileResponse(ruta_pdf, media_type="application/pdf", filename=nombre_archivo)

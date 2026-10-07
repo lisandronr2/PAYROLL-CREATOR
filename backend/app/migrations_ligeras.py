@@ -44,6 +44,8 @@ COLUMNAS_NUEVAS = [
     ("convenios", "vacaciones_dias_laborables", "INTEGER"),
     ("convenios", "preaviso_cese_dias_tecnicos", "INTEGER"),
     ("convenios", "preaviso_cese_dias_resto", "INTEGER"),
+    ("convenios", "antiguedad_max_tramos", "INTEGER"),
+    ("presupuestos", "coste_directo_trabajos", "NUMERIC(12, 2) NOT NULL DEFAULT 0"),
 ]
 
 

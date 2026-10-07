@@ -12,6 +12,7 @@ import {
   Presupuesto,
   PresupuestoLineaOtroCoste,
   PresupuestoLineaPersonal,
+  PresupuestoLineaTrabajo,
 } from "@/lib/api";
 
 const lineaPersonalVacia: PresupuestoLineaPersonal = {
@@ -22,6 +23,12 @@ const lineaPersonalVacia: PresupuestoLineaPersonal = {
   numero_medias_dietas: 0,
   numero_dietas_completas_cortas: 0,
   numero_dietas_completas_largas: 0,
+};
+
+const lineaTrabajoVacia: PresupuestoLineaTrabajo = {
+  concepto: "",
+  cantidad: "1",
+  precio_unitario: "0",
 };
 
 const lineaOtroVacia: PresupuestoLineaOtroCoste = {
@@ -59,6 +66,7 @@ function PresupuestosForm() {
   const [gastoHotel, setGastoHotel] = useState("0");
   const [gastoCombustible, setGastoCombustible] = useState("0");
   const [lineasPersonal, setLineasPersonal] = useState<PresupuestoLineaPersonal[]>([{ ...lineaPersonalVacia }]);
+  const [lineasTrabajos, setLineasTrabajos] = useState<PresupuestoLineaTrabajo[]>([]);
   const [lineasOtros, setLineasOtros] = useState<PresupuestoLineaOtroCoste[]>([]);
 
   const [error, setError] = useState<string | null>(null);
@@ -131,6 +139,13 @@ function PresupuestosForm() {
               }))
             : [{ ...lineaPersonalVacia }]
         );
+        setLineasTrabajos(
+          p.lineas_trabajos.map((l) => ({
+            concepto: l.concepto,
+            cantidad: l.cantidad,
+            precio_unitario: l.precio_unitario,
+          }))
+        );
         setLineasOtros(
           p.lineas_otros.map((l) => ({
             concepto: l.concepto,
@@ -151,6 +166,10 @@ function PresupuestosForm() {
     setLineasPersonal((prev) => prev.map((l, idx) => (idx === i ? { ...l, ...cambios } : l)));
   }
 
+  function actualizarLineaTrabajo(i: number, cambios: Partial<PresupuestoLineaTrabajo>) {
+    setLineasTrabajos((prev) => prev.map((l, idx) => (idx === i ? { ...l, ...cambios } : l)));
+  }
+
   function actualizarLineaOtro(i: number, cambios: Partial<PresupuestoLineaOtroCoste>) {
     setLineasOtros((prev) => prev.map((l, idx) => (idx === i ? { ...l, ...cambios } : l)));
   }
@@ -164,6 +183,7 @@ function PresupuestosForm() {
     setGastoCombustible("0");
     setSinIva(false);
     setLineasPersonal([{ ...lineaPersonalVacia }]);
+    setLineasTrabajos([]);
     setLineasOtros([]);
   }
 
@@ -196,6 +216,9 @@ function PresupuestosForm() {
             numero_dietas_completas_cortas: l.numero_dietas_completas_cortas,
             numero_dietas_completas_largas: l.numero_dietas_completas_largas,
           })),
+        lineas_trabajos: lineasTrabajos
+          .filter((l) => l.concepto)
+          .map((l) => ({ concepto: l.concepto, cantidad: l.cantidad, precio_unitario: l.precio_unitario })),
         lineas_otros: lineasOtros
           .filter((l) => l.concepto)
           .map((l) => ({ concepto: l.concepto, cantidad: l.cantidad, precio_unitario: l.precio_unitario })),
@@ -404,6 +427,60 @@ function PresupuestosForm() {
               />
             </label>
           </div>
+        </div>
+
+        <div>
+          <div className="flex justify-between items-center mb-2">
+            <h2 className="font-medium text-sm">Trabajos a realizar (opcional)</h2>
+            <button
+              type="button"
+              onClick={() => setLineasTrabajos((prev) => [...prev, { ...lineaTrabajoVacia }])}
+              className="text-sm text-blue-600 underline"
+            >
+              + Añadir trabajo
+            </button>
+          </div>
+          {lineasTrabajos.map((linea, i) => (
+            <div key={i} className="border rounded p-3 mb-2 grid sm:grid-cols-4 gap-2 text-sm">
+              <input
+                placeholder="Trabajo a realizar (ej. Montaje de estructura)"
+                className="border rounded px-2 py-1 sm:col-span-2"
+                value={linea.concepto}
+                onChange={(e) => actualizarLineaTrabajo(i, { concepto: e.target.value })}
+              />
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="Cantidad"
+                className="border rounded px-2 py-1"
+                value={linea.cantidad}
+                onChange={(e) => actualizarLineaTrabajo(i, { cantidad: e.target.value })}
+              />
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                placeholder="Precio unitario (€)"
+                className="border rounded px-2 py-1"
+                value={linea.precio_unitario}
+                onChange={(e) => actualizarLineaTrabajo(i, { precio_unitario: e.target.value })}
+              />
+              <button
+                type="button"
+                onClick={() => setLineasTrabajos((prev) => prev.filter((_, idx) => idx !== i))}
+                className="text-red-600 text-xs underline text-left"
+              >
+                Quitar
+              </button>
+            </div>
+          ))}
+          {lineasTrabajos.length > 0 && (
+            <p className="text-xs text-slate-400">
+              Igual que los materiales, el precio de cada trabajo se trata como coste: se le aplican los gastos
+              generales y el margen del presupuesto.
+            </p>
+          )}
         </div>
 
         <div>

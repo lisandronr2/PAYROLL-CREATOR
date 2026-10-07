@@ -21,6 +21,12 @@ class PresupuestoLineaOtroCosteCreate(BaseModel):
     precio_unitario: Decimal
 
 
+class PresupuestoLineaTrabajoCreate(BaseModel):
+    concepto: str
+    cantidad: Decimal = Decimal("1")
+    precio_unitario: Decimal
+
+
 class PresupuestoCreate(BaseModel):
     empresa_id: int
     convenio_id: int
@@ -37,6 +43,7 @@ class PresupuestoCreate(BaseModel):
     gasto_hotel: Decimal = Decimal("0")
     gasto_combustible: Decimal = Decimal("0")
     lineas_personal: list[PresupuestoLineaPersonalCreate] = []
+    lineas_trabajos: list[PresupuestoLineaTrabajoCreate] = []
     lineas_otros: list[PresupuestoLineaOtroCosteCreate] = []
 
 
@@ -65,6 +72,15 @@ class PresupuestoLineaOtroCosteOut(BaseModel):
     importe: Decimal
 
 
+class PresupuestoLineaTrabajoOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    concepto: str
+    cantidad: Decimal
+    precio_unitario: Decimal
+    importe: Decimal
+
+
 class PresupuestoOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: int
@@ -82,6 +98,7 @@ class PresupuestoOut(BaseModel):
     coste_directo_dietas: Decimal
     coste_directo_hotel: Decimal
     coste_directo_combustible: Decimal
+    coste_directo_trabajos: Decimal
     coste_directo_otros: Decimal
     coste_directo_total: Decimal
     gastos_generales_importe: Decimal
@@ -91,4 +108,5 @@ class PresupuestoOut(BaseModel):
     iva_importe: Decimal
     precio_total_cliente: Decimal
     lineas_personal: list[PresupuestoLineaPersonalOut] = []
+    lineas_trabajos: list[PresupuestoLineaTrabajoOut] = []
     lineas_otros: list[PresupuestoLineaOtroCosteOut] = []

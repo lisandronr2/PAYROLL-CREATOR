@@ -97,6 +97,9 @@ def obtener_datos_convenio_contrato(db: Session, contrato: Contrato, en_fecha: d
     convenio = contrato.convenio
     categoria = contrato.categoria
     fecha_antiguedad = contrato.fecha_antiguedad or contrato.fecha_inicio
+    numero_tramos_antiguedad = _numero_quinquenios_o_trienios(fecha_antiguedad, en_fecha)
+    if convenio.antiguedad_max_tramos is not None:
+        numero_tramos_antiguedad = min(numero_tramos_antiguedad, convenio.antiguedad_max_tramos)
 
     dieta = (
         db.query(ConvenioDieta)
@@ -122,7 +125,7 @@ def obtener_datos_convenio_contrato(db: Session, contrato: Contrato, en_fecha: d
         jornada_porcentaje=Decimal(contrato.jornada_porcentaje),
         tipo_contrato=contrato.tipo_contrato,
         pagas_extra_prorrateadas=contrato.pagas_extra_prorrateadas,
-        numero_quinquenios_o_trienios=_numero_quinquenios_o_trienios(fecha_antiguedad, en_fecha),
+        numero_quinquenios_o_trienios=numero_tramos_antiguedad,
         grupo_cotizacion=categoria.grupo_cotizacion,
         salario_pactado_mensual=Decimal(contrato.salario_pactado_mensual) if contrato.salario_pactado_mensual else None,
         media_dieta=Decimal(dieta.media_dieta) if dieta else Decimal("0"),

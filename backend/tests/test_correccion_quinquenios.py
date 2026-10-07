@@ -57,9 +57,37 @@ def test_sustituye_el_valor_erroneo_del_grupo_y_de_sus_subniveles(db):
     db.refresh(subnivel)
     db.refresh(grupo5)
 
-    assert grupo4.valor_quinquenio_o_trienio == Decimal("33.38")
-    assert subnivel.valor_quinquenio_o_trienio == Decimal("33.38")
+    assert grupo4.valor_quinquenio_o_trienio == Decimal("33.37")
+    assert subnivel.valor_quinquenio_o_trienio == Decimal("33.37")
     assert grupo5.valor_quinquenio_o_trienio == Decimal("31.91")
+
+
+def test_corrige_la_estimacion_del_grupo_4_ya_aplicada_en_produccion(db):
+    # Con el build 2764 se aplicó 33,38 (estimado); la tabla oficial dice 33,37.
+    convenio = convenio_metal(db)
+    grupo4 = crear_categoria(db, convenio, "4", "33.38")
+    subnivel = crear_categoria(db, convenio, "4.7", "33.38")
+
+    corregir_quinquenios_metal(db)
+    db.refresh(grupo4)
+    db.refresh(subnivel)
+
+    assert grupo4.valor_quinquenio_o_trienio == Decimal("33.37")
+    assert subnivel.valor_quinquenio_o_trienio == Decimal("33.37")
+
+
+def test_los_valores_oficiales_ya_correctos_no_cambian(db):
+    convenio = convenio_metal(db)
+    tablas = {g: crear_categoria(db, convenio, g, v) for g, v in
+              {"1": "42.72", "2": "38.88", "3": "35.78", "5": "31.91", "6": "31.19", "7": "30.82"}.items()}
+
+    corregir_quinquenios_metal(db)
+
+    for grupo, tabla in tablas.items():
+        db.refresh(tabla)
+    assert {g: str(t.valor_quinquenio_o_trienio) for g, t in tablas.items()} == {
+        "1": "42.72", "2": "38.88", "3": "35.78", "5": "31.91", "6": "31.19", "7": "30.82"
+    }
 
 
 def test_no_pisa_un_valor_corregido_a_mano(db):

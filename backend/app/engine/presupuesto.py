@@ -3,7 +3,7 @@ Motor de cálculo de presupuestos de proyecto.
 
 Metodología igual a la usada en licitaciones de obra en España:
 
-    Coste directo (personal + materiales/otros)
+    Coste directo (personal + dietas + hotel/combustible + trabajos a realizar + materiales/otros)
         + Gastos Generales de estructura (%)
         = Coste total del proyecto
         + Margen de beneficio (%)
@@ -96,6 +96,7 @@ class ResultadoPresupuesto:
     coste_directo_dietas: Decimal
     coste_directo_hotel: Decimal
     coste_directo_combustible: Decimal
+    coste_directo_trabajos: Decimal
     coste_directo_materiales: Decimal
     coste_directo_total: Decimal
     gastos_generales_importe: Decimal
@@ -111,6 +112,7 @@ def calcular_totales_presupuesto(
     coste_directo_dietas: Decimal,
     coste_directo_hotel: Decimal,
     coste_directo_combustible: Decimal,
+    coste_directo_trabajos: Decimal,
     coste_directo_materiales: Decimal,
     gastos_generales_pct: Decimal,
     margen_beneficio_pct: Decimal,
@@ -121,6 +123,7 @@ def calcular_totales_presupuesto(
         + coste_directo_dietas
         + coste_directo_hotel
         + coste_directo_combustible
+        + coste_directo_trabajos
         + coste_directo_materiales
     )
     gastos_generales_importe = _q(coste_directo_total * gastos_generales_pct / Decimal(100))
@@ -135,6 +138,7 @@ def calcular_totales_presupuesto(
         coste_directo_dietas=_q(coste_directo_dietas),
         coste_directo_hotel=_q(coste_directo_hotel),
         coste_directo_combustible=_q(coste_directo_combustible),
+        coste_directo_trabajos=_q(coste_directo_trabajos),
         coste_directo_materiales=_q(coste_directo_materiales),
         coste_directo_total=coste_directo_total,
         gastos_generales_importe=gastos_generales_importe,

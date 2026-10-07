@@ -42,15 +42,14 @@ def seed_convenios(db: Session) -> None:
     db.add(metal)
     db.flush()
 
-    # El último valor de cada fila es el quinquenio 2026 (art. 41 del convenio).
-    # Es una ESTIMACIÓN: valor del quinquenio de la tabla 2024 del convenio
-    # incrementado en el mismo % que el salario (+5,06 % hasta 2026). Confirmar
-    # con la tabla oficial 2026.
+    # El último valor de cada fila es el quinquenio 2026 (art. 41 del convenio),
+    # según la "Tabla de valores del complemento de antigüedad por quinquenios
+    # 2026" del Convenio del Metal de Madrid.
     grupos_metal = [
         ("1", "Licenciada/o - Grado", 1, "35378.96", "2527.07", "42.72"),
         ("2", "Técnico/a", 2, "29689.98", "2120.71", "38.88"),
         ("3", "Técnica/o auxiliar", 3, "26768.79", "1912.06", "35.78"),
-        ("4", "Empleado/a", 4, "23930.65", "1709.33", "33.38"),
+        ("4", "Empleado/a", 4, "23930.65", "1709.33", "33.37"),
         ("5", "Operaria/o", 5, "22263.68", "1590.26", "31.91"),
         ("6", "Empleado/a auxiliar", 6, "22030.78", "1573.63", "31.19"),
         ("7", "Operaria/o auxiliar", 7, "20687.47", "1477.68", "30.82"),
@@ -317,14 +316,17 @@ def seed_subniveles_metal(db: Session) -> None:
     db.commit()
 
 
-def cargar_reglas_liquidacion_metal(db: Session) -> None:
+def cargar_reglas_convenio_metal(db: Session) -> None:
     """
-    Reglas del Convenio Metal Madrid que usa la liquidación/finiquito, según
-    su texto 2024-2026 (BOCM 18/01/2025):
+    Reglas del Convenio Metal Madrid que usan las nóminas y la liquidación/
+    finiquito, según su texto 2024-2026 (BOCM 18/01/2025):
       - Art. 35: vacaciones de 22 días laborables, nunca inferiores a 30
         días naturales.
       - Art. 26: cese voluntario con preaviso por escrito de un mes para el
         personal técnico y titulado, y 15 días naturales para el resto.
+      - Art. 41: el complemento de antigüedad tiene un máximo de cinco
+        quinquenios (se respetan los que ya tuviera de más quien los tenía al
+        entrar en vigor el convenio: esos casos hay que tratarlos a mano).
     Solo rellena los campos que estén vacíos, para no pisar cambios hechos a
     mano desde la aplicación.
     """
@@ -341,6 +343,7 @@ def cargar_reglas_liquidacion_metal(db: Session) -> None:
         "vacaciones_dias_naturales": 30,
         "preaviso_cese_dias_tecnicos": 30,
         "preaviso_cese_dias_resto": 15,
+        "antiguedad_max_tramos": 5,
     }
     cambiado = False
     for campo, valor in valores.items():
@@ -351,26 +354,30 @@ def cargar_reglas_liquidacion_metal(db: Session) -> None:
         db.commit()
 
 
-# Quinquenio 2026 estimado por grupo profesional (ver seed_convenios) y el
-# valor ERRÓNEO que se sembró antes por error: era la columna "bases de grupo
-# para cálculo de complementos" de la tabla del convenio, no el quinquenio.
+# Quinquenio 2026 por grupo profesional, según la tabla de valores de
+# quinquenios 2026 del Convenio del Metal de Madrid (euros al mes por cada
+# quinquenio cumplido).
 QUINQUENIO_METAL_2026 = {
     "1": Decimal("42.72"),
     "2": Decimal("38.88"),
     "3": Decimal("35.78"),
-    "4": Decimal("33.38"),
+    "4": Decimal("33.37"),
     "5": Decimal("31.91"),
     "6": Decimal("31.19"),
     "7": Decimal("30.82"),
 }
-QUINQUENIO_METAL_2026_ERRONEO = {
-    "1": Decimal("1130.84"),
-    "2": Decimal("1002.16"),
-    "3": Decimal("913.80"),
-    "4": Decimal("841.22"),
-    "5": Decimal("26.46"),
-    "6": Decimal("781.71"),
-    "7": Decimal("25.28"),
+# Valores que se sembraron antes por error y que hay que sustituir: la columna
+# equivocada de la tabla del convenio ("bases de grupo para cálculo de
+# complementos") y, en el grupo 4, la estimación 33,38 que se aplicó mientras
+# no se tenía la tabla oficial (el valor oficial es 33,37).
+QUINQUENIO_METAL_2026_A_SUSTITUIR = {
+    "1": (Decimal("1130.84"),),
+    "2": (Decimal("1002.16"),),
+    "3": (Decimal("913.80"),),
+    "4": (Decimal("841.22"), Decimal("33.38")),
+    "5": (Decimal("26.46"),),
+    "6": (Decimal("781.71"),),
+    "7": (Decimal("25.28"),),
 }
 
 
@@ -380,8 +387,9 @@ def corregir_quinquenios_metal(db: Session) -> None:
     datos ya creadas (en producción se sembró la columna equivocada de la
     tabla del convenio: ~841 € por quinquenio en vez de ~33 €).
 
-    Solo sustituye los valores que siguen siendo exactamente el erróneo
-    sembrado, así que es idempotente y no pisa un valor corregido a mano.
+    Solo sustituye los valores que siguen siendo exactamente uno de los
+    sembrados antes (ver QUINQUENIO_METAL_2026_A_SUSTITUIR), así que es
+    idempotente y no pisa un valor corregido a mano.
     Cubre también los subniveles (p. ej. "5.1"), que copian el valor de su
     grupo. Las nóminas ya guardadas no se recalculan.
     """
@@ -405,7 +413,7 @@ def corregir_quinquenios_metal(db: Session) -> None:
         for tabla in tablas:
             if tabla.valor_quinquenio_o_trienio is None:
                 continue
-            if Decimal(tabla.valor_quinquenio_o_trienio) == QUINQUENIO_METAL_2026_ERRONEO[grupo]:
+            if Decimal(tabla.valor_quinquenio_o_trienio) in QUINQUENIO_METAL_2026_A_SUSTITUIR[grupo]:
                 tabla.valor_quinquenio_o_trienio = QUINQUENIO_METAL_2026[grupo]
                 cambiado = True
     if cambiado:

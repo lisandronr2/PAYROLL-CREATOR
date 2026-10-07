@@ -18,6 +18,7 @@ class ConvenioCreate(BaseModel):
     vacaciones_dias_laborables: Optional[int] = None
     preaviso_cese_dias_tecnicos: Optional[int] = None
     preaviso_cese_dias_resto: Optional[int] = None
+    antiguedad_max_tramos: Optional[int] = None
 
 
 class ConvenioUpdate(BaseModel):
@@ -33,6 +34,7 @@ class ConvenioUpdate(BaseModel):
     vacaciones_dias_laborables: Optional[int] = None
     preaviso_cese_dias_tecnicos: Optional[int] = None
     preaviso_cese_dias_resto: Optional[int] = None
+    antiguedad_max_tramos: Optional[int] = None
 
 
 class CategoriaProfesionalCreate(BaseModel):
@@ -69,6 +71,7 @@ class ConvenioOut(BaseModel):
     vacaciones_dias_laborables: Optional[int] = None
     preaviso_cese_dias_tecnicos: Optional[int] = None
     preaviso_cese_dias_resto: Optional[int] = None
+    antiguedad_max_tramos: Optional[int] = None
 
 
 class CategoriaProfesionalOut(BaseModel):

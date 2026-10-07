@@ -1,0 +1,88 @@
+{% extends "presupuesto_profesional_base.html" %}
+{% block secciones %}
+  {% for s in datos.secciones %}
+  <div class="seccion">{{ s.titulo }}</div>
+  <table class="detalle">
+    {% if s.clave == "mano_obra" %}
+    <tr class="enc">
+      <td width="46%">CATEGORÍA PROFESIONAL</td>
+      <td class="num" width="13%">PERSONAS</td>
+      <td class="num" width="13%">DÍAS</td>
+      <td class="num" width="13%">HORAS</td>
+      <td class="num" width="15%">IMPORTE</td>
+    </tr>
+    {% for l in s.lineas %}
+    <tr class="{{ 'par' if loop.index is even else '' }}">
+      <td>{{ l.concepto }}</td>
+      <td class="num">{{ l.personas }}</td>
+      <td class="num">{{ l.dias }}</td>
+      <td class="num">{{ l.horas }}</td>
+      <td class="num">{{ l.importe|eur }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="subtotal">
+      <td colspan="4">Total mano de obra</td>
+      <td class="num">{{ s.total|eur }}</td>
+    </tr>
+
+    {% elif s.clave == "dietas" %}
+    <tr class="enc">
+      <td width="82%">CONCEPTO</td>
+      <td class="num" width="18%">IMPORTE</td>
+    </tr>
+    {% for l in s.lineas %}
+    <tr class="{{ 'par' if loop.index is even else '' }}">
+      <td>{{ l.concepto }}{% if l.detalle %}<br><span class="detalle-gris">{{ l.detalle }}</span>{% endif %}</td>
+      <td class="num">{{ l.importe|eur }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="subtotal">
+      <td>Total dietas y desplazamiento</td>
+      <td class="num">{{ s.total|eur }}</td>
+    </tr>
+
+    {% elif s.clave == "hotel_combustible" %}
+    <tr class="enc">
+      <td width="82%">CONCEPTO</td>
+      <td class="num" width="18%">IMPORTE</td>
+    </tr>
+    {% for l in s.lineas %}
+    <tr class="{{ 'par' if loop.index is even else '' }}">
+      <td>{{ l.concepto }}</td>
+      <td class="num">{{ l.importe|eur }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="subtotal">
+      <td>Total hotel y combustible</td>
+      <td class="num">{{ s.total|eur }}</td>
+    </tr>
+
+    {% else %}
+    <tr class="enc">
+      <td width="66%">CONCEPTO</td>
+      <td class="num" width="15%">CANTIDAD</td>
+      <td class="num" width="19%">IMPORTE</td>
+    </tr>
+    {% for l in s.lineas %}
+    <tr class="{{ 'par' if loop.index is even else '' }}">
+      <td>{{ l.concepto }}</td>
+      <td class="num">{{ l.cantidad }}</td>
+      <td class="num">{{ l.importe|eur }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="subtotal">
+      <td colspan="2">Total {{ s.titulo|lower }}</td>
+      <td class="num">{{ s.total|eur }}</td>
+    </tr>
+    {% endif %}
+  </table>
+  {% endfor %}
+{% endblock %}
+{% block filas_totales %}
+          {% for s in datos.secciones %}
+          <tr>
+            <td width="62%">{{ s.titulo }}</td>
+            <td class="num" width="38%">{{ s.total|eur }}</td>
+          </tr>
+          {% endfor %}
+{% endblock %}

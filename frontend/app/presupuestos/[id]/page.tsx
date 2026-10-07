@@ -200,6 +200,36 @@ export default function DetallePresupuestoPage() {
           </section>
         )}
 
+        {presupuesto.lineas_trabajos.length > 0 && (
+          <section>
+            <h2 className="text-sm font-semibold text-slate-600 mb-1">Trabajos a realizar</h2>
+            <table className="w-full text-sm">
+              <thead className="bg-slate-100">
+                <tr>
+                  <th className="text-left p-1.5">Trabajo</th>
+                  <th className="text-right p-1.5">Cantidad</th>
+                  <th className="text-right p-1.5">Precio unitario</th>
+                  <th className="text-right p-1.5">Importe</th>
+                </tr>
+              </thead>
+              <tbody>
+                {presupuesto.lineas_trabajos.map((l, i) => (
+                  <tr key={i} className="border-t">
+                    <td className="p-1.5">{l.concepto}</td>
+                    <td className="p-1.5 text-right">{Number(l.cantidad).toFixed(2)}</td>
+                    <td className="p-1.5 text-right">{Number(l.precio_unitario).toFixed(2)} €</td>
+                    <td className="p-1.5 text-right">{Number(l.importe).toFixed(2)} €</td>
+                  </tr>
+                ))}
+                <tr className="border-t font-semibold">
+                  <td className="p-1.5" colSpan={3}>Total trabajos a realizar</td>
+                  <td className="p-1.5 text-right">{Number(presupuesto.coste_directo_trabajos).toFixed(2)} €</td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+        )}
+
         {presupuesto.lineas_otros.length > 0 && (
           <section>
             <h2 className="text-sm font-semibold text-slate-600 mb-1">Materiales y otros costes</h2>
@@ -240,6 +270,9 @@ export default function DetallePresupuestoPage() {
           )}
           {Number(presupuesto.coste_directo_combustible) > 0 && (
             <div>Combustible: <strong>{Number(presupuesto.coste_directo_combustible).toFixed(2)} €</strong></div>
+          )}
+          {presupuesto.lineas_trabajos.length > 0 && (
+            <div>Total trabajos a realizar: <strong>{Number(presupuesto.coste_directo_trabajos).toFixed(2)} €</strong></div>
           )}
           {presupuesto.lineas_otros.length > 0 && (
             <div>Total materiales y otros costes: <strong>{Number(presupuesto.coste_directo_otros).toFixed(2)} €</strong></div>

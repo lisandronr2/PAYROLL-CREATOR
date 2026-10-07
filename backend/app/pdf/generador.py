@@ -4,6 +4,7 @@ from jinja2 import Environment, FileSystemLoader
 from xhtml2pdf import pisa
 
 from app.models.nomina import Nomina
+from app.pdf.logos import logo_de_empresa
 from app.version import FULL_VERSION
 
 MESES_ES = [
@@ -46,6 +47,7 @@ def generar_pdf_nomina(nomina: Nomina) -> str:
     html_str = template.render(
         nomina=nomina,
         empresa=empresa,
+        logo=logo_de_empresa(empresa),
         trabajador=trabajador,
         contrato=contrato,
         categoria_nombre=categoria.nombre,

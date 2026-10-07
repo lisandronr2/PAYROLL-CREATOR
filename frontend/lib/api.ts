@@ -246,6 +246,20 @@ export interface Liquidacion {
   avisos: string[];
 }
 
+export interface LiquidacionGuardada extends Liquidacion {
+  id: number;
+  contrato_id: number;
+  trabajador_id: number;
+  vacaciones_disfrutadas: string;
+  unidad_vacaciones: "laborables" | "naturales";
+  vacaciones_pendientes_anteriores: string;
+  otras_cantidades: string;
+  indemnizacion_pactada: string;
+  descuentos: string;
+  notas?: string | null;
+  creado_en?: string | null;
+}
+
 export interface SugerenciasLiquidacion {
   fecha_ingreso: string;
   tipo_contrato: string;
@@ -306,6 +320,14 @@ export interface PresupuestoLineaPersonal {
   coste_dietas_total?: string;
 }
 
+export interface PresupuestoLineaTrabajo {
+  id?: number;
+  concepto: string;
+  cantidad: string;
+  precio_unitario: string;
+  importe?: string;
+}
+
 export interface PresupuestoLineaOtroCoste {
   id?: number;
   concepto: string;
@@ -330,6 +352,7 @@ export interface Presupuesto {
   coste_directo_dietas: string;
   coste_directo_hotel: string;
   coste_directo_combustible: string;
+  coste_directo_trabajos: string;
   coste_directo_otros: string;
   coste_directo_total: string;
   gastos_generales_importe: string;
@@ -339,6 +362,7 @@ export interface Presupuesto {
   iva_importe: string;
   precio_total_cliente: string;
   lineas_personal: PresupuestoLineaPersonal[];
+  lineas_trabajos: PresupuestoLineaTrabajo[];
   lineas_otros: PresupuestoLineaOtroCoste[];
 }
 
@@ -404,17 +428,21 @@ async function abrirPdfEnNuevaPestana(url: string, nombreArchivo: string) {
     } else {
       // Si aun así el navegador bloqueó la ventana, se descarga directamente
       // como alternativa (mejor que no hacer nada).
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = nombreArchivo;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+      descargarBlob(blobUrl, nombreArchivo);
     }
   } catch (err) {
     ventana?.close();
     throw err;
   }
+}
+
+function descargarBlob(blobUrl: string, nombreArchivo: string) {
+  const a = document.createElement("a");
+  a.href = blobUrl;
+  a.download = nombreArchivo;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 }
 
 async function fetchPdfComoBlobUrl(url: string): Promise<string> {
@@ -431,8 +459,33 @@ async function verPdfNomina(nominaId: number, nombreArchivo: string) {
   await abrirPdfEnNuevaPestana(`/nominas/${nominaId}/pdf`, nombreArchivo);
 }
 
-async function verPdfPresupuesto(presupuestoId: number, tipo: "cliente" | "interno", nombreArchivo: string) {
-  await abrirPdfEnNuevaPestana(`/presupuestos/${presupuestoId}/pdf?tipo=${tipo}`, nombreArchivo);
+async function verPdfPresupuesto(
+  presupuestoId: number,
+  tipo: "cliente" | "interno",
+  nombreArchivo: string,
+  formato: "clasico" | "profesional" = "profesional"
+) {
+  await abrirPdfEnNuevaPestana(`/presupuestos/${presupuestoId}/pdf?tipo=${tipo}&formato=${formato}`, nombreArchivo);
+}
+
+async function verPdfLiquidacion(liquidacionId: number, tipo: "trabajador" | "interno", nombreArchivo: string) {
+  await abrirPdfEnNuevaPestana(`/liquidaciones/${liquidacionId}/pdf?tipo=${tipo}`, nombreArchivo);
+}
+
+/**
+ * Para "guardar y ver PDF": la pestaña ya se abrió (síncronamente, al hacer
+ * clic, para que el navegador no la bloquee) y aquí se le carga el PDF de la
+ * liquidación recién guardada.
+ */
+async function cargarPdfLiquidacionEn(
+  ventana: Window | null,
+  liquidacionId: number,
+  tipo: "trabajador" | "interno",
+  nombreArchivo: string
+) {
+  const blobUrl = await fetchPdfComoBlobUrl(`/liquidaciones/${liquidacionId}/pdf?tipo=${tipo}`);
+  if (ventana) ventana.location.href = blobUrl;
+  else descargarBlob(blobUrl, nombreArchivo);
 }
 
 async function verPdfPresupuestoItems(presupuestoId: number, tipo: "cliente" | "interno", nombreArchivo: string) {
@@ -580,6 +633,15 @@ export const api = {
       ),
     calcular: (data: Record<string, unknown>) =>
       request<Liquidacion>("/liquidaciones/calcular", { method: "POST", body: JSON.stringify(data) }),
+    listar: () => request<LiquidacionGuardada[]>("/liquidaciones"),
+    obtener: (id: number) => request<LiquidacionGuardada>(`/liquidaciones/${id}`),
+    crear: (data: Record<string, unknown>) =>
+      request<LiquidacionGuardada>("/liquidaciones", { method: "POST", body: JSON.stringify(data) }),
+    actualizar: (id: number, data: Record<string, unknown>) =>
+      request<LiquidacionGuardada>(`/liquidaciones/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+    eliminar: (id: number) => request<void>(`/liquidaciones/${id}`, { method: "DELETE" }),
+    verPdf: verPdfLiquidacion,
+    cargarPdfEn: cargarPdfLiquidacionEn,
   },
   partidasCatalogo: {
     listar: (soloActivas = true) =>

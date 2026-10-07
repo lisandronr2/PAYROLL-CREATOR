@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<style>
+  @page {
+    size: A4;
+    margin: 1.4cm 1.6cm 2.5cm 1.6cm;
+    @frame pie_pagina {
+      -pdf-frame-content: pie_contenido;
+      left: 45pt; width: 505pt; top: 790pt; height: 36pt;
+    }
+  }
+  body { font-family: Helvetica, Arial, sans-serif; font-size: 9pt; color: #1f2937; line-height: 1.3; }
+
+  table { border-collapse: collapse; }
+  table.cabecera { width: 100%; }
+  td.empresa { vertical-align: top; padding: 0; }
+  td.titulo-doc { vertical-align: top; text-align: right; padding: 0; }
+  .empresa-nombre { font-size: 15pt; font-weight: bold; color: #1f3a5f; }
+  .empresa-datos { font-size: 8pt; color: #6b7280; margin-top: 3pt; }
+  .titulo { font-size: 24pt; font-weight: bold; color: #1f3a5f; }
+  .meta { font-size: 8.5pt; color: #374151; }
+  .meta-num { font-size: 10pt; font-weight: bold; color: #1f3a5f; margin-top: 2pt; }
+  .linea-azul { border-bottom: 2pt solid #1f3a5f; margin: 8pt 0 8pt 0; }
+
+  table.cajas { width: 100%; margin-bottom: 4pt; }
+  td.caja { background-color: #f3f4f6; padding: 5pt 9pt; vertical-align: top; }
+  .caja-titulo { font-size: 7pt; font-weight: bold; color: #6b7280; }
+  .caja-valor { font-size: 10.5pt; font-weight: bold; color: #111827; margin-top: 2pt; }
+  .caja-sub { font-size: 8.5pt; color: #4b5563; margin-top: 1pt; }
+
+  .seccion { font-size: 10.5pt; font-weight: bold; color: #1f3a5f; border-bottom: 1pt solid #1f3a5f; padding-bottom: 2pt; margin: 10pt 0 4pt 0; -pdf-keep-with-next: true; }
+
+  table.detalle { width: 100%; }
+  table.detalle td { padding: 3.6pt 6pt; font-size: 8.5pt; vertical-align: top; border-bottom: 0.5pt solid #e5e7eb; }
+  table.detalle tr.enc td { background-color: #1f3a5f; color: #ffffff; font-size: 7pt; font-weight: bold; border: 0.5pt solid #1f3a5f; }
+  table.detalle tr.par td { background-color: #f8fafc; }
+  table.detalle td.num { text-align: right; white-space: nowrap; }
+  table.detalle tr.subtotal td { background-color: #e8eef6; border-top: 1pt solid #1f3a5f; border-bottom: 0.5pt solid #e8eef6; border-left: 0.5pt solid #e8eef6; border-right: 0.5pt solid #e8eef6; font-weight: bold; color: #1f3a5f; }
+  .detalle-gris { font-size: 7.5pt; color: #6b7280; }
+
+  table.resumen-general { width: 100%; margin-top: 14pt; }
+  td.condiciones { width: 42%; vertical-align: top; padding-right: 14pt; }
+  td.totales { width: 58%; vertical-align: top; }
+  .condiciones-titulo { font-size: 8pt; font-weight: bold; color: #1f3a5f; margin-bottom: 3pt; }
+  .condiciones-texto { font-size: 7.8pt; color: #4b5563; margin-bottom: 3pt; }
+  table.totales-tabla { width: 100%; }
+  table.totales-tabla td { padding: 4pt 8pt; font-size: 8.8pt; border-bottom: 0.5pt solid #e5e7eb; }
+  table.totales-tabla td.num { text-align: right; white-space: nowrap; }
+  table.totales-tabla tr.total td { background-color: #1f3a5f; color: #ffffff; font-size: 11pt; font-weight: bold; border: 0.5pt solid #1f3a5f; padding: 7pt 8pt; }
+  .iva-nota { font-size: 7.5pt; color: #6b7280; text-align: right; margin-top: 3pt; }
+
+  table.conforme { width: 100%; margin-top: 4pt; }
+  td.firma { border: 0.75pt solid #cbd5e1; height: 52pt; vertical-align: top; padding: 5pt 7pt; font-size: 7.5pt; color: #6b7280; }
+  .conforme-nota { font-size: 7pt; color: #9ca3af; }
+
+  table.pie { width: 100%; border-top: 0.5pt solid #cbd5e1; }
+  table.pie td { font-size: 7pt; color: #6b7280; padding-top: 3pt; }
+  table.pie td.der { text-align: right; }
+</style>
+</head>
+<body>
+
+  <div id="pie_contenido">
+    <table class="pie">
+      <tr>
+        <td>{{ empresa.razon_social }} · CIF {{ empresa.cif }}{% if empresa.direccion %} · {{ empresa.direccion }}{% endif %}{% if empresa.poblacion and (not empresa.direccion or empresa.poblacion not in empresa.direccion) %}, {{ empresa.poblacion }}{% endif %}</td>
+        <td class="der">Presupuesto nº {{ datos.numero }} · Página <pdf:pagenumber> de <pdf:pagecount></td>
+      </tr>
+    </table>
+  </div>
+
+  <table class="cabecera">
+    <tr>
+      {% if logo %}
+      <td class="empresa" width="17%"><img src="{{ logo }}" width="92" height="113"></td>
+      <td class="empresa" width="41%" style="padding-left: 4pt; padding-top: 10pt;">
+        <div class="empresa-datos" style="margin-top: 0;">
+          <b>{{ empresa.razon_social }}</b><br>
+          CIF {{ empresa.cif }}
+          {% if empresa.direccion %}<br>{{ empresa.direccion }}{% endif %}
+          {% if empresa.poblacion and (not empresa.direccion or empresa.poblacion not in empresa.direccion) %}<br>{{ empresa.poblacion }}{% endif %}
+        </div>
+      </td>
+      {% else %}
+      <td class="empresa" width="58%">
+        <div class="empresa-nombre">{{ empresa.razon_social }}</div>
+        <div class="empresa-datos">
+          CIF {{ empresa.cif }}
+          {% if empresa.direccion %}<br>{{ empresa.direccion }}{% endif %}
+          {% if empresa.poblacion and (not empresa.direccion or empresa.poblacion not in empresa.direccion) %}<br>{{ empresa.poblacion }}{% endif %}
+        </div>
+      </td>
+      {% endif %}
+      <td class="titulo-doc" width="42%">
+        <div class="titulo">PRESUPUESTO</div>
+        <div class="meta-num">Nº {{ datos.numero }}</div>
+        <div class="meta">Fecha: {{ datos.fecha }}</div>
+        <div class="meta">Válido hasta: {{ datos.valido_hasta }}</div>
+      </td>
+    </tr>
+  </table>
+  <div class="linea-azul"></div>
+
+  <table class="cajas">
+    <tr>
+      <td class="caja" width="48%">
+        <div class="caja-titulo">PRESUPUESTO PARA</div>
+        <div class="caja-valor">{{ presupuesto.cliente_nombre or "—" }}</div>
+        {% if presupuesto.cliente_nif %}<div class="caja-sub">NIF/CIF: {{ presupuesto.cliente_nif }}</div>{% endif %}
+      </td>
+      <td width="4%"></td>
+      <td class="caja" width="48%">
+        <div class="caja-titulo">TRABAJO A REALIZAR</div>
+        <div class="caja-valor">{{ presupuesto.nombre }}</div>
+      </td>
+    </tr>
+  </table>
+
+  {% block secciones %}{% endblock %}
+
+  <table class="resumen-general">
+    <tr>
+      <td class="condiciones">
+        <div class="condiciones-titulo">CONDICIONES</div>
+        <div class="condiciones-texto">Presupuesto válido hasta el {{ datos.valido_hasta }} ({{ datos.dias_validez }} días naturales desde su fecha de emisión).</div>
+        {% if t.iva_pct %}<div class="condiciones-texto">El total incluye el IVA ({{ t.iva_pct|cant }} %).</div>{% else %}<div class="condiciones-texto">Los importes indicados no incluyen IVA.</div>{% endif %}
+        {% if presupuesto.notas %}
+        <div class="condiciones-titulo" style="margin-top:6pt;">NOTAS</div>
+        <div class="condiciones-texto">{{ presupuesto.notas }}</div>
+        {% endif %}
+      </td>
+      <td class="totales">
+        <table class="totales-tabla">
+          {% block filas_totales %}{% endblock %}
+          {% if t.iva_pct %}
+          <tr><td width="62%">Base imponible</td><td class="num" width="38%">{{ t.base|eur }}</td></tr>
+          <tr><td width="62%">IVA ({{ t.iva_pct|cant }} %)</td><td class="num" width="38%">{{ t.iva_importe|eur }}</td></tr>
+          <tr class="total"><td width="62%">TOTAL PRESUPUESTO</td><td class="num" width="38%">{{ t.total|eur }}</td></tr>
+          {% else %}
+          <tr class="total"><td width="62%">TOTAL PRESUPUESTO</td><td class="num" width="38%">{{ t.base|eur }}</td></tr>
+          {% endif %}
+        </table>
+        {% if not t.iva_pct %}<div class="iva-nota">IVA no incluido</div>{% endif %}
+      </td>
+    </tr>
+  </table>
+
+  <div class="seccion">Conforme del cliente</div>
+  <table class="conforme">
+    <tr>
+      <td class="firma" width="38%">Fecha</td>
+      <td width="3%"></td>
+      <td class="firma" width="59%">Firma y sello del cliente<br><span class="conforme-nota">Su firma supone la conformidad con este presupuesto en las condiciones indicadas.</span></td>
+    </tr>
+  </table>
+
+</body>
+</html>
