@@ -396,6 +396,14 @@ export interface PresupuestoItemsLinea {
   importe?: string;
 }
 
+export interface PresupuestoItemsExtra {
+  id?: number;
+  concepto: string;
+  cantidad: string;
+  precio_unitario: string;
+  importe?: string;
+}
+
 export interface PresupuestoItems {
   id: number;
   numero?: number | null;
@@ -410,6 +418,7 @@ export interface PresupuestoItems {
   iva_importe: string;
   precio_total_cliente: string;
   lineas: PresupuestoItemsLinea[];
+  extras?: PresupuestoItemsExtra[];
 }
 
 /**

@@ -10,7 +10,7 @@ from app.numeracion import asignar_numero, siguiente_numero
 from app.engine.presupuesto_items import calcular_importe_linea, calcular_totales_items
 from app.models.parametro_negocio import ParametroNegocio
 from app.models.partida_catalogo import PartidaCatalogo
-from app.models.presupuesto_items import PresupuestoItems, PresupuestoItemsLinea
+from app.models.presupuesto_items import PresupuestoItems, PresupuestoItemsExtra, PresupuestoItemsLinea
 from app.pdf.generador_presupuesto_items import generar_pdf_presupuesto_items
 from app.schemas.presupuesto_items import PresupuestoItemsCreate, PresupuestoItemsOut
 
@@ -39,6 +39,17 @@ def _calcular_y_poblar(presupuesto: PresupuestoItems, payload: PresupuestoItemsC
         importes.append(importe)
         lineas_calculadas.append((linea_in, partida, importe))
 
+    extras_calculados = []
+    for extra_in in payload.extras:
+        concepto = extra_in.concepto.strip()
+        if not concepto:
+            raise HTTPException(status_code=422, detail="Cada concepto extra necesita un nombre")
+        if extra_in.cantidad < 0 or extra_in.precio_unitario < 0:
+            raise HTTPException(status_code=422, detail=f'El concepto "{concepto}" no puede tener valores negativos')
+        importe = calcular_importe_linea(extra_in.precio_unitario, extra_in.cantidad, Decimal("0"))
+        importes.append(importe)
+        extras_calculados.append((extra_in, concepto, importe))
+
     totales = calcular_totales_items(importes, iva_pct)
 
     presupuesto.empresa_id = payload.empresa_id
@@ -55,6 +66,7 @@ def _calcular_y_poblar(presupuesto: PresupuestoItems, payload: PresupuestoItemsC
     db.add(presupuesto)
     db.flush()
 
+    presupuesto.extras.clear()
     presupuesto.lineas.clear()
     for linea_in, partida, importe in lineas_calculadas:
         db.add(
@@ -69,6 +81,17 @@ def _calcular_y_poblar(presupuesto: PresupuestoItems, payload: PresupuestoItemsC
                 precio_unitario=partida.precio_venta,
                 cantidad=linea_in.cantidad,
                 descuento_pct=linea_in.descuento_pct,
+                importe=importe,
+            )
+        )
+
+    for extra_in, concepto, importe in extras_calculados:
+        db.add(
+            PresupuestoItemsExtra(
+                presupuesto_id=presupuesto.id,
+                concepto=concepto,
+                cantidad=extra_in.cantidad,
+                precio_unitario=extra_in.precio_unitario,
                 importe=importe,
             )
         )

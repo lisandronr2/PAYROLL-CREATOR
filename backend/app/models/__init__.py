@@ -16,7 +16,7 @@ from app.models.presupuesto import (
     PresupuestoLineaTrabajo,
 )
 from app.models.partida_catalogo import PartidaCatalogo
-from app.models.presupuesto_items import PresupuestoItems, PresupuestoItemsLinea
+from app.models.presupuesto_items import PresupuestoItems, PresupuestoItemsExtra, PresupuestoItemsLinea
 from app.models.liquidacion import Liquidacion, LiquidacionLinea
 
 __all__ = [
@@ -42,6 +42,7 @@ __all__ = [
     "PartidaCatalogo",
     "PresupuestoItems",
     "PresupuestoItemsLinea",
+    "PresupuestoItemsExtra",
     "Liquidacion",
     "LiquidacionLinea",
 ]

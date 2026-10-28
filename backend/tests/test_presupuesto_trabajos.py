@@ -497,3 +497,91 @@ def test_una_tabla_larga_empieza_en_la_primera_pagina_y_continua_con_su_cabecera
     assert "Trabajos a realizar" in textos[1] and "CANTIDAD" in textos[1]  # título y cabecera se repiten
     assert sum(t.count("Total trabajos a realizar") for t in textos) == 1
     assert sum(t.count("Conforme del cliente") for t in textos) == 1
+
+
+# ---------- Presupuesto por items: conceptos extra fuera de las partidas ----------
+def _items_con_extras(db, extras=(), partidas=True):
+    from app.models.partida_catalogo import PartidaCatalogo
+    from app.routers import presupuestos_items as ri
+    from app.schemas.presupuesto_items import (
+        PresupuestoItemsCreate,
+        PresupuestoItemsExtraCreate,
+        PresupuestoItemsLineaCreate,
+    )
+    from app.seed.parametros_negocio import seed_parametros_negocio
+
+    seed_parametros_negocio(db)
+    partida = PartidaCatalogo(
+        familia="Cableado", nombre="Punto de red", unidad="ud", coste_directo=D("40"), margen_pct=D("25"), precio_venta=D("50")
+    )
+    db.add(partida)
+    db.commit()
+    payload = PresupuestoItemsCreate(
+        empresa_id=db.query(Empresa).first().id,
+        nombre="Cableado oficina",
+        cliente_nombre="Cliente SL",
+        fecha=date(2026, 10, 7),
+        lineas=[PresupuestoItemsLineaCreate(partida_id=partida.id, cantidad=D("4"))] if partidas else [],
+        extras=[PresupuestoItemsExtraCreate(concepto=c, cantidad=q, precio_unitario=pr) for c, q, pr in extras],
+    )
+    return ri, ri.crear_presupuesto_items(payload, db)
+
+
+def test_items_los_extras_suman_al_subtotal_y_al_iva(db):
+    ri, p = _items_con_extras(db, [("Desplazamiento", D("1"), D("80")), ("Combustible", D("2"), D("30.50"))])
+
+    assert [(e.concepto, e.importe) for e in p.extras] == [("Desplazamiento", D("80.00")), ("Combustible", D("61.00"))]
+    assert p.subtotal == D("341.00")  # 4 × 50 + 80 + 61
+    assert p.iva_importe == D("71.61")
+    assert p.precio_total_cliente == D("412.61")
+
+
+def test_items_editar_sustituye_los_extras_y_borrar_los_elimina(db):
+    from app.models.presupuesto_items import PresupuestoItemsExtra
+    from app.schemas.presupuesto_items import PresupuestoItemsCreate, PresupuestoItemsExtraCreate
+
+    ri, p = _items_con_extras(db, [("Desplazamiento", D("1"), D("80"))])
+    datos = PresupuestoItemsCreate(
+        empresa_id=p.empresa_id,
+        nombre=p.nombre,
+        fecha=p.fecha,
+        lineas=[],
+        extras=[PresupuestoItemsExtraCreate(concepto="Otros", cantidad=D("1"), precio_unitario=D("10"))],
+    )
+    editado = ri.actualizar_presupuesto_items(p.id, datos, db)
+    assert [e.concepto for e in editado.extras] == ["Otros"] and editado.subtotal == D("10.00")
+
+    ri.eliminar_presupuesto_items(p.id, db)
+    assert db.query(PresupuestoItemsExtra).count() == 0
+
+
+def test_items_un_extra_sin_nombre_o_negativo_da_422(db):
+    with pytest.raises(HTTPException) as error:
+        _items_con_extras(db, [("  ", D("1"), D("5"))])
+    assert error.value.status_code == 422
+
+
+@pytest.mark.parametrize("formato,tipo", [("profesional", "cliente"), ("clasico", "cliente"), ("clasico", "interno")])
+def test_items_el_pdf_muestra_los_extras_y_los_totales_cuadran(db, tmp_path, monkeypatch, formato, tipo):
+    from app.pdf import generador_presupuesto_items as gen
+
+    monkeypatch.setattr(gen, "OUTPUT_DIR", str(tmp_path))
+    ri, p = _items_con_extras(db, [("Desplazamiento", D("1"), D("80"))])
+
+    texto = texto_pdf(gen.generar_pdf_presupuesto_items(p, tipo, formato))
+
+    assert "Desplazamiento" in texto and "Otros conceptos" in texto
+    assert (eur(p.precio_total_cliente) if formato == "profesional" else f"{p.precio_total_cliente:.2f}") in texto
+    if formato == "profesional":
+        assert eur(D("200")) in texto and eur(D("80")) in texto  # subtotal de partidas y total de extras
+
+
+def test_items_solo_con_extras_el_pdf_no_muestra_la_tabla_de_partidas(db, tmp_path, monkeypatch):
+    from app.pdf import generador_presupuesto_items as gen
+
+    monkeypatch.setattr(gen, "OUTPUT_DIR", str(tmp_path))
+    ri, p = _items_con_extras(db, [("Desplazamiento", D("1"), D("80"))], partidas=False)
+
+    for formato, tipo in (("profesional", "cliente"), ("clasico", "cliente")):
+        texto = texto_pdf(gen.generar_pdf_presupuesto_items(p, tipo, formato))
+        assert "Desplazamiento" in texto and "Partidas" not in texto and "Total partidas" not in texto

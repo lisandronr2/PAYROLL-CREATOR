@@ -102,6 +102,7 @@ export default function DetallePresupuestoItemsPage() {
           )}
         </div>
 
+        {presupuesto.lineas.length > 0 && (
         <section>
           <h2 className="text-sm font-semibold text-slate-600 mb-1">Partidas</h2>
           <table className="w-full text-sm">
@@ -135,6 +136,33 @@ export default function DetallePresupuestoItemsPage() {
             </tbody>
           </table>
         </section>
+        )}
+
+        {(presupuesto.extras ?? []).length > 0 && (
+          <section>
+            <h2 className="text-sm font-semibold text-slate-600 mb-1">Otros conceptos</h2>
+            <table className="w-full text-sm">
+              <thead className="bg-slate-100">
+                <tr>
+                  <th className="text-left p-1.5">Concepto</th>
+                  <th className="text-right p-1.5">Cantidad</th>
+                  <th className="text-right p-1.5">Precio</th>
+                  <th className="text-right p-1.5">Importe</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(presupuesto.extras ?? []).map((x, i) => (
+                  <tr key={i} className="border-t">
+                    <td className="p-1.5">{x.concepto}</td>
+                    <td className="p-1.5 text-right">{Number(x.cantidad).toFixed(2)}</td>
+                    <td className="p-1.5 text-right">{Number(x.precio_unitario).toFixed(2)} €</td>
+                    <td className="p-1.5 text-right">{Number(x.importe).toFixed(2)} €</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        )}
 
         <section className="border-t pt-3 grid gap-1 text-sm">
           <div>Subtotal: <strong>{Number(presupuesto.subtotal).toFixed(2)} €</strong></div>

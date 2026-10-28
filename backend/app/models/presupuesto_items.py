@@ -27,7 +27,7 @@ class PresupuestoItems(Base):
 
     iva_pct = Column(Numeric(6, 3), nullable=False)
 
-    subtotal = Column(Numeric(12, 2), nullable=False, default=0)  # suma de importes de línea (con margen ya incluido)
+    subtotal = Column(Numeric(12, 2), nullable=False, default=0)  # partidas + conceptos extra (con margen ya incluido), sin IVA
     iva_importe = Column(Numeric(12, 2), nullable=False, default=0)
     precio_total_cliente = Column(Numeric(12, 2), nullable=False, default=0)
 
@@ -35,6 +35,12 @@ class PresupuestoItems(Base):
 
     empresa = relationship("Empresa")
     lineas = relationship("PresupuestoItemsLinea", back_populates="presupuesto", cascade="all, delete-orphan")
+    extras = relationship(
+        "PresupuestoItemsExtra",
+        back_populates="presupuesto",
+        cascade="all, delete-orphan",
+        order_by="PresupuestoItemsExtra.id",
+    )
 
 
 class PresupuestoItemsLinea(Base):
@@ -62,3 +68,19 @@ class PresupuestoItemsLinea(Base):
 
     presupuesto = relationship("PresupuestoItems", back_populates="lineas")
     partida = relationship("PartidaCatalogo")
+
+
+class PresupuestoItemsExtra(Base):
+    """Concepto añadido fuera de las partidas del catálogo (desplazamiento,
+    combustible, otros...): texto libre, cantidad y precio. Es un importe de
+    venta directo: no se le aplica margen ni descuento."""
+    __tablename__ = "presupuesto_items_extras"
+
+    id = Column(Integer, primary_key=True, index=True)
+    presupuesto_id = Column(Integer, ForeignKey("presupuestos_items.id"), nullable=False)
+    concepto = Column(String, nullable=False)
+    cantidad = Column(Numeric(10, 2), nullable=False, default=1)
+    precio_unitario = Column(Numeric(10, 2), nullable=False, default=0)
+    importe = Column(Numeric(12, 2), nullable=False, default=0)
+
+    presupuesto = relationship("PresupuestoItems", back_populates="extras")

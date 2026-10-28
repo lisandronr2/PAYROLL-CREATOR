@@ -11,6 +11,21 @@ class PresupuestoItemsLineaCreate(BaseModel):
     descuento_pct: Decimal = Decimal("0")
 
 
+class PresupuestoItemsExtraCreate(BaseModel):
+    concepto: str
+    cantidad: Decimal = Decimal("1")
+    precio_unitario: Decimal = Decimal("0")
+
+
+class PresupuestoItemsExtraOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    concepto: str
+    cantidad: Decimal
+    precio_unitario: Decimal
+    importe: Decimal
+
+
 class PresupuestoItemsCreate(BaseModel):
     empresa_id: int
     numero: Optional[int] = None  # si no se indica, el menor libre del año
@@ -22,6 +37,7 @@ class PresupuestoItemsCreate(BaseModel):
     # Si no se indica, se usa el valor por defecto configurado (ver ParametroNegocio).
     iva_pct: Optional[Decimal] = None
     lineas: list[PresupuestoItemsLineaCreate] = []
+    extras: list[PresupuestoItemsExtraCreate] = []
 
 
 class PresupuestoItemsLineaOut(BaseModel):
@@ -54,3 +70,4 @@ class PresupuestoItemsOut(BaseModel):
     iva_importe: Decimal
     precio_total_cliente: Decimal
     lineas: list[PresupuestoItemsLineaOut] = []
+    extras: list[PresupuestoItemsExtraOut] = []

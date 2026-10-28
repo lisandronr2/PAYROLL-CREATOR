@@ -1,4 +1,5 @@
 import os
+from decimal import Decimal
 from datetime import timedelta
 from types import SimpleNamespace
 
@@ -41,6 +42,8 @@ def generar_pdf_presupuesto_items(presupuesto: PresupuestoItems, tipo: str = "cl
         return _generar_pdf_cliente_profesional(presupuesto)
 
     hay_descuentos = any(l.descuento_pct for l in presupuesto.lineas)
+    subtotal_partidas = sum((Decimal(l.importe) for l in presupuesto.lineas), Decimal("0"))
+    subtotal_extras = sum((Decimal(e.importe) for e in presupuesto.extras), Decimal("0"))
     # Familia, Partida, Unidad, Cantidad, Precio unit. = 5 columnas base;
     # +2 si es interno (coste unitario, margen %); +1 si hay descuentos.
     columnas_antes_importe = 5 + (2 if tipo == "interno" else 0) + (1 if hay_descuentos else 0)
@@ -53,6 +56,9 @@ def generar_pdf_presupuesto_items(presupuesto: PresupuestoItems, tipo: str = "cl
         tipo=tipo,
         fecha=_fecha_es(presupuesto.fecha),
         lineas=presupuesto.lineas,
+        extras=presupuesto.extras,
+        subtotal_partidas=subtotal_partidas,
+        subtotal_extras=subtotal_extras,
         hay_descuentos=hay_descuentos,
         columnas_antes_importe=columnas_antes_importe,
         app_version=FULL_VERSION,
@@ -84,6 +90,9 @@ def _generar_pdf_cliente_profesional(presupuesto: PresupuestoItems) -> str:
         t=totales_de(presupuesto, presupuesto.subtotal),
         logo=logo_de_empresa(presupuesto.empresa),
         lineas=presupuesto.lineas,
+        extras=presupuesto.extras,
+        subtotal_partidas=sum((Decimal(l.importe) for l in presupuesto.lineas), Decimal("0")),
+        subtotal_extras=sum((Decimal(e.importe) for e in presupuesto.extras), Decimal("0")),
         hay_descuentos=any(l.descuento_pct for l in presupuesto.lineas),
     )
     ruta_salida = os.path.join(OUTPUT_DIR, f"presupuesto_items_{presupuesto.id}_cliente_profesional.pdf")

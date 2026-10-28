@@ -1,5 +1,6 @@
 {% extends "presupuesto_profesional_base.html" %}
 {% block secciones %}
+  {% if lineas %}
   <table class="detalle" repeat="2">
     <tr class="tit"><td colspan="{{ 6 if hay_descuentos else 5 }}">Partidas</td></tr>
     <tr class="enc">
@@ -22,8 +23,30 @@
     {% endfor %}
     <tr class="subtotal">
       <td colspan="{{ 4 + (1 if hay_descuentos else 0) }}">Total partidas</td>
-      <td class="num">{{ presupuesto.subtotal|eur }}</td>
+      <td class="num">{{ subtotal_partidas|eur }}</td>
     </tr>
   </table>
+  {% endif %}
+  {% if extras %}
+  <table class="detalle" repeat="2">
+    <tr class="tit"><td colspan="3">Otros conceptos</td></tr>
+    <tr class="enc">
+      <td width="66%">CONCEPTO</td>
+      <td class="num" width="15%">CANTIDAD</td>
+      <td class="num" width="19%">IMPORTE</td>
+    </tr>
+    {% for e in extras %}
+    <tr class="{{ 'par' if loop.index is even else '' }}">
+      <td>{{ e.concepto }}</td>
+      <td class="num">{{ e.cantidad|cant }}</td>
+      <td class="num">{{ e.importe|eur }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="subtotal">
+      <td colspan="2">Total otros conceptos</td>
+      <td class="num">{{ subtotal_extras|eur }}</td>
+    </tr>
+  </table>
+  {% endif %}
 {% endblock %}
 {% block filas_totales %}{% endblock %}

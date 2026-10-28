@@ -67,6 +67,7 @@
     </tr>
   </table>
 
+  {% if lineas %}
   <div class="seccion-titulo">Partidas</div>
   <table class="detalle">
     <tr>
@@ -99,9 +100,32 @@
     {% endfor %}
     <tr class="total-row">
       <td colspan="{{ columnas_antes_importe }}">Subtotal</td>
-      <td class="num">{{ "%.2f"|format(presupuesto.subtotal) }}</td>
+      <td class="num">{{ "%.2f"|format(subtotal_partidas) }}</td>
     </tr>
   </table>
+  {% endif %}
+
+  {% if extras %}
+  <div class="seccion-titulo">Otros conceptos</div>
+  <table class="detalle">
+    <tr>
+      <th>Concepto</th>
+      <th class="num">Cantidad</th>
+      <th class="num">Importe (€)</th>
+    </tr>
+    {% for e in extras %}
+    <tr>
+      <td>{{ e.concepto }}</td>
+      <td class="num">{{ "%.2f"|format(e.cantidad) }}</td>
+      <td class="num">{{ "%.2f"|format(e.importe) }}</td>
+    </tr>
+    {% endfor %}
+    <tr class="total-row">
+      <td colspan="2">Total otros conceptos</td>
+      <td class="num">{{ "%.2f"|format(subtotal_extras) }}</td>
+    </tr>
+  </table>
+  {% endif %}
 
   <div class="resumen">
     <table>

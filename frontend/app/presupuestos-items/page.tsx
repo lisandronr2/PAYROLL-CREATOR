@@ -3,13 +3,15 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { api, numeroPresupuesto, Empresa, ParametroNegocio, PartidaCatalogo, PresupuestoItems, PresupuestoItemsLinea } from "@/lib/api";
+import { api, numeroPresupuesto, Empresa, ParametroNegocio, PartidaCatalogo, PresupuestoItems, PresupuestoItemsExtra, PresupuestoItemsLinea } from "@/lib/api";
 
 const lineaVacia: PresupuestoItemsLinea = {
   partida_id: 0,
   cantidad: "1",
   descuento_pct: "0",
 };
+
+const SUGERENCIAS_EXTRA = ["Desplazamiento", "Combustible", "Otros"];
 
 function valorDefecto(parametros: ParametroNegocio[], clave: string): string {
   return parametros.find((p) => p.clave === clave)?.valor ?? "";
@@ -36,6 +38,7 @@ function PresupuestosItemsForm() {
   const [sinIva, setSinIva] = useState(false);
   const [notas, setNotas] = useState("");
   const [lineas, setLineas] = useState<PresupuestoItemsLinea[]>([{ ...lineaVacia }]);
+  const [extras, setExtras] = useState<PresupuestoItemsExtra[]>([]);
 
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
@@ -91,6 +94,9 @@ function PresupuestosItemsForm() {
               }))
             : [{ ...lineaVacia }]
         );
+        setExtras(
+          (p.extras ?? []).map((x) => ({ concepto: x.concepto, cantidad: x.cantidad, precio_unitario: x.precio_unitario }))
+        );
       })
       .catch((e) => setError(String(e)))
       .finally(() => setCargandoEdicion(false));
@@ -117,7 +123,16 @@ function PresupuestosItemsForm() {
     return precio * cantidad * (1 - descuento / 100);
   }
 
-  const subtotal = lineas.reduce((acc, l) => acc + importeLinea(l), 0);
+  function actualizarExtra(i: number, cambios: Partial<PresupuestoItemsExtra>) {
+    setExtras((prev) => prev.map((x, idx) => (idx === i ? { ...x, ...cambios } : x)));
+  }
+
+  function importeExtra(x: PresupuestoItemsExtra): number {
+    return (Number(x.cantidad) || 0) * (Number(x.precio_unitario) || 0);
+  }
+
+  const subtotal =
+    lineas.reduce((acc, l) => acc + importeLinea(l), 0) + extras.reduce((acc, x) => acc + importeExtra(x), 0);
   const ivaPctEfectivo = sinIva ? 0 : Number(ivaPct) || 0;
   const ivaImporte = (subtotal * ivaPctEfectivo) / 100;
 
@@ -130,6 +145,7 @@ function PresupuestosItemsForm() {
     setNotas("");
     setSinIva(false);
     setLineas([{ ...lineaVacia }]);
+    setExtras([]);
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -152,6 +168,13 @@ function PresupuestosItemsForm() {
             partida_id: l.partida_id,
             cantidad: l.cantidad,
             descuento_pct: l.descuento_pct,
+          })),
+        extras: extras
+          .filter((x) => x.concepto.trim() || Number(x.precio_unitario))
+          .map((x) => ({
+            concepto: x.concepto,
+            cantidad: x.cantidad || "1",
+            precio_unitario: x.precio_unitario || "0",
           })),
       };
 
@@ -332,6 +355,73 @@ function PresupuestosItemsForm() {
           <p className="text-xs text-slate-400">
             Cada partida ya trae su margen incluido en el precio unitario — el importe de la línea es
             precio unitario × cantidad, con el descuento que indiques. Solo se añade el IVA al final.
+          </p>
+        </div>
+
+        <div>
+          <div className="flex justify-between items-center mb-2 flex-wrap gap-2">
+            <h2 className="font-medium text-sm">Otros conceptos (fuera de las partidas)</h2>
+            <div className="flex gap-3">
+              {SUGERENCIAS_EXTRA.map((nombreExtra) => (
+                <button
+                  key={nombreExtra}
+                  type="button"
+                  onClick={() =>
+                    setExtras((prev) => [...prev, { concepto: nombreExtra, cantidad: "1", precio_unitario: "" }])
+                  }
+                  className="text-sm text-blue-600 underline"
+                >
+                  + {nombreExtra}
+                </button>
+              ))}
+            </div>
+          </div>
+          {extras.map((extra, i) => (
+            <div key={i} className="border rounded p-3 mb-2 grid sm:grid-cols-5 gap-2 text-sm items-end">
+              <label className="flex flex-col gap-0.5 text-xs text-slate-500 sm:col-span-2">
+                Concepto
+                <input
+                  className="border rounded px-2 py-1"
+                  value={extra.concepto}
+                  onChange={(e) => actualizarExtra(i, { concepto: e.target.value })}
+                />
+              </label>
+              <label className="flex flex-col gap-0.5 text-xs text-slate-500">
+                Cantidad
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  className="border rounded px-2 py-1"
+                  value={extra.cantidad}
+                  onChange={(e) => actualizarExtra(i, { cantidad: e.target.value })}
+                />
+              </label>
+              <label className="flex flex-col gap-0.5 text-xs text-slate-500">
+                Precio (€)
+                <input
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  className="border rounded px-2 py-1"
+                  value={extra.precio_unitario}
+                  onChange={(e) => actualizarExtra(i, { precio_unitario: e.target.value })}
+                />
+              </label>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-slate-600">{importeExtra(extra).toFixed(2)} €</span>
+                <button
+                  type="button"
+                  onClick={() => setExtras((prev) => prev.filter((_, idx) => idx !== i))}
+                  className="text-red-600 text-xs underline"
+                >
+                  Quitar
+                </button>
+              </div>
+            </div>
+          ))}
+          <p className="text-xs text-slate-400">
+            Importes de venta directos (cantidad × precio), sin margen ni descuento. Suman al subtotal antes del IVA.
           </p>
         </div>
 
