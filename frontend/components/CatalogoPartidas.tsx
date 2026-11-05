@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { api, PartidaCatalogo } from "@/lib/api";
 
 const nuevaVacia = {
@@ -12,6 +12,7 @@ const nuevaVacia = {
   margen_pct: "20",
   precio_venta_directo: "0",
   observaciones: "",
+  alcance: "",
 };
 
 const OPCION_GRUPO_NUEVO = "__nuevo__";
@@ -86,6 +87,7 @@ export default function CatalogoPartidas() {
         precio_medios_aux: soloPrecio ? "0" : nueva.precio_medios_aux,
         margen_pct: soloPrecio ? "0" : nueva.margen_pct,
         observaciones: nueva.observaciones || null,
+        alcance: nueva.alcance.trim() || null,
       });
       setNueva({ ...nuevaVacia });
       setGrupo(grupoDestino);
@@ -108,6 +110,7 @@ export default function CatalogoPartidas() {
       precio_medios_aux: p.precio_medios_aux,
       margen_pct: p.margen_pct,
       observaciones: p.observaciones ?? "",
+      alcance: p.alcance ?? "",
     });
   }
 
@@ -122,6 +125,7 @@ export default function CatalogoPartidas() {
         precio_medios_aux: edicion.precio_medios_aux,
         margen_pct: edicion.margen_pct,
         observaciones: edicion.observaciones || null,
+        alcance: edicion.alcance?.trim() ? edicion.alcance : null,
       });
       setEditandoId(null);
       cargar();
@@ -270,6 +274,16 @@ export default function CatalogoPartidas() {
                 value={nueva.observaciones}
                 onChange={(e) => setNueva({ ...nueva, observaciones: e.target.value })}
               />
+              <label className="flex flex-col gap-0.5 text-xs text-slate-500 sm:col-span-3">
+                Alcance (sale en el PDF del cliente)
+                <textarea
+                  rows={3}
+                  placeholder="Qué operaciones incluye la partida y qué materiales suministramos. Una idea por línea."
+                  className="border rounded px-2 py-1.5 text-sm text-slate-900"
+                  value={nueva.alcance}
+                  onChange={(e) => setNueva({ ...nueva, alcance: e.target.value })}
+                />
+              </label>
             </div>
             <label className="flex items-center gap-2 text-xs text-slate-600">
               <input type="checkbox" checked={soloPrecio} onChange={(e) => setSoloPrecio(e.target.checked)} />
@@ -305,7 +319,8 @@ export default function CatalogoPartidas() {
                 {partidasDelGrupo.map((p) => {
                   const enEdicion = editandoId === p.id;
                   return (
-                    <tr key={p.id} className={`border-t ${!p.activo ? "opacity-50" : ""}`}>
+                    <Fragment key={p.id}>
+                    <tr className={`border-t ${!p.activo ? "opacity-50" : ""}`}>
                       {enEdicion ? (
                         <>
                           <td className="p-1"><input className="border rounded px-1 py-0.5 w-44" value={edicion.nombre} onChange={(e) => setEdicion({ ...edicion, nombre: e.target.value })} /></td>
@@ -331,6 +346,11 @@ export default function CatalogoPartidas() {
                             {p.nombre}
                             {!p.activo && <span className="ml-2 text-xs text-slate-400">(desactivada)</span>}
                             {p.observaciones && <div className="text-xs text-slate-400">{p.observaciones}</div>}
+                            {p.alcance && (
+                              <div className="text-xs text-slate-500 whitespace-pre-line mt-0.5">
+                                <span className="font-medium">Alcance:</span> {p.alcance}
+                              </div>
+                            )}
                           </td>
                           <td className="p-2">{p.unidad}</td>
                           <td className="p-2 text-right">{Number(p.precio_coste_mo).toFixed(2)}</td>
@@ -348,6 +368,23 @@ export default function CatalogoPartidas() {
                         </>
                       )}
                     </tr>
+                    {enEdicion && (
+                      <tr className="bg-slate-50">
+                        <td colSpan={9} className="p-2">
+                          <label className="flex flex-col gap-0.5 text-xs text-slate-500">
+                            Alcance (sale en el PDF del cliente)
+                            <textarea
+                              rows={3}
+                              placeholder="Qué operaciones incluye la partida y qué materiales suministramos. Una idea por línea."
+                              className="border rounded px-2 py-1.5 text-sm text-slate-900"
+                              value={edicion.alcance ?? ""}
+                              onChange={(e) => setEdicion({ ...edicion, alcance: e.target.value })}
+                            />
+                          </label>
+                        </td>
+                      </tr>
+                    )}
+                    </Fragment>
                   );
                 })}
               </tbody>

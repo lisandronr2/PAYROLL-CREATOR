@@ -29,7 +29,7 @@ from app.seed.convenios import (
 )
 from app.seed.parametros_negocio import seed_parametros_negocio
 from app.seed.usuarios import seed_usuario_admin
-from app.seed.partidas_catalogo import seed_partidas_catalogo
+from app.seed.partidas_catalogo import cargar_partidas_telecom_2026, seed_partidas_catalogo
 from app.numeracion import rellenar_numeros_pendientes
 from app.models.presupuesto import Presupuesto
 from app.models.presupuesto_items import PresupuestoItems
@@ -65,6 +65,7 @@ def on_startup() -> None:
         seed_parametros_negocio(db)
         seed_usuario_admin(db)
         seed_partidas_catalogo(db)
+        cargar_partidas_telecom_2026(db)
         rellenar_numeros_pendientes(db, Presupuesto)
         rellenar_numeros_pendientes(db, PresupuestoItems)
     finally:

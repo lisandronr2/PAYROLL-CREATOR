@@ -337,6 +337,11 @@ function PresupuestosItemsForm() {
                     onChange={(e) => actualizarLinea(i, { descuento_pct: e.target.value })}
                   />
                 </label>
+                {p?.alcance && (
+                  <p className="sm:col-span-5 text-xs text-slate-500 whitespace-pre-line">
+                    <span className="font-medium">Alcance:</span> {p.alcance}
+                  </p>
+                )}
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-slate-600">{importeLinea(linea).toFixed(2)} €</span>
                   {lineas.length > 1 && (

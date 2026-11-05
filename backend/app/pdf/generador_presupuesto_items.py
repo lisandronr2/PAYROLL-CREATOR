@@ -1,4 +1,5 @@
 import os
+from html import escape
 from decimal import Decimal
 from datetime import timedelta
 from types import SimpleNamespace
@@ -18,6 +19,14 @@ OUTPUT_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file
 _env = Environment(loader=FileSystemLoader(TEMPLATES_DIR))
 _env.filters["eur"] = eur
 _env.filters["cant"] = cant
+
+
+def _saltos_de_linea(texto) -> str:
+    """Escapa el HTML y convierte los saltos de línea del texto libre en <br>."""
+    return escape(texto or "").replace("\n", "<br>")
+
+
+_env.filters["saltos"] = _saltos_de_linea
 
 FORMATOS = ("clasico", "profesional")
 

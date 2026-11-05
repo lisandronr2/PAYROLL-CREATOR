@@ -121,7 +121,14 @@ export default function DetallePresupuestoItemsPage() {
               {presupuesto.lineas.map((l, i) => (
                 <tr key={i} className="border-t">
                   <td className="p-1.5">{l.familia}</td>
-                  <td className="p-1.5">{l.nombre}</td>
+                  <td className="p-1.5">
+                    {l.nombre}
+                    {l.alcance && (
+                      <div className="text-xs text-slate-500 whitespace-pre-line">
+                        <span className="font-medium">Alcance:</span> {l.alcance}
+                      </div>
+                    )}
+                  </td>
                   <td className="p-1.5 text-right">{l.unidad}</td>
                   <td className="p-1.5 text-right">{Number(l.cantidad).toFixed(2)}</td>
                   <td className="p-1.5 text-right">{Number(l.precio_unitario).toFixed(2)} €</td>

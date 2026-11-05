@@ -57,6 +57,7 @@ class PresupuestoItemsLinea(Base):
     familia = Column(String, nullable=False)
     nombre = Column(String, nullable=False)
     unidad = Column(String, nullable=False)
+    alcance = Column(Text, nullable=True)  # copia del alcance de la partida al crear la línea
 
     coste_directo_unitario = Column(Numeric(10, 2), nullable=False, default=0)
     margen_pct = Column(Numeric(6, 2), nullable=False, default=0)

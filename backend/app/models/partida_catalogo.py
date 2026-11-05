@@ -27,6 +27,7 @@ class PartidaCatalogo(Base):
     precio_venta = Column(Numeric(10, 2), nullable=False, default=0)  # coste_directo * (1 + margen_pct/100)
 
     observaciones = Column(Text, nullable=True)
+    alcance = Column(Text, nullable=True)  # qué incluye la partida (operaciones y materiales); sale en el PDF del cliente
     activo = Column(Boolean, nullable=False, default=True)
 
     creado_en = Column(DateTime(timezone=True), server_default=func.now())

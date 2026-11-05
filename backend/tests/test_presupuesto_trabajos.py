@@ -500,7 +500,7 @@ def test_una_tabla_larga_empieza_en_la_primera_pagina_y_continua_con_su_cabecera
 
 
 # ---------- Presupuesto por items: conceptos extra fuera de las partidas ----------
-def _items_con_extras(db, extras=(), partidas=True):
+def _items_con_extras(db, extras=(), partidas=True, alcance=None):
     from app.models.partida_catalogo import PartidaCatalogo
     from app.routers import presupuestos_items as ri
     from app.schemas.presupuesto_items import (
@@ -512,7 +512,13 @@ def _items_con_extras(db, extras=(), partidas=True):
 
     seed_parametros_negocio(db)
     partida = PartidaCatalogo(
-        familia="Cableado", nombre="Punto de red", unidad="ud", coste_directo=D("40"), margen_pct=D("25"), precio_venta=D("50")
+        familia="Cableado",
+        nombre="Punto de red",
+        unidad="ud",
+        coste_directo=D("40"),
+        margen_pct=D("25"),
+        precio_venta=D("50"),
+        alcance=alcance,
     )
     db.add(partida)
     db.commit()
@@ -585,3 +591,94 @@ def test_items_solo_con_extras_el_pdf_no_muestra_la_tabla_de_partidas(db, tmp_pa
     for formato, tipo in (("profesional", "cliente"), ("clasico", "cliente")):
         texto = texto_pdf(gen.generar_pdf_presupuesto_items(p, tipo, formato))
         assert "Desplazamiento" in texto and "Partidas" not in texto and "Total partidas" not in texto
+
+
+# ---------- Alcance de las partidas ----------
+ALCANCE = "Tendido y ponchado del cable.\nIncluye el material: cable Cat6 y conectores.\nNo incluye canalización <nueva>."
+
+
+def test_el_alcance_de_la_partida_se_copia_a_la_linea_y_se_conserva_si_cambia_el_catalogo(db):
+    from app.models.partida_catalogo import PartidaCatalogo
+
+    ri, p = _items_con_extras(db, alcance=ALCANCE)
+    assert p.lineas[0].alcance == ALCANCE
+
+    db.query(PartidaCatalogo).update({"alcance": "Otro texto"})
+    db.commit()
+    db.refresh(p)
+    assert p.lineas[0].alcance == ALCANCE  # el presupuesto ya creado no cambia
+
+
+def test_el_catalogo_crea_y_modifica_el_alcance(db):
+    from app.routers import partidas_catalogo as rc
+    from app.schemas.partida_catalogo import PartidaCatalogoCreate, PartidaCatalogoUpdate
+
+    nueva = rc.crear_partida(
+        PartidaCatalogoCreate(familia="CCTV", nombre="Cámara", unidad="ud", precio_coste_mo=D("10"), alcance="Montaje y puesta en marcha"), db
+    )
+    assert nueva.alcance == "Montaje y puesta en marcha"
+    editada = rc.actualizar_partida(nueva.id, PartidaCatalogoUpdate(alcance="Incluye la cámara"), db)
+    assert editada.alcance == "Incluye la cámara" and editada.nombre == "Cámara"
+    sin_tocar = rc.actualizar_partida(nueva.id, PartidaCatalogoUpdate(unidad="m"), db)
+    assert sin_tocar.alcance == "Incluye la cámara"
+
+
+@pytest.mark.parametrize("formato,tipo", [("profesional", "cliente"), ("clasico", "cliente"), ("clasico", "interno")])
+def test_el_pdf_muestra_el_alcance_de_cada_partida(db, tmp_path, monkeypatch, formato, tipo):
+    from app.pdf import generador_presupuesto_items as gen
+
+    monkeypatch.setattr(gen, "OUTPUT_DIR", str(tmp_path))
+    ri, p = _items_con_extras(db, alcance=ALCANCE)
+
+    texto = " ".join(texto_pdf(gen.generar_pdf_presupuesto_items(p, tipo, formato)).split())  # sin saltos de ajuste
+
+    assert "Alcance" in texto and "Tendido y ponchado del cable." in texto
+    assert "Incluye el material" in texto and "<nueva>" in texto  # el texto libre no rompe el PDF
+
+
+def test_sin_alcance_el_pdf_no_pone_la_etiqueta(db, tmp_path, monkeypatch):
+    from app.pdf import generador_presupuesto_items as gen
+
+    monkeypatch.setattr(gen, "OUTPUT_DIR", str(tmp_path))
+    ri, p = _items_con_extras(db)
+    assert "Alcance" not in texto_pdf(gen.generar_pdf_presupuesto_items(p, "cliente", "profesional"))
+
+
+# ---------- Carga de la tarifa de telecomunicaciones 2026 ----------
+def test_la_carga_de_la_tarifa_telecom_anade_sin_duplicar_ni_pisar_lo_existente(db):
+    from app.models.partida_catalogo import PartidaCatalogo
+    from app.seed.partidas_catalogo import cargar_partidas_telecom_2026, seed_partidas_catalogo
+    from app.seed.partidas_telecom_2026 import PARTIDAS_TELECOM_2026
+
+    seed_partidas_catalogo(db)
+    antes = db.query(PartidaCatalogo).count()
+    previas = {p.id: (p.nombre, p.precio_venta) for p in db.query(PartidaCatalogo).all()}
+    # Un grupo existente con otra grafía: la carga debe reutilizarlo ("FIBRA" -> "Fibra").
+    assert cargar_partidas_telecom_2026(db) == len(PARTIDAS_TELECOM_2026) == 30
+    assert db.query(PartidaCatalogo).count() == antes + 30
+    assert {p.id: (p.nombre, p.precio_venta) for p in db.query(PartidaCatalogo).filter(PartidaCatalogo.id.in_(previas))} == previas
+
+    grupos = {p.familia for p in db.query(PartidaCatalogo).all()}
+    assert "Fibra" in grupos and "FIBRA" not in grupos
+    assert {"UTP", "FTP", "Rack cobre", "Racks principales", "Cámaras perimetrales", "Cámaras interior / exterior"} <= grupos
+
+    fusion = db.query(PartidaCatalogo).filter(PartidaCatalogo.nombre.like("Fusión individual%")).one()
+    assert (fusion.familia, fusion.unidad, fusion.precio_venta, fusion.coste_directo, fusion.margen_pct) == (
+        "Fibra", "fusión", D("17.50"), D("17.50"), D("0")
+    )
+    assert "OTDR" in fusion.alcance
+
+    # Segunda ejecución: idempotente, y respeta lo editado a mano.
+    fusion.precio_venta = D("20")
+    db.commit()
+    assert cargar_partidas_telecom_2026(db) == 0
+    assert db.query(PartidaCatalogo).count() == antes + 30
+    assert db.get(PartidaCatalogo, fusion.id).precio_venta == D("20")
+
+
+def test_las_notas_internas_de_cantidad_no_van_al_alcance_del_cliente():
+    from app.seed.partidas_telecom_2026 import PARTIDAS_TELECOM_2026
+
+    for _, nombre, _, _, alcance, observaciones in PARTIDAS_TELECOM_2026:
+        assert "pendiente" not in (alcance or "").lower(), nombre
+    assert any(o and o.startswith("Cantidad pendiente") for *_, o in PARTIDAS_TELECOM_2026)

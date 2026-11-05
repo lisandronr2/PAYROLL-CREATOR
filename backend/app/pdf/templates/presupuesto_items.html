@@ -72,7 +72,7 @@
   <table class="detalle">
     <tr>
       <th>Familia</th>
-      <th>Partida</th>
+      <th width="42%">Partida</th>
       <th class="num">Unidad</th>
       <th class="num">Cantidad</th>
       {% if tipo == "interno" %}
@@ -86,7 +86,7 @@
     {% for l in lineas %}
     <tr>
       <td>{{ l.familia }}</td>
-      <td>{{ l.nombre }}</td>
+      <td>{{ l.nombre }}{% if l.alcance %}<div style="font-size:6.8pt; color:#555; margin-top:2px;"><b>Alcance:</b> {{ l.alcance|saltos }}</div>{% endif %}</td>
       <td class="num">{{ l.unidad }}</td>
       <td class="num">{{ "%.2f"|format(l.cantidad) }}</td>
       {% if tipo == "interno" %}

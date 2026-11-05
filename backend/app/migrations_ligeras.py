@@ -46,6 +46,8 @@ COLUMNAS_NUEVAS = [
     ("convenios", "preaviso_cese_dias_resto", "INTEGER"),
     ("convenios", "antiguedad_max_tramos", "INTEGER"),
     ("presupuestos", "numero", "INTEGER"),
+    ("partidas_catalogo", "alcance", "TEXT"),
+    ("presupuesto_items_lineas", "alcance", "TEXT"),
     ("presupuestos_items", "numero", "INTEGER"),
     ("presupuestos", "coste_directo_trabajos", "NUMERIC(12, 2) NOT NULL DEFAULT 0"),
 ]

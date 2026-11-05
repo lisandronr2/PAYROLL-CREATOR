@@ -47,6 +47,7 @@ class PresupuestoItemsLineaOut(BaseModel):
     familia: str
     nombre: str
     unidad: str
+    alcance: Optional[str] = None
     coste_directo_unitario: Decimal
     margen_pct: Decimal
     precio_unitario: Decimal

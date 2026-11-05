@@ -11,6 +11,7 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from app.models.partida_catalogo import PartidaCatalogo
+from app.seed.partidas_telecom_2026 import PARTIDAS_TELECOM_2026
 
 MARGEN_DEFECTO = Decimal("20")
 
@@ -106,3 +107,40 @@ def seed_partidas_catalogo(db: Session) -> None:
             )
         )
     db.commit()
+
+
+def cargar_partidas_telecom_2026(db: Session) -> int:
+    """Añade al catálogo las partidas de la tarifa de telecomunicaciones 2026.
+    Idempotente: una partida que ya existe (mismo grupo y nombre, sin distinguir
+    mayúsculas) no se toca ni se duplica, así que lo editado a mano se respeta.
+    Devuelve cuántas se han añadido."""
+    existentes = {(p.familia.casefold(), p.nombre.casefold()) for p in db.query(PartidaCatalogo).all()}
+    # Si el grupo ya existe con otra grafía de mayúsculas, se reutiliza esa.
+    grupos = {p.familia.casefold(): p.familia for p in db.query(PartidaCatalogo).all()}
+    añadidas = 0
+    for grupo, nombre, unidad, precio, alcance, observaciones in PARTIDAS_TELECOM_2026:
+        familia = grupos.get(grupo.casefold(), grupo)
+        if (familia.casefold(), nombre.casefold()) in existentes:
+            continue
+        precio_d = Decimal(precio)
+        db.add(
+            PartidaCatalogo(
+                familia=familia,
+                nombre=nombre,
+                unidad=unidad,
+                precio_coste_mo=precio_d,  # precio de venta directo: sin desglose ni margen
+                precio_material=Decimal("0"),
+                precio_medios_aux=Decimal("0"),
+                coste_directo=precio_d,
+                margen_pct=Decimal("0"),
+                precio_venta=precio_d,
+                alcance=alcance,
+                observaciones=observaciones,
+                activo=True,
+            )
+        )
+        grupos.setdefault(grupo.casefold(), familia)
+        existentes.add((familia.casefold(), nombre.casefold()))
+        añadidas += 1
+    db.commit()
+    return añadidas

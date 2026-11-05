@@ -13,6 +13,7 @@ class PartidaCatalogoCreate(BaseModel):
     precio_medios_aux: Decimal = Decimal("0")
     margen_pct: Decimal = Decimal("20")
     observaciones: Optional[str] = None
+    alcance: Optional[str] = None
     activo: bool = True
 
 
@@ -25,6 +26,7 @@ class PartidaCatalogoUpdate(BaseModel):
     precio_medios_aux: Optional[Decimal] = None
     margen_pct: Optional[Decimal] = None
     observaciones: Optional[str] = None
+    alcance: Optional[str] = None
     activo: Optional[bool] = None
 
 
@@ -41,4 +43,5 @@ class PartidaCatalogoOut(BaseModel):
     margen_pct: Decimal
     precio_venta: Decimal
     observaciones: Optional[str] = None
+    alcance: Optional[str] = None
     activo: bool

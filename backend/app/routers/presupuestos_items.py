@@ -76,6 +76,7 @@ def _calcular_y_poblar(presupuesto: PresupuestoItems, payload: PresupuestoItemsC
                 familia=partida.familia,
                 nombre=partida.nombre,
                 unidad=partida.unidad,
+                alcance=partida.alcance,
                 coste_directo_unitario=partida.coste_directo,
                 margen_pct=partida.margen_pct,
                 precio_unitario=partida.precio_venta,

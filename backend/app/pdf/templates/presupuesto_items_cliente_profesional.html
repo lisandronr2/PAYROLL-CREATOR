@@ -13,7 +13,7 @@
     </tr>
     {% for l in lineas %}
     <tr class="{{ 'par' if loop.index is even else '' }}">
-      <td>{{ l.nombre }}<br><span class="detalle-gris">{{ l.familia }}</span></td>
+      <td>{{ l.nombre }}<br><span class="detalle-gris">{{ l.familia }}</span>{% if l.alcance %}<br><span class="alcance"><b>Alcance:</b> {{ l.alcance|saltos }}</span>{% endif %}</td>
       <td class="num">{{ l.unidad }}</td>
       <td class="num">{{ l.cantidad|cant }}</td>
       <td class="num">{{ l.precio_unitario|eur }}</td>

@@ -379,6 +379,7 @@ export interface PartidaCatalogo {
   margen_pct: string;
   precio_venta: string;
   observaciones?: string | null;
+  alcance?: string | null;
   activo: boolean;
 }
 
@@ -388,6 +389,7 @@ export interface PresupuestoItemsLinea {
   familia?: string;
   nombre?: string;
   unidad?: string;
+  alcance?: string | null;
   coste_directo_unitario?: string;
   margen_pct?: string;
   precio_unitario?: string;
